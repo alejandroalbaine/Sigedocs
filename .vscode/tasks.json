@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SIGESDOC: generar variables privadas",
+      "type": "npm",
+      "script": "env:setup",
+      "problemMatcher": []
+    },
+    {
+      "label": "SIGESDOC: inicializar PostgreSQL",
+      "type": "npm",
+      "script": "db:init",
+      "problemMatcher": []
+    },
+    {
+      "label": "SIGESDOC: ejecutar pruebas",
+      "type": "npm",
+      "script": "verify",
+      "problemMatcher": []
+    }
+  ]
+}

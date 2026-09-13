@@ -1,0 +1,33 @@
+{
+  "name": "sigesdoc-login",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Módulo de acceso institucional de SIGESDOC",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js",
+    "env:setup": "node src/setup-env.js",
+    "db:init": "node src/init-database.js",
+    "test": "node --test test/auth.test.js",
+    "test:db": "node --test test/postgres.integration.js",
+    "verify": "npm run test && npm run test:db"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "supertest": "^7.2.2"
+  }
+}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel principal | SIGESDOC</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/dashboard.js" defer></script>
+  </head>
+  <body class="dashboard-page">
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
+    <header class="topbar">
+      <a class="mini-brand" href="/dashboard.html" aria-label="SIGESDOC, panel principal"><span>SIGES</span><strong>DOC</strong></a>
+      <div class="topbar-title">Sistema de Gestión Documental Curricular</div>
+      <div class="user-pill"><span id="user-initials">U</span><div><strong id="user-name">Cargando…</strong><small id="user-role"></small></div></div>
+    </header>
+
+    <div class="dashboard-layout">
+      <aside class="sidebar" aria-label="Navegación principal">
+        <p>Navegación institucional</p>
+        <nav>
+          <a class="current" href="/dashboard.html"><span>▦</span> Panel principal</a>
+          <a href="#proximamente"><span>▱</span> Expedientes</a>
+          <a href="#proximamente"><span>⌕</span> Búsqueda</a>
+          <a href="#proximamente"><span>▤</span> Reportes</a>
+        </nav>
+        <button id="logout-button" class="logout-button" type="button">Cerrar sesión</button>
+      </aside>
+
+      <main id="main-content" class="dashboard-main">
+        <section class="welcome-card">
+          <div>
+            <p class="eyebrow orange">Panel principal</p>
+            <h1>Bienvenido/a, <span id="welcome-name">usuario</span></h1>
+            <p>Su acceso institucional fue validado correctamente.</p>
+          </div>
+          <span id="data-mode" class="mode-badge">Verificando datos…</span>
+        </section>
+
+        <section class="module-status" id="proximamente" aria-labelledby="module-title">
+          <div class="success-seal" aria-hidden="true">✓</div>
+          <p class="eyebrow">Primera fase completada</p>
+          <h2 id="module-title">El módulo de acceso está funcionando</h2>
+          <p>
+            La aplicación ya valida credenciales, mantiene una sesión segura, protege este panel y permite cerrar la sesión. Los módulos documentales se incorporarán en las próximas fases.
+          </p>
+          <div class="status-grid">
+            <article><span>01</span><strong>Autenticación</strong><small>Correo y contraseña validados en el servidor.</small></article>
+            <article><span>02</span><strong>Sesión protegida</strong><small>Cookie HttpOnly con vencimiento controlado.</small></article>
+            <article><span>03</span><strong>Roles</strong><small>Perfil y unidad disponibles para permisos futuros.</small></article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
