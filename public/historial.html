@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Historial y trazabilidad de los expedientes curriculares | SIGESDOC" />
+    <title>Historial y trazabilidad | SIGESDOC</title>
+    <link rel="icon" type="image/png" href="./LogoSIGESDOC.png" />
+    <link rel="stylesheet" href="./historial.css" />
+    <script src="./historial.js" defer></script>
+  </head>
+  <body>
+    <div class="shell" id="shell">
+      <!-- Menú lateral -->
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="./LogoSIGESDOC.png" alt="Logo SIGESDOC" class="brand-logo" />
+          <div>
+            <p class="brand-name">SIGESDOC</p>
+            <p class="brand-caption">Sistema de Gestión Documental Curricular</p>
+          </div>
+        </div>
+        <nav class="menu" aria-label="Menú principal">
+          <button class="menu-item active" type="button" aria-current="page">Historial y trazabilidad</button>
+        </nav>
+      </aside>
+
+      <!-- Zona principal -->
+      <div class="content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button id="menu-toggle" class="menu-toggle" type="button" aria-label="Mostrar u ocultar el menú" aria-expanded="true">
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+            </button>
+            <h1 class="title">Historial y trazabilidad</h1>
+          </div>
+          <span class="user-badge" id="user-badge">usuario</span>
+        </header>
+
+        <main class="main">
+          <div class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Historial y trazabilidad</h2>
+              <p class="panel-desc">
+                Cronología auditable de las acciones sobre los expedientes curriculares: usuario, fecha, acción,
+                versión, estado anterior → estado nuevo, observación y evidencia.
+              </p>
+            </div>
+
+            <!-- Filtros -->
+            <form id="filtros" class="filtros" autocomplete="off">
+              <div class="filtros-header">
+                <h3>Filtros y búsqueda</h3>
+              </div>
+
+              <div class="filtros-grid">
+                <label class="field">
+                  <span class="field-label">Expediente</span>
+                  <input id="f-expediente" type="text" placeholder="Código del expediente" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Usuario</span>
+                  <input id="f-usuario" type="text" placeholder="Nombre o correo" />
+                </label>
+                <label class="field">
+                  <span class="field-label">Acción</span>
+                  <select id="f-accion"><option value="all">Todas las acciones</option></select>
+                </label>
+                <label class="field">
+                  <span class="field-label">Estado nuevo</span>
+                  <select id="f-estado"><option value="all">Todos los estados</option></select>
+                </label>
+                <label class="field f-date">
+                  <span class="field-label">Desde</span>
+                  <input id="f-desde" type="date" />
+                </label>
+                <label class="field f-date">
+                  <span class="field-label">Hasta</span>
+                  <input id="f-hasta" type="date" />
+                </label>
+              </div>
+
+              <div class="filtros-search">
+                <span class="field-label">Buscar por expediente, usuario, observación o evidencia</span>
+                <span class="search-row">
+                  <input id="f-texto" type="search" placeholder="Código, título, observación…" />
+                  <button class="btn btn-dark" type="submit">Buscar</button>
+                </span>
+              </div>
+
+              <div class="filtros-foot">
+                <span class="filtros-hint">Los campos de acción, estado y fechas se aplican automáticamente.</span>
+                <button class="link" id="limpiar" type="button">Limpiar filtros</button>
+              </div>
+            </form>
+
+            <!-- Resultados -->
+            <div class="table-wrap">
+              <div class="loading" id="loading" hidden><span class="spinner"></span></div>
+              <div class="empty" id="empty" hidden>
+                <span class="empty-icon" aria-hidden="true">🗂️</span>
+                <p class="empty-title">No hay eventos para los filtros seleccionados</p>
+                <p class="empty-desc">Ajusta el expediente, la acción, el estado o el rango de fechas y vuelve a consultar.</p>
+              </div>
+              <div class="table-scroll" id="table-scroll">
+                <table class="tabla">
+                  <thead>
+                    <tr id="encabezados">
+                      <th class="sortable" data-sort="fecha">Fecha y hora<span class="sort-arrow" aria-hidden="true">↕</span></th>
+                      <th class="sortable" data-sort="accion">Acción<span class="sort-arrow" aria-hidden="true">↕</span></th>
+                      <th class="sortable" data-sort="expedienteCodigo">Expediente<span class="sort-arrow" aria-hidden="true">↕</span></th>
+                      <th class="sortable" data-sort="usuarioNombre">Usuario<span class="sort-arrow" aria-hidden="true">↕</span></th>
+                      <th>Rol</th>
+                      <th class="sortable" data-sort="version">Versión<span class="sort-arrow" aria-hidden="true">↕</span></th>
+                      <th>Estado (anterior → nuevo)</th>
+                      <th>Evidencia</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Paginación -->
+            <div class="pagination" id="pagination" hidden>
+              <p class="pg-summary" id="pg-summary"></p>
+              <div class="pg-controls">
+                <label class="pg-size">Por página
+                  <select id="pg-size">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                  </select>
+                </label>
+                <span class="pg-nav">
+                  <button class="btn" id="pg-prev" type="button">Anterior</button>
+                  <span class="pg-page" id="pg-page">Página 1 de 1</span>
+                  <button class="btn" id="pg-next" type="button">Siguiente</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Detalle del evento -->
+    <div class="drawer-overlay" id="drawer-overlay" hidden></div>
+    <aside class="drawer" id="detalle" role="dialog" aria-modal="true" aria-label="Detalle del evento de trazabilidad" hidden>
+      <div class="drawer-head">
+        <h2 class="drawer-title">Detalle del evento</h2>
+        <button class="drawer-close" id="detalle-cerrar" type="button" aria-label="Cerrar detalle">✕</button>
+      </div>
+      <div class="drawer-body">
+        <span class="badge" id="det-accion-badge"></span>
+        <dl class="meta">
+          <div class="meta-row"><dt>Expediente</dt><dd id="det-expediente"></dd></div>
+          <div class="meta-row"><dt>Fecha y hora</dt><dd id="det-fecha"></dd></div>
+          <div class="meta-row"><dt>Usuario</dt><dd id="det-usuario"></dd></div>
+          <div class="meta-row"><dt>Rol</dt><dd id="det-rol"></dd></div>
+          <div class="meta-row"><dt>Acción</dt><dd id="det-accion"></dd></div>
+          <div class="meta-row"><dt>Versión</dt><dd id="det-version"></dd></div>
+          <div class="meta-row"><dt>Estado</dt><dd id="det-estado"></dd></div>
+          <div class="meta-row"><dt>Observación</dt><dd id="det-observacion"></dd></div>
+          <div class="meta-row"><dt>Evidencia</dt><dd id="det-evidencia"></dd></div>
+          <div class="meta-row"><dt>Registro</dt><dd id="det-registro"></dd></div>
+        </dl>
+      </div>
+    </aside>
+  </body>
+</html>
