@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIGESDOC - Registro de Observaciones</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="contenedor">
+    <header class="cabecera">
+      <h1>Registro de Observaciones</h1>
+      <p>SIGESDOC - Sistema de Gestión de Expedientes y Documentos</p>
+    </header>
+
+    <main>
+      <form id="formObservacion" class="tarjeta">
+
+        <div class="campo">
+          <label for="expediente">Expediente relacionado</label>
+          <select id="expediente" name="expediente" required>
+            <option value="">-- Seleccione un expediente --</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="descripcion">Descripción de la observación</label>
+          <textarea id="descripcion" name="descripcion" rows="5"
+            placeholder="Describa la observación encontrada en el expediente..." required></textarea>
+        </div>
+
+        <div class="campo">
+          <label for="estado">Estado</label>
+          <select id="estado" name="estado" required>
+            <option value="pendiente">Pendiente</option>
+            <option value="en_revision">En revisión</option>
+            <option value="resuelta">Resuelta</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="usuario">Registrado por</label>
+          <input type="text" id="usuario" name="usuario" placeholder="Nombre del usuario" required>
+        </div>
+
+        <div class="campo">
+          <label for="fecha">Fecha</label>
+          <input type="date" id="fecha" name="fecha" required>
+        </div>
+
+        <div id="mensaje" class="mensaje" hidden></div>
+
+        <div class="acciones">
+          <button type="reset" class="btn btn-secundario">Limpiar</button>
+          <button type="submit" class="btn btn-primario">Registrar observación</button>
+        </div>
+
+      </form>
+
+      <section class="tarjeta" id="seccionListado">
+        <h2>Últimas observaciones registradas</h2>
+        <table class="tabla" id="tablaObservaciones">
+          <thead>
+            <tr>
+              <th>Expediente</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              <th>Registrado por</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script src="observaciones.js"></script>
+</body>
+</html>

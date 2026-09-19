@@ -43,3 +43,28 @@ CREATE TABLE IF NOT EXISTS auth_events (
 
 CREATE INDEX IF NOT EXISTS auth_events_user_time_idx ON auth_events (user_id, occurred_at DESC);
 CREATE INDEX IF NOT EXISTS auth_events_type_time_idx ON auth_events (event_type, occurred_at DESC);
+
+-- ============================================================
+-- Módulo: Registro de observaciones
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS observations (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  expediente_id UUID NOT NULL,
+  description   TEXT NOT NULL,
+  status        VARCHAR(30) NOT NULL DEFAULT 'pendiente'
+                  CHECK (status IN ('pendiente', 'en_revision', 'resuelta')),
+  created_by    UUID REFERENCES users(id) ON DELETE SET NULL,
+  occurred_at   DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS observations_expediente_idx ON observations (expediente_id);
+CREATE INDEX IF NOT EXISTS observations_status_idx ON observations (status);
+
+DROP TRIGGER IF EXISTS observations_set_updated_at ON observations;
+CREATE TRIGGER observations_set_updated_at
+BEFORE UPDATE ON observations
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();

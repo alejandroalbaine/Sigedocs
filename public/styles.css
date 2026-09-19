@@ -264,3 +264,157 @@ button { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ============================================================
+   Módulo: Registro de observaciones
+   ============================================================ */
+.contenedor {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+.cabecera {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.cabecera h1 {
+  margin-bottom: 4px;
+  color: var(--navy);
+}
+
+.cabecera p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.tarjeta {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+
+.campo {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  padding: 10px 12px;
+  border: 1.5px solid #b9c6d8;
+  border-radius: 9px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  width: 100%;
+  background: #fbfcff;
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(18, 150, 219, .16);
+}
+
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 9px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out, transform 0.15s;
+}
+
+.btn-primario {
+  background-color: var(--orange);
+  color: #fff;
+}
+
+.btn-primario:hover {
+  background-color: #e97311;
+  transform: translateY(-1px);
+}
+
+.btn-secundario {
+  background-color: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.btn-secundario:hover {
+  background-color: #f3f6fa;
+}
+
+.mensaje {
+  padding: 10px 14px;
+  border-radius: 7px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.mensaje.exito {
+  background-color: #eaf9f2;
+  color: var(--success);
+  border-left: 4px solid var(--success);
+}
+
+.mensaje.error {
+  background-color: #fff0ee;
+  color: var(--danger);
+  border-left: 4px solid var(--danger);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabla th,
+.tabla td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabla th {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.tabla tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+@media (max-width: 480px) {
+  .acciones {
+    flex-direction: column-reverse;
+  }
+  .btn {
+    width: 100%;
+  }
+}
