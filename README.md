@@ -165,3 +165,79 @@ Consulte `CONTRIBUTING.md`. Cada cambio debe desarrollarse en una rama separada 
 - El esquema inicial se aplica desde un archivo SQL; antes de múltiples despliegues deberá incorporarse una herramienta de migraciones versionadas.
 - Falta automatización CI para ejecutar pruebas en cada Pull Request.
 - El almacenamiento de sesión mediante JWT es suficiente para esta fase, pero la revocación centralizada deberá evaluarse para producción.
+
+
+
+
+
+## Módulo Dashboard
+
+El módulo Dashboard de SIGESDOC constituye la pantalla principal de visualización del sistema. Su objetivo es presentar de manera organizada y sencilla la información relacionada con la gestión documental curricular.
+
+### Funcionalidades desarrolladas
+
+En el desarrollo del Dashboard se implementaron las siguientes funcionalidades:
+
+- Diseño de la interfaz principal del Dashboard.
+- Navegación institucional mediante menú lateral.
+- Visualización del logo y elementos de identidad visual de SIGESDOC.
+- Indicadores generales del sistema.
+- Gráfico de Ingreso y Radicación Mensual de Documentos.
+- Gráfico de Estado de Trámite.
+- Sección de Actividad Reciente en el Sistema.
+- Sección de Alertas TRD.
+- Búsqueda y filtrado de registros.
+- Paginación de la actividad reciente.
+- Exportación de registros en formato CSV.
+- Visualización automática de la fecha y hora.
+- Visualización del nombre del usuario autenticado.
+- Visualización del rol y unidad institucional del usuario.
+- Menú de perfil del usuario.
+- Función de cierre de sesión.
+- Diseño adaptable para diferentes tamaños de pantalla.
+- Manejo visual de errores cuando no es posible obtener los datos del Dashboard.
+
+### Integración con el sistema
+
+El Dashboard está preparado para recibir información desde los servicios del sistema mediante:
+
+`GET /api/dashboard`
+
+Este servicio proporciona la información utilizada por los indicadores, gráficos, actividad reciente y alertas.
+
+La información del usuario autenticado se obtiene mediante:
+
+`GET /api/auth/me`
+
+A partir de esta información se muestran en el Dashboard el nombre, rol, unidad institucional e iniciales del usuario.
+
+### Manejo de errores
+
+Se incorporó un mecanismo de manejo de errores para evitar que el Dashboard muestre información incorrecta cuando el servicio de datos no está disponible.
+
+Cuando ocurre un problema durante la actualización de los datos, el sistema muestra un mensaje indicando:
+
+> No fue posible actualizar los datos. Intente nuevamente.
+
+Cuando no existen registros disponibles, el Dashboard presenta estados vacíos en lugar de información ficticia.
+
+### Datos del Dashboard
+
+Los indicadores, gráficos, actividad reciente y alertas están preparados para utilizar información real proveniente de la base de datos.
+
+Durante la etapa de desarrollo e integración, estos valores pueden mantenerse en cero hasta que los servicios y la base de datos correspondientes proporcionen la información real.
+
+### Archivos principales
+
+Los principales archivos relacionados con el módulo son:
+
+- `public/dashboard.html` — estructura de la interfaz.
+- `public/dashboard.css` — estilos y diseño visual.
+- `public/dashboard.js` — lógica e interacción del Dashboard.
+- `docs/dashboard-contract.md` — estructura de los datos utilizados por el Dashboard.
+
+### Alcance del módulo
+
+El alcance de este módulo se centra en la presentación, visualización e interacción con la información proporcionada por el sistema.
+
+La creación, almacenamiento y modificación de documentos, expedientes, usuarios y demás información documental corresponde a los servicios y módulos encargados de la gestión documental y la base de datos.
