@@ -25,7 +25,8 @@ function mapDatabaseUser(row) {
     fullName: row.full_name,
     role: row.role,
     isActive: row.is_active,
-    profile: row.profile || {}
+    profile: row.profile || {},
+    permissions: Array.isArray(row.profile?.permissions) ? row.profile.permissions : []
   };
 }
 

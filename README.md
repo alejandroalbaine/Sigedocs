@@ -16,7 +16,52 @@ La primera fase incluye:
 - Modo demostrativo cuando el proyecto se ejecuta intencionalmente sin base de datos.
 - Pruebas del flujo de autenticación y de la integración con PostgreSQL.
 
-La recuperación de contraseña, identidad única UAPA, 2FA y los módulos documentales todavía no están implementados.
+La recuperación de contraseña, identidad única UAPA, 2FA y la persistencia de
+los módulos documentales todavía no están implementadas. Las interfaces de
+dashboard, observaciones, historial y revisión sí están incorporadas como
+prototipos protegidos por sesión y permisos.
+
+El frontend ya implementa el contrato versionado, la configuración de la API por
+entorno, el envío de credenciales entre orígenes, los errores Problem Details y
+la presentación de opciones según permisos efectivos. El servidor incluido
+responde temporalmente al mismo contrato para conservar una demostración funcional.
+Su retirada depende del aviso de backend indicado en el requerimiento de migración.
+
+## Requisitos de integración solicitados por backend
+
+El objetivo acordado es que este repositorio conserve la interfaz y consuma la API
+del repositorio de backend. La siguiente tabla distingue los requisitos técnicos
+de su estado real de implementación.
+
+| Requisito | Estado en frontend | Dependencia externa |
+|---|---|---|
+| Separar el servidor de la interfaz | El servidor, la autenticación, el acceso a PostgreSQL y sus pruebas siguen en este repositorio para mantener el acceso actual. | Esperar la confirmación de migración de backend; después retirar el código y las dependencias de servidor y documentar un arranque estático independiente. |
+| Configurar la URL de la API por entorno | Implementado: `API_BASE_URL` se lee del entorno, se publica sin secretos en `/runtime-config.js` y todas las peticiones usan el cliente central. Vacío conserva el mismo origen. | Confirmar los valores reales para desarrollo separado y mentor. |
+| Mantener la sesión entre orígenes | Implementado en frontend: todas las peticiones usan `credentials: 'include'` y CSP autoriza exactamente el origen configurado. | Backend debe habilitar ese origen en CORS, admitir credenciales y configurar la cookie según los dominios y HTTPS; después se ejecuta la prueba conjunta. |
+| Consumir el contrato versionado de la API | Implementado: rutas `/api/v1`, respuestas desde `data`, logout `DELETE` con 204 y errores Problem Details elegidos por `codigo`, incluidos campos inválidos. | Validar los cuerpos definitivos contra la rama integrada de backend. |
+| Mostrar opciones según permisos efectivos | Implementado: el dashboard usa exclusivamente `permisos`, oculta opciones no autorizadas y muestra un estado válido cuando la lista está vacía. | Backend debe devolver el catálogo definitivo y autorizar cada operación. |
+
+La implementación del frontend está completa y probada de forma local contra el
+contrato acordado. Falta la **validación conjunta** porque la copia de backend
+entregada no registra aún las rutas de autenticación ni CORS. Ocultar opciones
+en la interfaz no reemplaza la autorización del servidor.
+
+### Cambios incorporados
+
+- Configuración pública del origen de la API separada de las variables privadas del servidor.
+- Cliente de peticiones compartido por login y dashboard, con rutas centralizadas
+  y módulos JavaScript nativos, sin añadir dependencias.
+- Contrato definitivo `/api/v1`, respuestas de éxito bajo `data`, errores
+  Problem Details por `codigo` y validaciones relacionadas con su campo.
+- Credenciales incluidas en todas las peticiones y CSP generada con el origen
+  configurado para cada entorno.
+- Navegación basada en permisos efectivos, sin deducir privilegios del rol.
+- Mensajes controlados ante fallos de red, HTTP o formato; espera máxima de diez
+  segundos y ausencia de reintentos automáticos.
+- Cierre de sesión con control de errores: si falla, se informa en el panel y se
+  permite reintentar sin presentar el cierre como exitoso.
+- Pruebas del cliente y de su integración con el servidor actual, junto a las
+  pruebas de autenticación existentes.
 
 ## Tecnologías
 
@@ -50,8 +95,16 @@ Esta estructura es deliberadamente sencilla para la primera fase. La autorizaci�
 SIGESDOC_LOGIN/
 ├── .vscode/              Configuración compartida de Visual Studio Code
 ├── database/schema.sql   Estructura inicial de PostgreSQL
-├── docs/database.md      Diccionario y decisiones de la base de datos
-├── public/               Interfaz del login y panel protegido
+├── docs/
+│   ├── database.md       Diccionario y decisiones de la base de datos
+│   └── integracion-api.md Decisiones y verificación de la integración
+├── public/
+│   ├── config.js         Configuración pública del origen de la API
+│   ├── api.js            Cliente compartido y contrato /api/v1
+│   ├── permissions.js    Visibilidad según permisos efectivos
+│   ├── session.js        Sesión compartida por las pantallas protegidas
+│   ├── charts.js         Gráficos locales sin dependencias externas
+│   └── ...               Login, dashboard y prototipos de módulos
 ├── src/                  Configuración, autenticación y persistencia
 ├── test/                 Pruebas unitarias y de integración
 ├── .env.example          Plantilla pública de variables
@@ -91,12 +144,18 @@ archivista.central@uapa.edu.do
 
 Mientras se use el modo demostrativo, la contraseña es `UapaSecure2024*`. Cuando se inicialice PostgreSQL, la contraseña de las cuentas creadas será el valor privado `SEED_USER_PASSWORD` de `.env`. Ese valor no debe enviarse al repositorio ni publicarse en mensajes del equipo.
 
+El perfil demostrativo **Sin módulos asignados** permite verificar el estado
+seguro de un usuario autenticado cuya lista de permisos está vacía. No representa
+un rol institucional nuevo ni se inserta en PostgreSQL.
+
 ## Variables de entorno
 
 | Variable | Uso | Obligatoria |
 |---|---|---|
 | `PORT` | Puerto HTTP de la aplicación | No, usa 3000 |
 | `NODE_ENV` | `development`, `test` o `production` | Sí en despliegue |
+| `API_BASE_URL` | Origen público del backend, sin rutas | Sí cuando la API está separada |
+| `COOKIE_SAME_SITE` | Política temporal de cookie mientras se conserva el servidor | No, usa `strict` |
 | `JWT_SECRET` | Firma criptográfica de las sesiones | Sí con PostgreSQL y producción |
 | `DATABASE_URL` | Conexión utilizada por Node.js | Sí fuera del modo demostrativo |
 | `DB_SSL` | Activa TLS para PostgreSQL remoto | Según infraestructura |
@@ -112,19 +171,85 @@ npm run dev        # Servidor con reinicio automático
 npm start          # Servidor sin modo watch
 npm run env:setup  # Genera .env si no existe
 npm run db:init    # Aplica esquema y usuarios iniciales
-npm test           # Pruebas de autenticación sin depender de PostgreSQL
+npm test           # Autenticación y cliente de API, sin depender de PostgreSQL
 npm run test:db    # Prueba la conexión y el esquema PostgreSQL
 npm run verify     # Ejecuta ambas suites
 ```
 
-## Endpoints actuales
+## Contrato de API consumido
 
 | Método | Ruta | Protección | Propósito |
 |---|---|---|---|
-| `GET` | `/api/health` | Pública | Estado mínimo del servicio y la base de datos |
-| `POST` | `/api/auth/login` | Límite de intentos | Inicia una sesión |
-| `GET` | `/api/auth/me` | Sesión | Devuelve el perfil autenticado |
-| `POST` | `/api/auth/logout` | Sesión | Audita y cierra la sesión |
+| `GET` | `/api/v1/estado` | Pública | Consulta el estado del servicio |
+| `POST` | `/api/v1/sesiones` | Límite de intentos | Inicia una sesión y devuelve la identidad |
+| `GET` | `/api/v1/usuarios/actual` | Sesión | Devuelve identidad y permisos efectivos |
+| `DELETE` | `/api/v1/sesiones/actual` | Sesión | Cierra la sesión con `204 No Content` |
+
+El segmento `actual` identifica al usuario o a la sesión autenticada. El cierre
+de sesión de destino debe responder `204 No Content`, sin cuerpo JSON.
+El cliente usa esas cuatro rutas. Las respuestas exitosas se leen desde `data`;
+`meta` puede acompañar la respuesta sin alterar el recurso. Los errores se
+interpretan mediante `codigo`, sin mostrar `title` o `detail` del servidor.
+
+Antes de validar la integración entre repositorios se deben confirmar con backend:
+
+- La versión integrada de la API y la disponibilidad de las cuatro rutas.
+- Los cuerpos de solicitud y respuesta de autenticación, identidad y estado,
+  incluidos los permisos efectivos, códigos de error y validaciones por campo.
+- Los orígenes y puertos por entorno, la configuración de CORS y las cookies.
+- La autorización para retirar el servidor actual sin interrumpir el acceso.
+
+## Configuración pública de la API
+
+La variable `API_BASE_URL` del entorno define el origen del backend. El servidor
+publica únicamente ese dato no secreto mediante `/runtime-config.js` y
+`public/config.js` lo entrega al cliente. Si está vacía, las peticiones usan el
+mismo origen que la interfaz.
+
+Cuando se acuerde una API separada, el valor debe ser únicamente su origen
+HTTP o HTTPS, sin rutas como `/api/v1`, sin usuario, contraseña, query ni fragmento.
+No hay una dirección definitiva del mentor confirmada; no debe inventarse.
+
+| Entorno | Valor de `API_BASE_URL` | Estado |
+|---|---|---|
+| Desarrollo actual, interfaz y API juntas | `''` | Conserva el funcionamiento actual |
+| Desarrollo con backend separado | Origen por confirmar con backend | Implementación lista; falta el valor |
+| Entorno del mentor | Origen por confirmar con el mentor | Implementación lista; falta el valor |
+
+Este archivo llega al navegador: **no es un lugar para secretos**. No contiene
+`DATABASE_URL`, `JWT_SECRET` ni contraseñas. El navegador recibe solamente
+`API_BASE_URL`; las demás variables permanecen privadas en el servidor.
+
+`public/api.js` reúne las rutas y las peticiones. Las pantallas protegidas usan
+ese cliente mediante `session.js` y módulos JavaScript nativos, sin nuevas dependencias.
+El cliente limita la espera a diez segundos, comprueba errores HTTP, admite
+respuestas sin contenido y muestra errores de conexión sin detalles internos.
+No reintenta operaciones automáticamente. Las rutas y los cuerpos de respuesta
+siguen el contrato `/api/v1`. Todas las solicitudes usan `credentials: 'include'`.
+La CSP agrega exclusivamente el origen configurado. Backend debe responder con
+CORS para ese mismo origen y `Access-Control-Allow-Credentials: true`; no se usan
+comodines ni se desactivan protecciones del navegador.
+
+Las decisiones de integración, las pruebas y las dependencias pendientes están en
+[`docs/integracion-api.md`](docs/integracion-api.md).
+
+## Verificación del estado actual
+
+La última validación de la implementación dio como resultado:
+
+- `npm test`: **26 pruebas aprobadas, ninguna fallida**. Incluye autenticación,
+  configuración de URL, rutas y métodos, errores, tiempo de espera, respuestas
+  sin contenido, permisos y regresiones de integración entre módulos.
+- Navegador en modo demostrativo: acceso incorrecto, acceso correcto, carga de
+  identidad, dashboard, revisión, observaciones, historial, cierre de sesión y
+  estado seguro de un usuario sin permisos, sin errores de consola.
+- Servidor temporal detenido: mensaje claro de conexión tanto en login como en
+  cierre de sesión, sin simular una operación exitosa.
+
+Estas verificaciones certifican el comportamiento del frontend y el contrato
+temporal local. La prueba contra el backend independiente, sus CORS/cookies y
+PostgreSQL real requiere la versión integrada y los orígenes definitivos. El procedimiento está en
+[`docs/integracion-api.md`](docs/integracion-api.md).
 
 ## Seguridad
 
@@ -141,7 +266,9 @@ Para producción se requiere HTTPS, gestión institucional de secretos, copias d
 
 La estructura y el diccionario de datos están documentados en `docs/database.md`. `profile` y `event_data` utilizan `JSONB` únicamente para atributos variables; los datos principales permanecen normalizados en columnas relacionales.
 
-Cuando backend entregue la conexión, complete `DATABASE_URL` en `.env`. Si se utiliza PostgreSQL local, primero cree una base vacía llamada `sigesdoc`. Luego ejecute:
+Mientras se conserve el servidor actual, su conexión se configura mediante
+`DATABASE_URL` en el `.env` privado. Si se utiliza PostgreSQL local, primero
+cree una base vacía llamada `sigesdoc`. Luego ejecute:
 
 ```bash
 npm run db:init
@@ -149,6 +276,10 @@ npm run test:db
 ```
 
 Git conserva el código y el historial de cambios, pero no ejecuta PostgreSQL ni debe almacenar sus contraseñas.
+
+Una vez completada la separación, la conexión y las credenciales de PostgreSQL
+serán responsabilidad exclusiva del backend. La interfaz consumirá la API y
+no se conectará directamente a la base de datos.
 
 ## Visual Studio Code
 
@@ -160,7 +291,7 @@ Consulte `CONTRIBUTING.md`. Cada cambio debe desarrollarse en una rama separada 
 
 ## Deuda técnica conocida
 
-- Los roles todavía son un atributo del usuario; cuando existan permisos por módulo se deberá implementar autorización RBAC en el servidor.
+- El frontend ya usa permisos efectivos; el catálogo definitivo y la autorización RBAC corresponden al backend.
 - La auditoría no tiene todavía una política institucional de retención o anonimización.
 - El esquema inicial se aplica desde un archivo SQL; antes de múltiples despliegues deberá incorporarse una herramienta de migraciones versionadas.
 - Falta automatización CI para ejecutar pruebas en cada Pull Request.
@@ -170,74 +301,29 @@ Consulte `CONTRIBUTING.md`. Cada cambio debe desarrollarse en una rama separada 
 
 
 
-## Módulo Dashboard
+## Interfaces incorporadas por el equipo
 
-El módulo Dashboard de SIGESDOC constituye la pantalla principal de visualización del sistema. Su objetivo es presentar de manera organizada y sencilla la información relacionada con la gestión documental curricular.
+El repositorio incluye interfaces para dashboard, observaciones, historial y
+revisión. Todas cargan la identidad desde `GET /api/v1/usuarios/actual` y muestran
+sus accesos exclusivamente cuando el usuario recibe el permiso correspondiente.
 
-### Funcionalidades desarrolladas
+El dashboard consulta únicamente el estado oficial de la API y mantiene métricas,
+gráficos, actividad y alertas en cero hasta que Backend publique un contrato para
+esos datos. Los gráficos usan Canvas nativo y no dependen de scripts externos.
 
-En el desarrollo del Dashboard se implementaron las siguientes funcionalidades:
+Las pantallas de observaciones, historial y revisión están disponibles como
+prototipos navegables. No envían, inventan ni muestran registros ficticios como
+si fueran reales. Sus controles de escritura permanecen deshabilitados o informan
+que la operación no fue enviada hasta que Backend entregue rutas versionadas,
+cuerpos de datos, códigos de error y permisos definitivos.
 
-- Diseño de la interfaz principal del Dashboard.
-- Navegación institucional mediante menú lateral.
-- Visualización del logo y elementos de identidad visual de SIGESDOC.
-- Indicadores generales del sistema.
-- Gráfico de Ingreso y Radicación Mensual de Documentos.
-- Gráfico de Estado de Trámite.
-- Sección de Actividad Reciente en el Sistema.
-- Sección de Alertas TRD.
-- Búsqueda y filtrado de registros.
-- Paginación de la actividad reciente.
-- Exportación de registros en formato CSV.
-- Visualización automática de la fecha y hora.
-- Visualización del nombre del usuario autenticado.
-- Visualización del rol y unidad institucional del usuario.
-- Menú de perfil del usuario.
-- Función de cierre de sesión.
-- Diseño adaptable para diferentes tamaños de pantalla.
-- Manejo visual de errores cuando no es posible obtener los datos del Dashboard.
+Permisos temporales usados en la demostración:
 
-### Integración con el sistema
+- `expedientes:consultar` y `expedientes:buscar`;
+- `expedientes:registrar` y `expedientes:revisar`;
+- `observaciones:registrar`;
+- `trazabilidad:consultar`;
+- `reportes:consultar`.
 
-El Dashboard está preparado para recibir información desde los servicios del sistema mediante:
-
-`GET /api/dashboard`
-
-Este servicio proporciona la información utilizada por los indicadores, gráficos, actividad reciente y alertas.
-
-La información del usuario autenticado se obtiene mediante:
-
-`GET /api/auth/me`
-
-A partir de esta información se muestran en el Dashboard el nombre, rol, unidad institucional e iniciales del usuario.
-
-### Manejo de errores
-
-Se incorporó un mecanismo de manejo de errores para evitar que el Dashboard muestre información incorrecta cuando el servicio de datos no está disponible.
-
-Cuando ocurre un problema durante la actualización de los datos, el sistema muestra un mensaje indicando:
-
-> No fue posible actualizar los datos. Intente nuevamente.
-
-Cuando no existen registros disponibles, el Dashboard presenta estados vacíos en lugar de información ficticia.
-
-### Datos del Dashboard
-
-Los indicadores, gráficos, actividad reciente y alertas están preparados para utilizar información real proveniente de la base de datos.
-
-Durante la etapa de desarrollo e integración, estos valores pueden mantenerse en cero hasta que los servicios y la base de datos correspondientes proporcionen la información real.
-
-### Archivos principales
-
-Los principales archivos relacionados con el módulo son:
-
-- `public/dashboard.html` — estructura de la interfaz.
-- `public/dashboard.css` — estilos y diseño visual.
-- `public/dashboard.js` — lógica e interacción del Dashboard.
-- `docs/dashboard-contract.md` — estructura de los datos utilizados por el Dashboard.
-
-### Alcance del módulo
-
-El alcance de este módulo se centra en la presentación, visualización e interacción con la información proporcionada por el sistema.
-
-La creación, almacenamiento y modificación de documentos, expedientes, usuarios y demás información documental corresponde a los servicios y módulos encargados de la gestión documental y la base de datos.
+Estos códigos permiten probar la experiencia de usuario, pero Backend debe
+confirmar el catálogo institucional y autorizar cada operación en el servidor.

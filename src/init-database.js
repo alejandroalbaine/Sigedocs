@@ -38,7 +38,7 @@ try {
         user.fullName,
         user.role,
         user.isActive,
-        JSON.stringify(user.profile)
+        JSON.stringify({ ...user.profile, permissions: user.permissions })
       ]
     );
   }

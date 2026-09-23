@@ -7,7 +7,8 @@
     <title>Historial y trazabilidad | SIGESDOC</title>
     <link rel="icon" type="image/png" href="./LogoSIGESDOC.png" />
     <link rel="stylesheet" href="./historial.css" />
-    <script src="./historial.js" defer></script>
+    <script src="/runtime-config.js"></script>
+    <script src="/historial.js" type="module"></script>
   </head>
   <body>
     <div class="shell" id="shell">
@@ -21,6 +22,7 @@
           </div>
         </div>
         <nav class="menu" aria-label="Menú principal">
+          <a class="menu-item" href="/dashboard.html">Panel principal</a>
           <button class="menu-item active" type="button" aria-current="page">Historial y trazabilidad</button>
         </nav>
       </aside>
@@ -47,6 +49,7 @@
                 Cronología auditable de las acciones sobre los expedientes curriculares: usuario, fecha, acción,
                 versión, estado anterior → estado nuevo, observación y evidencia.
               </p>
+              <p id="module-notice" class="module-notice" role="status" hidden></p>
             </div>
 
             <!-- Filtros -->

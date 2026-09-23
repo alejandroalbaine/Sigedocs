@@ -14,6 +14,10 @@ const content = `# Configuración privada local de SIGESDOC.
 PORT=3000
 NODE_ENV=development
 
+# Origen de la API, sin rutas. Vacío conserva la aplicación conjunta.
+API_BASE_URL=
+COOKIE_SAME_SITE=strict
+
 JWT_SECRET=${jwtSecret}
 
 # Complete esta dirección cuando backend entregue la conexión PostgreSQL.

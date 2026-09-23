@@ -11,6 +11,8 @@ test('PostgreSQL responde y contiene el usuario inicial', { skip: !config.databa
   const user = await findUserByEmail('archivista.central@uapa.edu.do');
   assert.ok(user);
   assert.equal(user.role, 'Archivista / Gestor');
+  assert.ok(user.permissions.includes('expedientes.consultar'));
+  assert.ok(user.permissions.includes('auditoria.consultar'));
   assert.equal(await bcrypt.compare(config.seedUserPassword, user.passwordHash), true);
 
   const tables = await pool.query(

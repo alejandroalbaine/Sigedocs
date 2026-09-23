@@ -1,3 +1,4 @@
+/* Pantalla pública de revisión de expedientes. */
 * {
     box-sizing: border-box;
 }
@@ -259,4 +260,22 @@ th {
     .acciones {
         flex-direction: column;
     }
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.module-notice {
+    padding: 12px 14px;
+    border-left: 4px solid #315993;
+    border-radius: 6px;
+    background: #eef4ff;
+    color: #263f70;
+}
+
+.module-notice[data-kind="error"] {
+    border-left-color: #b91c1c;
+    background: #fef2f2;
+    color: #991b1b;
 }

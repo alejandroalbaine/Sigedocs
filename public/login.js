@@ -1,3 +1,5 @@
+import { api, ApiError } from './api.js';
+
 const form = document.querySelector('#login-form');
 const emailInput = document.querySelector('#email');
 const passwordInput = document.querySelector('#password');
@@ -23,6 +25,10 @@ function clearAlert() {
   alertBox.textContent = '';
 }
 
+function clearFieldErrors() {
+  for (const input of [emailInput, passwordInput]) input.removeAttribute('aria-invalid');
+}
+
 function setLoading(isLoading) {
   submitButton.disabled = isLoading;
   submitButton.classList.toggle('loading', isLoading);
@@ -31,11 +37,10 @@ function setLoading(isLoading) {
 
 async function inspectServerMode() {
   try {
-    const response = await fetch('/api/health');
-    const body = await response.json();
-    if (body.data?.mode === 'postgresql') {
-      modeBadge.textContent = body.data.connected ? 'PostgreSQL conectado' : 'PostgreSQL sin conexión';
-      modeBadge.dataset.mode = body.data.connected ? 'database' : 'error';
+    const estado = await api.request('health');
+    if (estado.mode === 'postgresql') {
+      modeBadge.textContent = estado.connected ? 'PostgreSQL conectado' : 'PostgreSQL sin conexión';
+      modeBadge.dataset.mode = estado.connected ? 'database' : 'error';
       demoSection.querySelector('.role-grid').hidden = true;
       emailInput.value = '';
       passwordInput.value = '';
@@ -43,10 +48,10 @@ async function inspectServerMode() {
       modeBadge.textContent = 'Datos locales';
       modeBadge.dataset.mode = 'demo';
     }
-  } catch {
+  } catch (error) {
     modeBadge.textContent = 'Servidor sin conexión';
     modeBadge.dataset.mode = 'error';
-    showAlert('No se pudo conectar con el servidor de SIGESDOC.');
+    showAlert(error instanceof ApiError ? error.message : 'No se pudo consultar el estado del servidor.');
   }
 }
 
@@ -75,6 +80,7 @@ togglePassword.addEventListener('click', () => {
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearAlert();
+  clearFieldErrors();
 
   if (!form.checkValidity()) {
     form.reportValidity();
@@ -84,24 +90,27 @@ form.addEventListener('submit', async (event) => {
 
   setLoading(true);
   try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: emailInput.value,
-        password: passwordInput.value,
-        remember: rememberInput.checked
-      })
+    // POST /api/v1/sessions → data = { sessionState, expiresAt, user: {...} } (ADR-005).
+    const { user } = await api.request('login', {
+      email: emailInput.value,
+      password: passwordInput.value,
+      remember: rememberInput.checked
     });
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.message || 'No se pudo iniciar sesión.');
 
-    showAlert(`Bienvenido/a, ${body.user.name}. Abriendo su panel…`, 'success');
+    showAlert(`Bienvenido/a, ${user.name}. Abriendo su panel…`, 'success');
     window.setTimeout(() => window.location.assign('/dashboard.html'), 500);
   } catch (error) {
-    showAlert(error.message);
-    passwordInput.focus();
-    passwordInput.select();
+    showAlert(error instanceof ApiError ? error.message : 'No se pudo iniciar sesión. Inténtelo de nuevo.');
+    const firstInvalidField = error instanceof ApiError
+      ? error.fieldErrors.map(({ field }) => form.elements.namedItem(field)).find(Boolean)
+      : null;
+    if (firstInvalidField) {
+      for (const { field } of error.fieldErrors) form.elements.namedItem(field)?.setAttribute('aria-invalid', 'true');
+      firstInvalidField.focus();
+    } else {
+      passwordInput.focus();
+      passwordInput.select();
+    }
   } finally {
     setLoading(false);
   }

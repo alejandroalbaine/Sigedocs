@@ -13,7 +13,15 @@ export const demoUsers = [
     fullName: 'Lic. Mercedes Peña',
     role: 'Archivista / Gestor',
     isActive: true,
-    profile: { unit: 'Archivo Central', initials: 'MP' }
+    profile: { unit: 'Archivo Central', initials: 'MP' },
+    permissions: [
+      'expedientes.consultar',
+      'expedientes.consultar',
+      'expedientes.crear',
+      'expedientes.editar',
+      'auditoria.consultar',
+      'auditoria.consultar'
+    ]
   },
   {
     id: '10000000-0000-4000-8000-000000000002',
@@ -22,7 +30,8 @@ export const demoUsers = [
     fullName: 'Rafael Gómez',
     role: 'Administrativo',
     isActive: true,
-    profile: { unit: 'Registro Académico', initials: 'RG' }
+    profile: { unit: 'Registro Académico', initials: 'RG' },
+    permissions: ['expedientes.consultar', 'expedientes.consultar', 'expedientes.editar']
   },
   {
     id: '10000000-0000-4000-8000-000000000003',
@@ -31,7 +40,8 @@ export const demoUsers = [
     fullName: 'Dra. Carmen Rosario',
     role: 'Auditor Jurídico',
     isActive: true,
-    profile: { unit: 'Consultoría Jurídica', initials: 'CR' }
+    profile: { unit: 'Consultoría Jurídica', initials: 'CR' },
+    permissions: ['expedientes.consultar', 'expedientes.aprobar', 'auditoria.consultar', 'auditoria.consultar']
   },
   {
     id: '10000000-0000-4000-8000-000000000004',
@@ -40,7 +50,26 @@ export const demoUsers = [
     fullName: 'Jonathan Tejada',
     role: 'Administrador',
     isActive: true,
-    profile: { unit: 'Tecnología de la Información', initials: 'JT' }
+    profile: { unit: 'Tecnología de la Información', initials: 'JT' },
+    permissions: [
+      'expedientes.consultar',
+      'expedientes.consultar',
+      'expedientes.crear',
+      'expedientes.aprobar',
+      'expedientes.editar',
+      'auditoria.consultar',
+      'auditoria.consultar'
+    ]
+  },
+  {
+    id: '10000000-0000-4000-8000-000000000005',
+    email: 'sin.permisos@uapa.edu.do',
+    passwordHash: demoHash,
+    fullName: 'Usuario de Prueba',
+    role: 'Administrativo',
+    isActive: true,
+    profile: { unit: 'Sin unidad asignada', initials: 'UP' },
+    permissions: []
   }
 ];
 

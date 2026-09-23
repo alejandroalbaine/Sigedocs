@@ -6,6 +6,7 @@
   <title>SIGESDOC | Panel Principal</title>
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/dashboard.css">
+  <script src="/runtime-config.js"></script>
 </head>
 <body class="dashboard-page">
   <div class="app">
@@ -23,12 +24,13 @@
       <nav class="nav">
         <div class="nav-label">NAVEGACIÓN INSTITUCIONAL</div>
         <a class="nav-item active" href="/dashboard.html" aria-current="page"><span>⌂</span><span>Panel Principal</span></a>
-        <button class="nav-item nav-pending" type="button" data-feature="Gestión Documental"><span>▣</span><span>Gestión Documental</span></button>
-        <button class="nav-item nav-pending" type="button" data-feature="Registrar Documento"><span>＋</span><span>Registrar Documento</span></button>
-        <button class="nav-item nav-pending" type="button" data-feature="Búsqueda Avanzada"><span>⌕</span><span>Búsqueda Avanzada</span></button>
-        <button class="nav-item nav-pending" type="button" data-feature="Detalle y Revisión"><span>▤</span><span>Detalle &amp; Revisión</span></button>
-        <button class="nav-item nav-pending" type="button" data-feature="Reportes y Estadísticas"><span>▥</span><span>Reportes &amp; Estadísticas</span></button>
-        <button class="nav-item nav-pending" type="button" data-feature="Biblioteca UI Kit"><span>▦</span><span>Biblioteca UI Kit</span></button>
+        <button class="nav-item nav-pending" type="button" data-feature="Gestión Documental" data-permission="expedientes.consultar"><span>▣</span><span>Gestión Documental</span></button>
+        <button class="nav-item nav-pending" type="button" data-feature="Registrar Documento" data-permission="expedientes.crear"><span>＋</span><span>Registrar Documento</span></button>
+        <button class="nav-item nav-pending" type="button" data-feature="Búsqueda Avanzada" data-permission="expedientes.consultar"><span>⌕</span><span>Búsqueda Avanzada</span></button>
+        <a class="nav-item" href="/revision.html" data-permission="expedientes.aprobar"><span>▤</span><span>Detalle &amp; Revisión</span></a>
+        <a class="nav-item" href="/observaciones.html" data-permission="expedientes.editar"><span>✎</span><span>Observaciones</span></a>
+        <a class="nav-item" href="/historial.html" data-permission="auditoria.consultar"><span>◷</span><span>Historial &amp; Trazabilidad</span></a>
+        <button class="nav-item nav-pending" type="button" data-feature="Reportes y Estadísticas" data-permission="auditoria.consultar"><span>▥</span><span>Reportes &amp; Estadísticas</span></button>
       </nav>
 
       <div class="sidebar-bottom">
@@ -97,6 +99,7 @@
           <div>
             <div class="crumb-mini">INICIO <span>/</span> PANEL PRINCIPAL</div>
             <h1>Bienvenido/a, <strong><span id="welcome-name">usuario</span></strong></h1>
+            <p id="dashboard-alert" role="alert" hidden></p>
             <div class="meta-row">
               <span>◉ <span id="user-unit-main">Gestión Documental Curricular — UAPA</span></span>
               <span>▣ <span id="current-date">Cargando fecha...</span></span><span>◷ <span id="current-time">Cargando hora...</span></span>
@@ -104,12 +107,15 @@
           </div>
 
           <div class="head-actions">
-            <button class="secondary-btn" id="exportBtn">⇩ Exportar Reporte</button>
-            <button class="primary-btn" id="registerBtn">＋ Registrar Documento</button>
+            <span id="data-mode" class="mode-badge">Verificando datos…</span>
+            <button class="secondary-btn" id="exportBtn" data-permission="auditoria.consultar">⇩ Exportar Reporte</button>
+            <button class="primary-btn" id="registerBtn" data-permission="expedientes.crear">＋ Registrar Documento</button>
           </div>
         </div>
 
         <div class="cards" id="cards"></div>
+
+        <section id="no-permissions" class="permission-empty" hidden><h2>No tiene módulos asignados</h2><p>Su sesión está activa, pero no tiene permisos asignados.</p></section>
 
         <div class="dashboard-grid">
           <section class="panel monthly-panel">
@@ -207,7 +213,6 @@
     <div id="profileDialogContent"></div>
   </dialog>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="/dashboard.js"></script>
+  <script src="/dashboard.js" type="module"></script>
 </body>
 </html>

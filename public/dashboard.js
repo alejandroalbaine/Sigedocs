@@ -1,11 +1,21 @@
+import { api, ApiError } from "./api.js";
+import { applyPermissions } from "./permissions.js";
+import { drawBarChart, drawDoughnutChart } from "./charts.js";
+import { closeCurrentSession, loadCurrentUser } from "./session.js";
+
 const $ = (selector) => document.querySelector(selector);
 const PAGE_SIZE = 6;
 let dashboard = null;
-let monthlyChart = null;
-let statusChart = null;
 let currentPage = 1;
 let tableQuery = "";
 let currentUser = null;
+const dashboardAlert = document.querySelector("#dashboard-alert");
+
+function showError(error) {
+  if (!dashboardAlert) return;
+  dashboardAlert.textContent = error instanceof ApiError ? error.message : "No se pudo completar la operación.";
+  dashboardAlert.hidden = false;
+}
 
 function showToast(message) {
   const toast = $("#toast");
@@ -50,21 +60,20 @@ function openProfileDialog(title, content) {
 }
 
 function profileDataRows(includeJoined = false) {
-  const profile = currentUser?.profile || {};
-  const role = currentUser?.role || "Usuario institucional";
-  const unit = profile.unit || "No disponible";
+  const role = (currentUser?.roles || []).join(", ") || "Usuario institucional";
+  const unit = currentUser?.unit || "No disponible";
   const rows = [
     ["Nombre", currentUser?.name || "Usuario"],
     ["Correo institucional", currentUser?.email || "No disponible"],
     ["Rol", role],
     ["Unidad", unit]
   ];
-  if (includeJoined) rows.push(["Fecha de ingreso", profile.joinedAt || "No disponible"]);
+  if (includeJoined) rows.push(["Fecha de ingreso", "No disponible"]);
   return `<dl class="profile-data">${rows.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`).join("")}</dl>`;
 }
 
 function openPhotoPreview(imageUrl) {
-  const initials = (currentUser?.profile?.initials) || getInitials(currentUser?.name);
+  const initials = getInitials(currentUser?.name);
   const preview = imageUrl
     ? `<img class="profile-photo-preview" src="${escapeHtml(imageUrl)}" alt="Vista previa de la foto de perfil">`
     : `<div class="profile-photo-fallback">${escapeHtml(initials)}</div>`;
@@ -110,7 +119,7 @@ function handleProfileAction(action) {
   };
   if (action === "profile") return openProfileDialog("Mi perfil", `${profileDataRows()}<p class="profile-note">Los datos institucionales son administrados por la institución y no pueden modificarse desde este menú.</p>`);
   if (action === "institutional") return openProfileDialog("Datos institucionales", `${profileDataRows(true)}<p class="profile-note">Rol, unidad y correo institucional son de solo lectura.</p>`);
-  if (action === "photo") return openPhotoPreview(currentUser?.profile?.photoUrl || currentUser?.profile?.avatarUrl);
+  if (action === "photo") return openPhotoPreview(null);
   if (action === "password") return openSecurityDialog();
   const [title, message] = messages[action];
   openProfileDialog(title, `<p>${escapeHtml(message)}</p><p class="profile-note">Interfaz preparada; pendiente de integración con su módulo correspondiente.</p>`);
@@ -125,26 +134,25 @@ function updateDateTime() {
 }
 
 async function loadLoggedUser() {
-  const response = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
-  if (response.status === 401) return window.location.replace("/");
-  if (!response.ok) throw new Error("No se pudo cargar la sesión.");
-  const { user = {} } = await response.json();
-  const profile = user.profile || {};
+  const { user } = await loadCurrentUser();
+  if (!user) return false;
   const name = user.name || "Usuario";
-  const role = user.role || "Usuario institucional";
-  const unit = profile.unit || role;
+  const role = (user.roles || []).join(", ") || "Usuario institucional";
+  const unit = user.unit || role;
   currentUser = user;
-  const initials = profile.initials || getInitials(name);
-  const photoUrl = profile.photoUrl || profile.avatarUrl;
+  const initials = getInitials(name);
   $("#header-user-name").textContent = name;
   $("#header-user-unit").textContent = `${role} · ${unit}`;
   $("#welcome-name").textContent = name;
-  setAvatar($("#user-avatar"), photoUrl, initials);
-  setAvatar($("#profile-menu-avatar"), photoUrl, initials);
+  setAvatar($("#user-avatar"), null, initials);
+  setAvatar($("#profile-menu-avatar"), null, initials);
   $("#profile-menu-name").textContent = name;
   $("#profile-menu-role").textContent = `${role} · ${unit}`;
   $("#profile-menu-email").textContent = user.email || "Correo institucional no disponible";
   $("#user-unit-main").textContent = `${role} — ${unit}`;
+  const visibleOptions = applyPermissions(document.querySelectorAll("[data-permission]"), user.permissions);
+  $("#no-permissions").hidden = visibleOptions > 0;
+  return true;
 }
 
 function normalizeRow(row) {
@@ -210,62 +218,45 @@ function renderStatus(status = {}) {
 }
 
 function createCharts(data) {
-  if (typeof Chart === "undefined") return showToast("No se pudo cargar el componente de gráficos.");
   const monthly = data.monthly || {};
   const status = data.status || {};
-  if (monthlyChart) monthlyChart.destroy();
-  if (statusChart) statusChart.destroy();
-  monthlyChart = new Chart($("#monthlyChart"), {
-    type: "bar",
-    data: { labels: monthly.labels || [], datasets: [
-      { label: "Planes de Estudio", data: monthly.received || [], backgroundColor: "#173b6c", borderRadius: 2, barPercentage: 0.72 },
-      { label: "Reglamentos y Actas", data: monthly.registered || [], backgroundColor: "#f28c28", borderRadius: 2, barPercentage: 0.72 }
-    ] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } }
-  });
-  statusChart = new Chart($("#statusChart"), {
-    type: "doughnut",
-    data: { labels: status.labels || [], datasets: [{ data: status.values || [], backgroundColor: ["#263f70", "#ed8a2b", "#d9a02d", "#cf564c"], borderWidth: 3, borderColor: "#fff" }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: "72%", plugins: { legend: { display: false } } }
-  });
+  drawBarChart($("#monthlyChart"), monthly);
+  drawDoughnutChart($("#statusChart"), status);
   $("#monthly-period").textContent = monthly.period || "Histórico comparativo por tipología";
   $("#monthly-rate").textContent = monthly.rate ? `Tasa de radicación mensual: ${monthly.rate}` : "Tasa de radicación mensual: sin datos disponibles";
 }
 
 function renderDashboardEmptyState() {
-  renderCards([]);
+  dashboard = {
+    cards: [
+      { label: "EXPEDIENTES", title: "Documentos recibidos", icon: "▣", value: 0, detail: "Sin datos del backend", tone: "blue" },
+      { label: "TRÁMITES", title: "En proceso de revisión", icon: "◷", value: 0, detail: "Sin datos del backend", tone: "orange" },
+      { label: "ALERTAS", title: "Vencimientos TRD", icon: "!", value: 0, detail: "Sin datos del backend", tone: "indigo" },
+      { label: "ACTIVIDAD", title: "Acciones registradas", icon: "◇", value: 0, detail: "Sin datos del backend", tone: "navy" }
+    ],
+    activity: [],
+    alerts: [],
+    status: {},
+    monthly: {}
+  };
+  renderCards(dashboard.cards);
   renderActivity();
   renderAlerts([]);
   renderStatus({});
-  createCharts({ monthly: {}, status: {} });
+  createCharts(dashboard);
 }
 
 async function loadDashboard({ announce = false } = {}) {
+  renderDashboardEmptyState();
   try {
-    const response = await fetch("/api/dashboard", { credentials: "same-origin", cache: "no-store" });
-    if (response.status === 401) return window.location.replace("/");
-    if (!response.ok) throw new Error("No se pudieron cargar los datos del dashboard.");
-
-    const data = await response.json();
-    dashboard = data && typeof data === "object" ? data : {};
-
-    renderCards(dashboard.cards || []);
-    renderActivity();
-    renderAlerts(dashboard.alerts || []);
-    renderStatus(dashboard.status || {});
-    createCharts(dashboard);
-    if (announce) showToast("Dashboard actualizado.");
+    const status = await api.request("health");
+    $("#data-mode").textContent = status.mode === "postgresql" ? "PostgreSQL conectado" : "Demostración local";
+    if (announce) showToast("Estado del servicio actualizado.");
   } catch (error) {
     console.error("Error al actualizar el Dashboard:", error);
-
-    // Si ya existen datos cargados, se mantienen en pantalla para no perder información.
-    // Si es la primera carga, se muestran estados vacíos en lugar de datos incorrectos.
-    if (!dashboard) {
-      dashboard = { cards: [], activity: [], alerts: [], status: {}, monthly: {} };
-      renderDashboardEmptyState();
-    }
-
-    showToast("No fue posible actualizar los datos. Intente nuevamente.");
+    $("#data-mode").textContent = "Servicio no disponible";
+    $("#data-mode").dataset.mode = "error";
+    showError(error);
     throw error;
   }
 }
@@ -299,9 +290,7 @@ function setupInteractions() {
     if (!file) return;
     const reader = new FileReader();
     reader.addEventListener("load", () => {
-      const initials = (currentUser?.profile?.initials) || getInitials(currentUser?.name);
-      currentUser.profile = currentUser.profile || {};
-      currentUser.profile.photoUrl = reader.result;
+      const initials = getInitials(currentUser?.name);
       setAvatar($("#user-avatar"), reader.result, initials);
       setAvatar($("#profile-menu-avatar"), reader.result, initials);
       openPhotoPreview(reader.result);
@@ -331,8 +320,16 @@ function setupInteractions() {
   $("#registerBtn").addEventListener("click", () => showToast("Registrar Documento será habilitado por el módulo correspondiente."));
   document.querySelectorAll(".nav-pending").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.feature} será habilitado por su módulo correspondiente.`)));
   $("#logoutButton").addEventListener("click", async () => {
-    try { await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }); }
-    finally { window.location.replace("/"); }
+    $("#logoutButton").disabled = true;
+    try {
+      await closeCurrentSession();
+    } catch (error) {
+      showError(error);
+      $("#logoutButton").disabled = false;
+    }
+  });
+  window.addEventListener("resize", () => {
+    if (dashboard) createCharts(dashboard);
   });
 }
 
@@ -340,7 +337,10 @@ async function init() {
   updateDateTime();
   window.setInterval(updateDateTime, 1000);
   setupInteractions();
-  try { await loadLoggedUser(); await loadDashboard(); }
+  try {
+    if (!await loadLoggedUser()) return;
+    await loadDashboard();
+  }
   catch (error) { console.error(error); showToast(error.message); }
 }
 

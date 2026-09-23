@@ -1,3 +1,5 @@
+import { loadCurrentUser } from './session.js';
+
 /**
  * Historial y trazabilidad | SIGESDOC
  * ------------------------------------------------------------------
@@ -65,31 +67,6 @@
   };
 
   // ------------------------------------------------------------------
-  // Configuración
-  // ------------------------------------------------------------------
-  // Misma convención que el login del equipo: el host reenvía /api al backend.
-  var API_BASE = '/api';
-
-  // Un solo registro de ejemplo mientras el backend no responde.
-  var EJEMPLO = [
-    {
-      id: 1,
-      expedienteCodigo: 'SIG-PA-2026-000',
-      expedienteTitulo: 'Programa de la asignatura (ejemplo)',
-      usuarioNombre: 'Dianni Paredes',
-      usuarioCorreo: 'd.paredes@sigesdoc.local',
-      usuarioRol: 'elaborador',
-      accion: 'recibir_programa',
-      version: 'v1.0',
-      estadoAnterior: null,
-      estadoNuevo: 'recepcionado',
-      observacion: null,
-      evidencia: 'programa_SIG-PA-2026-000_v1.0.docx',
-      fecha: '2026-09-15T10:20:00.000Z'
-    }
-  ];
-
-  // ------------------------------------------------------------------
   // Estado de la UI
   // ------------------------------------------------------------------
   var state = {
@@ -143,71 +120,14 @@
     return div.innerHTML;
   }
 
-  function usuarioActivo() {
-    try {
-      var raw = localStorage.getItem('sigesdoc.user');
-      if (raw) {
-        var u = JSON.parse(raw);
-        if (u && u.name) return u.name;
-      }
-      var nombre = localStorage.getItem('sigesdoc.userName');
-      if (nombre) return nombre;
-    } catch (e) { /* sin sesión */ }
-    return 'Dianni Paredes';
-  }
-
-  // ------------------------------------------------------------------
-  // Consulta a la API
-  // ------------------------------------------------------------------
-  function aConsulta() {
-    var f = state.filtros;
-    var params = new URLSearchParams();
-    if (f.expediente.trim()) params.set('expediente', f.expediente.trim());
-    if (f.usuario.trim()) params.set('usuario', f.usuario.trim());
-    if (f.accion !== 'all') params.set('accion', f.accion);
-    if (f.estado !== 'all') params.set('estado', f.estado);
-    if (f.desde) params.set('desde', f.desde);
-    if (f.hasta) params.set('hasta', f.hasta);
-    if (f.texto.trim()) params.set('texto', f.texto.trim());
-    params.set('page', state.page);
-    params.set('pageSize', state.pageSize);
-    params.set('sortBy', state.sort.field);
-    params.set('sortDir', state.sort.dir);
-    return params.toString();
-  }
-
-  function normalizarRespuesta(body) {
-    var payload = body && body.data ? body.data : body || {};
-    return {
-      items: Array.isArray(payload.items) ? payload.items : [],
-      total: typeof payload.total === 'number' ? payload.total : 0
-    };
-  }
-
   function cargarPagina(paginaNueva) {
     if (typeof paginaNueva === 'number') state.page = paginaNueva;
-    state.loading = true;
+    state.loading = false;
+    state.items = [];
+    state.total = 0;
+    $('module-notice').hidden = false;
+    $('module-notice').textContent = 'La interfaz está integrada con la sesión, pero Backend todavía no ha publicado el contrato versionado de trazabilidad.';
     pintar();
-
-    fetch(API_BASE + '/trazabilidad?' + aConsulta(), { headers: { Accept: 'application/json' } })
-      .then(function (resp) {
-        if (!resp.ok) throw new Error('Estado ' + resp.status);
-        return resp.json();
-      })
-      .then(function (body) {
-        var resultado = normalizarRespuesta(body);
-        state.items = resultado.items;
-        state.total = resultado.total;
-      })
-      .catch(function () {
-        // Backend indisponible: se muestra el único registro de ejemplo.
-        state.items = EJEMPLO;
-        state.total = 1;
-      })
-      .finally(function () {
-        state.loading = false;
-        pintar();
-      });
   }
 
   // ------------------------------------------------------------------
@@ -398,6 +318,26 @@
   // ------------------------------------------------------------------
   // Inicio
   // ------------------------------------------------------------------
-  $('user-badge').textContent = usuarioActivo();
-  cargarPagina(1);
+  async function iniciar() {
+    try {
+      var session = await loadCurrentUser({ requiredPermission: 'auditoria.consultar' });
+      if (!session.user) return;
+      $('user-badge').textContent = session.user.name;
+      if (!session.authorized) {
+        $('module-notice').hidden = false;
+        $('module-notice').textContent = 'No tiene permiso para consultar la trazabilidad.';
+        $('filtros').hidden = true;
+        state.items = [];
+        state.total = 0;
+        pintar();
+        return;
+      }
+      cargarPagina(1);
+    } catch (error) {
+      $('module-notice').hidden = false;
+      $('module-notice').textContent = error.message || 'No se pudo verificar la sesión.';
+    }
+  }
+
+  iniciar();
 })();

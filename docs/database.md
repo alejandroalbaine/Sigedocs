@@ -24,11 +24,14 @@ Ejemplo de `profile`:
 ```json
 {
   "unit": "Archivo Central",
-  "initials": "MP"
+  "initials": "MP",
+  "permissions": ["expedientes:consultar", "trazabilidad:consultar"]
 }
 ```
 
-`JSONB` no sustituye relaciones. Solo contiene atributos de perfil variables que no requieren integridad referencial propia.
+`JSONB` no sustituye relaciones. En esta fase temporal contiene atributos de
+perfil y permisos efectivos. Cuando Backend entregue su modelo definitivo, los
+permisos deberán proceder de sus relaciones de autorización y no inferirse del rol.
 
 ## Tabla auth_events
 

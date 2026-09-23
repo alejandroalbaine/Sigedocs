@@ -419,3 +419,13 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
   .search-row { flex-direction: column; }
   .pagination { flex-direction: column; align-items: stretch; }
 }
+
+.module-notice {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-left: 4px solid #315993;
+  border-radius: 6px;
+  background: #eef4ff;
+  color: #263f70;
+  font-size: 13px;
+}

@@ -6,7 +6,8 @@
     <meta name="description" content="Acceso institucional al Sistema de Gestión Documental Curricular SIGESDOC" />
     <title>Acceso institucional | SIGESDOC</title>
     <link rel="stylesheet" href="/styles.css" />
-    <script src="/login.js" defer></script>
+    <script src="/runtime-config.js"></script>
+    <script src="/login.js" type="module"></script>
   </head>
   <body class="login-page">
     <a class="skip-link" href="#login-form">Saltar al formulario de acceso</a>
@@ -79,6 +80,7 @@
                 <button class="role-option" type="button" data-email="administrativo@uapa.edu.do" aria-pressed="false">Administrativo</button>
                 <button class="role-option" type="button" data-email="auditor.juridico@uapa.edu.do" aria-pressed="false">Auditor Jurídico</button>
                 <button class="role-option" type="button" data-email="administrador@uapa.edu.do" aria-pressed="false">Administrador</button>
+                <button class="role-option" type="button" data-email="sin.permisos@uapa.edu.do" aria-pressed="false">Sin módulos asignados</button>
               </div>
             </section>
 
