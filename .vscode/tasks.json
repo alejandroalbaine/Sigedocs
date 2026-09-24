@@ -2,21 +2,24 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "SIGESDOC: generar variables privadas",
+      "label": "SIGESDOC: servidor de desarrollo",
       "type": "npm",
-      "script": "env:setup",
-      "problemMatcher": []
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activatesOnStart": true,
+          "beginsPattern": "VITE",
+          "endsPattern": "Local:"
+        }
+      }
     },
     {
-      "label": "SIGESDOC: inicializar PostgreSQL",
+      "label": "SIGESDOC: pruebas",
       "type": "npm",
-      "script": "db:init",
-      "problemMatcher": []
-    },
-    {
-      "label": "SIGESDOC: ejecutar pruebas",
-      "type": "npm",
-      "script": "verify",
+      "script": "test",
       "problemMatcher": []
     }
   ]

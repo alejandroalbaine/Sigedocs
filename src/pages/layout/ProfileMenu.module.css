@@ -1,0 +1,86 @@
+.profile {
+  position: relative;
+  margin-left: auto;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.trigger:hover,
+.trigger[aria-expanded='true'] {
+  background: var(--surface-hover);
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  color: var(--white);
+  background: var(--navy);
+  font-weight: 800;
+}
+
+.who strong,
+.who small {
+  display: block;
+}
+
+.who strong {
+  font-size: var(--text-md);
+}
+
+.who small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 50;
+  width: min(320px, calc(100vw - 32px));
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.data {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.data dt {
+  color: var(--muted);
+}
+
+.data dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (width <= 720px) {
+  .who {
+    display: none;
+  }
+}

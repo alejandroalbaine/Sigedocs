@@ -1,0 +1,9 @@
+/* Separación vertical común de las pantallas internas: el gap reemplaza los márgenes propios. */
+.stack {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.stack > * {
+  margin-block: 0;
+}

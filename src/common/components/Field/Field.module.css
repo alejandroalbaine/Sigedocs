@@ -1,0 +1,43 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.control {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px var(--space-3);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background: var(--surface-raised);
+}
+
+textarea.control {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.control:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.control:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.help {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}

@@ -1,0 +1,32 @@
+.alert {
+  margin-bottom: 18px;
+  padding: var(--space-3) 14px;
+  border-left: 4px solid;
+  border-radius: 7px;
+  font-size: var(--text-md);
+  line-height: 1.4;
+}
+
+.error {
+  border-left-color: var(--danger);
+  color: var(--danger-strong);
+  background: var(--danger-soft);
+}
+
+.success {
+  border-left-color: var(--success);
+  color: var(--success-strong);
+  background: var(--success-soft);
+}
+
+.info {
+  border-left-color: var(--info);
+  color: var(--info-strong);
+  background: var(--info-soft);
+}
+
+.warning {
+  border-left-color: var(--orange);
+  color: var(--warning-strong);
+  background: var(--warning-soft);
+}

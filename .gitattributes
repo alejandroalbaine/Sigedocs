@@ -1,0 +1,6 @@
+# Fin de linea LF en el repositorio y en las copias locales, igual que .editorconfig y Prettier.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.pdf binary

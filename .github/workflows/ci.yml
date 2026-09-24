@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Un push nuevo a un PR cancela la ejecucion anterior de ese PR.
+# En main no se cancela: cada merge queda validado.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validar:
+    name: Lint, pruebas y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      VITE_API_BASE_URL: http://localhost:3000
+
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js 22 con cache de npm
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Lint de estilos
+        run: npm run lint:css
+
+      - name: Formato
+        run: npm run format:check
+
+      - name: Tipos
+        run: npm run typecheck
+
+      - name: Pruebas
+        run: npm test
+
+      - name: Compilacion
+        run: npm run build

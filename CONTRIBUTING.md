@@ -1,82 +1,82 @@
-# Cómo colaborar en SIGESDOC
+# Cómo colaborar en SIGESDOC Frontend
 
-## Regla principal
+## Flujo de trabajo
 
-`main` representa la versión estable. Ningún integrante debe desarrollar directamente sobre ella.
-
-## Preparación
+`main` es la versión estable: nadie desarrolla directamente sobre ella.
 
 ```bash
-npm install
-npm run env:setup
-npm test
-```
-
-Cuando backend entregue una conexión PostgreSQL, complete `DATABASE_URL` en `.env`, ejecute `npm run db:init` y luego `npm run verify`.
-
-Cada integrante genera su propio `.env`. Las contraseñas, conexiones y tokens nunca se copian al repositorio.
-
-## Flujo por cambio
-
-```bash
-git switch main
-git pull
+git switch main && git pull
 git switch -c feature/nombre-breve
-```
-
-Después de desarrollar y probar:
-
-```bash
-npm run verify
-git add .
+# … cambios …
+npm run lint && npm run lint:css && npm run typecheck && npm test
 git commit -m "feat: descripción concreta"
 git push -u origin feature/nombre-breve
 ```
 
-Cree un Pull Request y solicite revisión antes de incorporar el cambio.
+Abra un Pull Request con la plantilla y pida revisión. No se mergea con el CI en rojo.
 
-## Nombres de ramas
+Ramas: `feature/`, `fix/`, `docs/`, `test/`, `refactor/`. Commits con el mismo prefijo
+(`feat: agregar filtro por fecha`, `fix: mantener la sesión al recargar`).
 
-- `feature/...` para funciones nuevas.
-- `fix/...` para correcciones.
-- `docs/...` para documentación.
-- `test/...` para pruebas.
-- `refactor/...` para reorganizaciones sin cambio funcional.
+## Dónde va cada cosa
 
-## Mensajes de commit
+| Carpeta                   | Contenido                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------ |
+| `src/pages/<Pagina>/`     | Una carpeta por ruta con `<Pagina>Page.tsx`, su `.module.css` (si tiene) y su `.test.tsx`. |
+| `src/features/<dominio>/` | Componentes y reglas de un dominio: `revision`, `trazabilidad`, etc.                       |
+| `src/common/`             | Solo lo que usan dos o más features o páginas.                                             |
 
-- `feat: agregar recuperación de contraseña`
-- `fix: impedir acceso de usuarios inactivos`
-- `docs: documentar variables de PostgreSQL`
-- `test: cubrir expiración de sesión`
+**Regla de movimiento:** un componente nace en la feature que lo necesita. Cuando una segunda
+feature lo necesita, se mueve a `src/common/components/`. No se crean componentes "comunes" por
+adelantado.
+
+Un archivo `.tsx` solo exporta componentes. Constantes, reglas y funciones van en un `.ts` junto
+a él (`reglas.ts`, `consulta.ts`, `catalogos.ts`).
+
+## Idioma
+
+| Qué                                                 | Idioma                                                                       |
+| --------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Propiedades del contrato de la API                  | Exactamente como las define el backend (inglés `camelCase`, ADR-005).        |
+| Vocabulario de dominio (carpetas, tipos, funciones) | Español, igual que los módulos del backend: `trazabilidad`, `validarAccion`. |
+| Vocabulario técnico                                 | Inglés: `components`, `api`, `Button`, `useSession`.                         |
+| Textos visibles para el usuario                     | Español.                                                                     |
+
+## Estilos
+
+- Todos los colores, radios, sombras y tamaños salen de `src/common/styles/tokens.css`.
+  Stylelint rechaza cualquier color escrito fuera de ese archivo.
+- Si hace falta un color nuevo, se agrega a `tokens.css` con un nombre que diga para qué sirve.
+- Cada componente tiene su `*.module.css` al lado; las clases van en `kebab-case` en el CSS y se
+  usan en `camelCase` desde TypeScript.
+- La prop `style` de React solo para valores calculados en tiempo de ejecución (el ancho de una
+  barra de progreso). Todo lo demás va en CSS Modules.
+
+## API y permisos
+
+- Toda llamada pasa por `src/common/api/client.ts`. Una ruta nueva se agrega ahí con su
+  validador en `contract.ts` y sus pruebas, usando la forma exacta que documenta el backend.
+- No se agregan rutas supuestas. Si el backend no publicó un contrato, la pantalla muestra un
+  estado pendiente y no simula que guardó nada.
+- Los errores se eligen por `codigo` (`src/common/api/errors.ts`); nunca se muestra `detail`.
+- Las opciones se protegen con `<Can permission>` o `RequirePermission`, nunca por nombre de
+  rol. Los códigos de permiso están tipados en `src/common/auth/permissions.ts`.
+
+## Pruebas
+
+- Van junto al código (`*.test.ts(x)`).
+- Las respuestas simuladas del backend viven en `src/test/backend.ts` y copian la forma real del
+  backend. Si el backend cambia su contrato, esas fixtures cambian primero.
+- Un cambio en autenticación, rutas o permisos incluye una prueba de regresión.
 
 ## Criterios antes del Pull Request
 
-- El código cumple el alcance solicitado.
+- El código cumple el alcance del ticket.
 - No contiene contraseñas, tokens ni archivos `.env`.
-- Las consultas SQL están parametrizadas.
-- Toda autorización importante se comprueba en el servidor.
-- Las pruebas pasan con `npm run verify`.
-- El README refleja cualquier comando o variable nueva.
-- Los cambios de esquema se explican al equipo de backend y análisis.
+- Lint, estilos, formato, tipos y pruebas pasan.
+- El README o `docs/integracion-api.md` reflejan cualquier variable, ruta o comando nuevo.
 
-## Datos y análisis
+## Datos
 
-Los analistas deben trabajar con datos ficticios o anonimizados en desarrollo. No se deben copiar expedientes reales, datos personales o registros institucionales a computadoras locales sin autorización y controles aprobados.
-
-
-
-
-
-## Integración de módulos de interfaz
-
-- Toda llamada confirmada debe pasar por `public/api.js`; no se escriben rutas en
-  cada pantalla.
-- No se agregan endpoints supuestos. Si Backend no publicó un contrato, la
-  interfaz presenta un estado pendiente y no simula un guardado exitoso.
-- Los datos públicos usan los nombres en español definidos por el contrato.
-- Las opciones se relacionan con `data-permission` y nunca se habilitan por el
-  nombre del rol.
-- No se incorporan scripts remotos sin una decisión de seguridad documentada.
-- Un cambio en autenticación, rutas o permisos debe incluir una prueba de
-  regresión y actualizar `docs/integracion-api.md`.
+Se trabaja con los usuarios de prueba del backend o datos ficticios. No se copian expedientes
+reales, datos personales ni registros institucionales a computadoras locales.

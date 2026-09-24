@@ -1,0 +1,123 @@
+/*
+ * Sistema de diseño de SIGESDOC: única fuente de colores, tipografía, radios y sombras.
+ * Deriva de la hoja del login (legacy/styles.css). Stylelint prohíbe colores fuera de
+ * este archivo: si un componente necesita un color nuevo, se agrega aquí con nombre.
+ */
+:root {
+  /* Marca */
+  --navy: #082a63;
+  --navy-deep: #061f4b;
+  --navy-bright: #0a377c;
+  --blue: #0b67b2;
+  --blue-bright: #1296db;
+  --orange: #f58220;
+  --orange-hover: #e97311;
+  --orange-strong: #b85b0b;
+  --orange-soft: #ffad66;
+
+  /* Texto */
+  --ink: #17243a;
+  --ink-strong: #3e4857;
+  --slate: #4d586a;
+  --muted: #5e6b7d;
+  --subtle: #788496;
+
+  /* Superficies */
+  --white: #fff;
+  --canvas: #f4f7fb;
+  --surface-raised: #fbfcff;
+  --surface-hover: #f3f6fa;
+  --soft-blue: #eaf0ff;
+  --tint: #eef1ff;
+  --tint-strong: #e4eafe;
+  --nav-current: #e9edff;
+
+  /* Bordes */
+  --line: #d9e1ec;
+  --line-soft: #e2e7ef;
+  --line-strong: #b9c6d8;
+  --line-hover: #bcc9e4;
+
+  /* Texto sobre el panel de marca */
+  --on-brand: #fff;
+  --on-brand-muted: #c9d8f3;
+  --on-brand-soft: #dbe6f8;
+  --on-brand-subtle: #aebfdc;
+
+  /* Estados */
+  --success: #1b7f5a;
+  --success-strong: #0d5d40;
+  --success-soft: #eaf9f2;
+  --danger: #b42318;
+  --danger-strong: #7d1c16;
+  --danger-soft: #fff0ee;
+  --warning-strong: #77520a;
+  --warning-soft: #fff0cf;
+  --info: #315993;
+  --info-strong: #263f70;
+  --info-soft: #eef4ff;
+
+  /* Gráficos (los lee common/charts en tiempo de dibujo) */
+  --chart-1: #082a63;
+  --chart-2: #f58220;
+  --chart-3: #d9a02d;
+  --chart-4: #b42318;
+  --chart-grid: #e2e7ef;
+  --chart-text: #788496;
+
+  /* Transparencias */
+  --glass: rgb(255 255 255 / 5.5%);
+  --glass-line: rgb(255 255 255 / 7.5%);
+  --glass-strong: rgb(255 255 255 / 10%);
+  --glass-ring: rgb(255 255 255 / 13%);
+  --spinner-track: rgb(255 255 255 / 45%);
+  --orange-glow: rgb(245 130 32 / 15%);
+  --focus-ring: rgb(18 150 219 / 16%);
+  --backdrop: rgb(4 18 42 / 62%);
+
+  /* Degradados */
+  --gradient-page: linear-gradient(135deg, #eef3ff 0%, #f8f9fd 52%, #edf2ff 100%);
+  --gradient-brand:
+    radial-gradient(circle at 85% 12%, rgb(18 150 219 / 28%), transparent 30%),
+    radial-gradient(circle at 10% 76%, rgb(245 130 32 / 10%), transparent 25%),
+    linear-gradient(145deg, #0a377c 0%, #082a63 45%, #061f4b 100%);
+
+  /* Sombras */
+  --shadow: 0 18px 50px rgb(8 42 99 / 14%);
+  --shadow-sm: 0 8px 24px rgb(8 42 99 / 7%);
+  --shadow-button: 0 7px 15px rgb(245 130 32 / 22%);
+  --shadow-button-hover: 0 9px 20px rgb(245 130 32 / 30%);
+  --shadow-selected: 0 7px 16px rgb(8 42 99 / 18%);
+  --shadow-dialog: 0 22px 70px rgb(0 0 0 / 25%);
+
+  /* Tipografía */
+  --font-sans: arial, helvetica, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-base: 16px;
+  --text-lg: 17px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+
+  /* Radios */
+  --radius-xs: 6px;
+  --radius-sm: 9px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* Espaciado */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* Movimiento */
+  --transition: 0.16s ease;
+}

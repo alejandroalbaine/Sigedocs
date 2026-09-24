@@ -1,0 +1,19 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "color-no-hex": true,
+    "color-named": "never",
+    "function-disallowed-list": ["rgb", "rgba", "hsl", "hsla"],
+    "selector-pseudo-class-no-unknown": [true, { "ignorePseudoClasses": ["global"] }]
+  },
+  "overrides": [
+    {
+      "files": ["src/common/styles/tokens.css"],
+      "rules": {
+        "color-no-hex": null,
+        "color-named": null,
+        "function-disallowed-list": null
+      }
+    }
+  ]
+}

@@ -2,13 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "node",
+      "type": "chrome",
       "request": "launch",
-      "name": "Iniciar SIGESDOC",
-      "program": "${workspaceFolder}/server.js",
-      "cwd": "${workspaceFolder}",
-      "skipFiles": ["<node_internals>/**"],
-      "console": "integratedTerminal"
+      "name": "Depurar SIGESDOC en Chrome",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "SIGESDOC: servidor de desarrollo"
     }
   ]
 }

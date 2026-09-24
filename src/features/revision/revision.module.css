@@ -1,0 +1,79 @@
+.progress {
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+}
+
+.bar {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+  transition: width var(--transition);
+}
+
+.counter {
+  margin: var(--space-2) 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.checklist {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+
+.option:has(input:checked) {
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+
+.option input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--success);
+}
+
+.legend {
+  margin-bottom: var(--space-3);
+  padding: 0;
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.decision {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.verdicts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

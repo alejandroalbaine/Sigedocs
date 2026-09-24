@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "dbaeumer.vscode-eslint",
-    "ms-ossdata.vscode-pgsql"
+    "esbenp.prettier-vscode",
+    "stylelint.vscode-stylelint"
   ]
 }
