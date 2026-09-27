@@ -1,7 +1,11 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import styles from './Button.module.css';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'text';
+/**
+ * primary: acción principal (azul) · accent: llamado a la acción o registro (naranja) ·
+ * secondary / quiet: acciones de apoyo · danger: destructiva · text: enlace.
+ */
+export type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'quiet' | 'danger' | 'text';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;

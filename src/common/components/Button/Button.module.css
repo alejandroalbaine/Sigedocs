@@ -26,7 +26,7 @@
 }
 
 .sm {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 var(--space-4);
   font-size: var(--text-md);
   font-weight: 700;
@@ -36,17 +36,41 @@
   width: 100%;
 }
 
+/* Jerarquía del T1 §3.9.6: azul para la acción primaria, naranja para el llamado a la acción. */
 .primary {
+  border-color: var(--navy);
+  color: var(--white);
+  background: var(--navy);
+  box-shadow: var(--shadow-button);
+}
+
+.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--navy-bright);
+  box-shadow: var(--shadow-button-hover);
+}
+
+.accent {
   border-color: var(--orange);
   color: var(--on-accent);
   background: var(--orange);
   box-shadow: var(--shadow-button);
 }
 
-.primary:hover:not(:disabled) {
+.accent:hover:not(:disabled) {
   transform: translateY(-1px);
   background: var(--orange-hover);
   box-shadow: var(--shadow-button-hover);
+}
+
+.danger {
+  border-color: var(--danger);
+  color: var(--white);
+  background: var(--danger);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--danger-strong);
 }
 
 .secondary {
