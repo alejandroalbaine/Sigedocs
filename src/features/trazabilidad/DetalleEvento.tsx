@@ -1,45 +1,34 @@
+import type { AuditEvent } from '../../common/api/dossierContract.ts';
 import { Dialog } from '../../common/components/Dialog/Dialog.tsx';
 import { formatDateTime } from '../../common/utils/format.ts';
-import type { EventoTrazabilidad } from './catalogos.ts';
-import { EtiquetaAccion, TransicionEstado } from './TablaEventos.tsx';
+import { EtiquetaTipo } from './TablaEventos.tsx';
 import styles from './trazabilidad.module.css';
 
 export interface DetalleEventoProps {
-  evento: EventoTrazabilidad | null;
+  evento: AuditEvent | null;
+  expediente: string;
   onCerrar: () => void;
 }
 
-export function DetalleEvento({ evento, onCerrar }: DetalleEventoProps) {
+export function DetalleEvento({ evento, expediente, onCerrar }: DetalleEventoProps) {
   return (
     <Dialog open={evento !== null} title="Detalle del evento" onClose={onCerrar}>
       {evento && (
         <>
-          <EtiquetaAccion accion={evento.accion} />
+          <EtiquetaTipo tipo={evento.type} />
           <dl className={styles.detail}>
             <dt>Expediente</dt>
-            <dd>
-              <strong>{evento.expedienteTitulo}</strong> ({evento.expedienteCodigo})
-            </dd>
+            <dd>{expediente}</dd>
             <dt>Fecha y hora</dt>
-            <dd>{formatDateTime(evento.fecha)}</dd>
+            <dd>{formatDateTime(evento.occurredAt)}</dd>
             <dt>Usuario</dt>
-            <dd>
-              {evento.usuarioNombre} · {evento.usuarioCorreo}
-            </dd>
-            <dt>Rol</dt>
-            <dd>{evento.usuarioRol}</dd>
+            <dd>{evento.user.name}</dd>
             <dt>Versión</dt>
-            <dd>{evento.version}</dd>
-            <dt>Estado</dt>
-            <dd>
-              <TransicionEstado evento={evento} />
-            </dd>
-            <dt>Observación</dt>
-            <dd>{evento.observacion ?? 'Sin observaciones'}</dd>
-            <dt>Evidencia</dt>
-            <dd>{evento.evidencia ?? '—'}</dd>
+            <dd>{evento.versionLabel ?? '—'}</dd>
+            <dt>Resumen</dt>
+            <dd>{evento.summary}</dd>
             <dt>Registro</dt>
-            <dd>#{evento.id}</dd>
+            <dd>#{evento.eventId}</dd>
           </dl>
         </>
       )}

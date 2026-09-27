@@ -10,17 +10,24 @@ import {
   MessageSquareText,
   Printer,
   ShieldCheck,
+  UserCheck,
 } from 'lucide-react';
+import { dossiersApi } from '../../common/api/dossiers.ts';
+import type { Dossier, TransitionResult } from '../../common/api/dossierContract.ts';
+import { useRecurso, type Recurso } from '../../common/api/useRecurso.ts';
 import { RequirePermission } from '../../common/auth/RequirePermission.tsx';
 import { useCurrentUser } from '../../common/auth/SessionContext.ts';
 import { hasPermission } from '../../common/auth/permissions.ts';
-import { EmptyState } from '../../common/components/index.ts';
+import { Alert, EmptyState } from '../../common/components/index.ts';
 import {
   admiteDecisionTecnica,
   ESTADOS_UNDERGRAD,
   ORDEN_UNDERGRAD,
   proximaAccion,
 } from '../../common/workflow/estados.ts';
+import { FormularioObservacion } from '../../features/observaciones/FormularioObservacion.tsx';
+import { AccionesFlujo } from '../../features/revision/AccionesFlujo.tsx';
+import { AsignacionExpediente } from '../../features/revision/AsignacionExpediente.tsx';
 import { ChecklistRevision } from '../../features/revision/ChecklistRevision.tsx';
 import { DecisionRevision } from '../../features/revision/DecisionRevision.tsx';
 import {
@@ -32,7 +39,6 @@ import {
 } from '../../features/revision/reglas.ts';
 import { claseEstado } from '../documental/estadoBadge.ts';
 import { useDossiers } from '../documental/useDossiers.ts';
-import type { Dossier } from '../documental/types.ts';
 import styles from './RevisionPage.module.css';
 
 /** Las siete pestañas del expediente definidas en el Informe T1 §3.7. */
@@ -53,6 +59,8 @@ const NIVELES: Record<Dossier['academicLevel'], string> = {
   bachelor: 'Grado',
 };
 
+const fecha = (valor: string) => new Date(valor).toLocaleString('es-DO');
+
 function InfoPanel({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className={styles.infoPanel}>
@@ -70,15 +78,64 @@ function Pendiente({ children }: { children: ReactNode }) {
   );
 }
 
-function Expediente({ dossier }: { dossier: Dossier }) {
+/** Estados de carga comunes a las pestañas que consultan el servidor. */
+function EstadoRecurso<T>({
+  recurso,
+  ruta,
+  children,
+}: {
+  recurso: Recurso<T>;
+  ruta: string;
+  children: (data: T) => ReactNode;
+}) {
+  if (recurso.loading) return <p className={styles.loading}>Consultando…</p>;
+  if (recurso.pendiente) {
+    return (
+      <Pendiente>
+        <code>{ruta}</code> está confirmada en el contrato, pero el servidor aún no la implementa.
+      </Pendiente>
+    );
+  }
+  if (recurso.error) return <Alert kind="error">{recurso.error}</Alert>;
+  return recurso.data === null ? null : <>{children(recurso.data)}</>;
+}
+
+function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => void }) {
   const user = useCurrentUser();
   const [activeTab, setActiveTab] = useState<TabId>('resumen');
   const [resultados, setResultados] = useState<ResultadoCriterio[]>(resultadosIniciales);
+  const [ultimo, setUltimo] = useState<TransitionResult | null>(null);
+  const id = dossier.dossierId;
   const puedeDevolver = hasPermission(user.permissions, 'workflow.request_changes');
   const puedeAprobar = hasPermission(user.permissions, 'workflow.approve_for_pilot');
+  const puedeAsignar = hasPermission(user.permissions, 'workflow.assign');
+  const puedeObservar = hasPermission(user.permissions, 'observations.create');
   const decisionHabilitada = admiteDecisionTecnica(dossier.currentState.code);
   const { evaluados, total } = resumirChecklist(resultados);
   const responsable = dossier.assignedSpecialist?.name ?? 'Sin asignar';
+  const clave = `${id}:${dossier.currentState.code}:${dossier.currentVersion.versionId}`;
+
+  const transiciones = useRecurso(() => dossiersApi.availableTransitions(id), [clave]);
+  const versiones = useRecurso(activeTab === 'versiones' ? () => dossiersApi.versions(id) : null, [
+    clave,
+    activeTab,
+  ]);
+  const observaciones = useRecurso(
+    activeTab === 'observaciones'
+      ? () => dossiersApi.observations(id, dossier.currentVersion.versionId)
+      : null,
+    [clave, activeTab],
+  );
+  const historial = useRecurso(activeTab === 'historial' ? () => dossiersApi.history(id) : null, [
+    clave,
+    activeTab,
+  ]);
+
+  function transicionRealizada(resultado: TransitionResult) {
+    setUltimo(resultado);
+    setResultados(resultadosIniciales());
+    onCambio();
+  }
 
   return (
     <div className={styles.page}>
@@ -86,6 +143,13 @@ function Expediente({ dossier }: { dossier: Dossier }) {
         <Link to="/expedientes">Gestión documental</Link> &nbsp; / &nbsp;{' '}
         <strong>{dossier.code}</strong> &nbsp; / &nbsp; <b>Detalle y revisión</b>
       </div>
+
+      {ultimo && (
+        <Alert kind="success">
+          Transición registrada: {ultimo.fromState.name} → {ultimo.toState.name}
+          {ultimo.newVersionId ? '. Se creó una nueva versión del expediente.' : '.'}
+        </Alert>
+      )}
 
       <section className={styles.hero}>
         <div className={styles.heroTitle}>
@@ -170,7 +234,7 @@ function Expediente({ dossier }: { dossier: Dossier }) {
                     ['Versión vigente', dossier.currentVersion.label],
                     ['Especialista asignado', responsable],
                     ['Registrado por', dossier.createdBy.name],
-                    ['Fecha de registro', new Date(dossier.createdAt).toLocaleString('es-DO')],
+                    ['Fecha de registro', fecha(dossier.createdAt)],
                   ] as const
                 ).map(([label, value]) => (
                   <div key={label}>
@@ -194,11 +258,11 @@ function Expediente({ dossier }: { dossier: Dossier }) {
                 </div>
               </div>
               <Pendiente>
-                El contenido del programa y sus adjuntos se consultarán con{' '}
+                El formulario del programa llegará con el motor de plantillas (
                 <code>
                   GET /dossiers/{'{id}'}/versions/{'{versionId}'}
-                </code>
-                , que el backend aún no implementa. No se muestra un documento de ejemplo.
+                </code>{' '}
+                y la plantilla publicada). No se muestra un documento de ejemplo.
               </Pendiente>
             </InfoPanel>
           )}
@@ -231,45 +295,77 @@ function Expediente({ dossier }: { dossier: Dossier }) {
                 </tbody>
               </table>
               <Pendiente>
-                La validación cruzada automática contra documentos maestros está diferida (Informe
-                Módulo II, §5.1); el especialista registra el resultado de forma manual.
+                El contrato MVP no tiene una ruta propia para los resultados del checklist: se
+                guardan dentro de la observación de la decisión, en el historial. La validación
+                cruzada automática está diferida (Informe Módulo II, §5.1).
               </Pendiente>
             </InfoPanel>
           )}
 
           {activeTab === 'observaciones' && (
             <InfoPanel title="Observaciones">
-              <div className={styles.emptyState}>
-                <MessageSquareText size={34} />
-                <strong>Sin observaciones registradas</strong>
-                <p>
-                  Las observaciones por criterio, sección o campo aparecerán aquí con su estado
-                  (pendiente, atendida o resuelta).
-                </p>
-              </div>
-              <Pendiente>
-                El backend aún no implementa la ruta de observaciones; las que escriba en el panel
-                de revisión no se guardan.
-              </Pendiente>
+              {puedeObservar && (
+                <FormularioObservacion
+                  key={clave}
+                  dossier={dossier}
+                  onRegistrada={observaciones.reload}
+                />
+              )}
+              <h3 className={styles.subheading}>Observaciones de {dossier.currentVersion.label}</h3>
+              <EstadoRecurso recurso={observaciones} ruta={`GET /dossiers/{id}/observations`}>
+                {(lista) =>
+                  lista.length === 0 ? (
+                    <p className={styles.lead}>Sin observaciones registradas en esta versión.</p>
+                  ) : (
+                    <ol className={styles.timeline}>
+                      {lista.map((item) => (
+                        <li key={item.observationId}>
+                          <strong>{item.text}</strong>
+                          <span>
+                            {item.createdBy?.name ?? 'Autor no informado'}
+                            {item.createdAt ? ` · ${fecha(item.createdAt)}` : ''}
+                          </span>
+                          {(item.sectionKey ?? item.fieldKey) && (
+                            <small>
+                              Sección {item.sectionKey ?? '—'} · campo {item.fieldKey ?? '—'}
+                            </small>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  )
+                }
+              </EstadoRecurso>
             </InfoPanel>
           )}
 
           {activeTab === 'versiones' && (
             <InfoPanel title="Versiones">
-              <ol className={styles.timeline}>
-                <li>
-                  <strong>{dossier.currentVersion.label} · versión vigente</strong>
-                  <span>Estado curricular: {dossier.currentState.name}</span>
-                  <small>
-                    La versión documental y el estado curricular son dimensiones distintas (REG-04).
-                  </small>
-                </li>
-              </ol>
-              <Pendiente>
-                Las versiones anteriores se listarán con{' '}
-                <code>GET /dossiers/{'{id}'}/versions</code>. La comparación entre versiones está
-                diferida al Curso Final de Grado (CU-09).
-              </Pendiente>
+              <EstadoRecurso recurso={versiones} ruta="GET /dossiers/{id}/versions">
+                {(lista) => (
+                  <ol className={styles.timeline}>
+                    {lista.map((version) => (
+                      <li key={version.versionId}>
+                        <strong>
+                          {version.label}
+                          {version.versionId === dossier.currentVersion.versionId
+                            ? ' · versión vigente'
+                            : ''}
+                        </strong>
+                        <span>
+                          Estado: {version.state.name} · {version.createdBy.name} ·{' '}
+                          {fecha(version.createdAt)}
+                        </span>
+                        {version.approvedAt && <small>Aprobada {fecha(version.approvedAt)}</small>}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </EstadoRecurso>
+              <p className={styles.lead}>
+                La versión documental y el estado curricular son dimensiones distintas (REG-04). La
+                comparación entre versiones está diferida al Curso Final de Grado (CU-09).
+              </p>
             </InfoPanel>
           )}
 
@@ -289,34 +385,61 @@ function Expediente({ dossier }: { dossier: Dossier }) {
               <p className={styles.lead}>
                 <strong>Próxima acción:</strong> {proximaAccion(dossier.currentState.code)}
               </p>
-              <Pendiente>
-                Las transiciones disponibles para su usuario llegarán con{' '}
-                <code>GET /dossiers/{'{id}'}/available-transitions</code>. El servidor valida cada
-                transición (REG-05).
-              </Pendiente>
+              {puedeAsignar &&
+                (dossier.currentState.code === 'RECEIVED' ||
+                  dossier.currentState.code === 'ASSIGNED') && (
+                  <section className={styles.flowBlock}>
+                    <h3 className={styles.subheading}>
+                      <UserCheck size={16} /> Asignación para revisión
+                    </h3>
+                    <AsignacionExpediente dossier={dossier} onAsignado={onCambio} />
+                  </section>
+                )}
+              <section className={styles.flowBlock}>
+                <h3 className={styles.subheading}>Acciones disponibles para su usuario</h3>
+                <EstadoRecurso
+                  recurso={transiciones}
+                  ruta="GET /dossiers/{id}/available-transitions"
+                >
+                  {(lista) => (
+                    <AccionesFlujo
+                      dossier={dossier}
+                      transiciones={lista}
+                      onRealizada={transicionRealizada}
+                    />
+                  )}
+                </EstadoRecurso>
+              </section>
             </InfoPanel>
           )}
 
           {activeTab === 'historial' && (
             <InfoPanel title="Historial y auditoría">
-              <ol className={styles.timeline}>
-                <li>
-                  <strong>Expediente registrado</strong>
-                  <span>{new Date(dossier.createdAt).toLocaleString('es-DO')}</span>
-                  <small>Por {dossier.createdBy.name}</small>
-                </li>
-                <li>
-                  <strong>Estado actual: {dossier.currentState.name}</strong>
-                  <span>Información entregada por la API</span>
-                </li>
-                <li className={styles.pending}>
-                  <strong>Eventos de auditoría detallados</strong>
-                  <small>
-                    Pendientes de la ruta de historial del backend; no se muestran eventos
-                    simulados.
-                  </small>
-                </li>
-              </ol>
+              <EstadoRecurso recurso={historial} ruta="GET /dossiers/{id}/transitions">
+                {(lista) => (
+                  <ol className={styles.timeline}>
+                    <li>
+                      <strong>Expediente registrado</strong>
+                      <span>{fecha(dossier.createdAt)}</span>
+                      <small>Por {dossier.createdBy.name}</small>
+                    </li>
+                    {lista.map((item) => (
+                      <li key={item.historyId}>
+                        <strong>
+                          {item.transition.name}: {item.fromState?.name ?? '—'} →{' '}
+                          {item.toState.name}
+                        </strong>
+                        <span>
+                          {fecha(item.occurredAt)} · {item.user.name} · {item.versionLabel}
+                        </span>
+                        {item.observation && (
+                          <small className={styles.preserve}>{item.observation}</small>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </EstadoRecurso>
             </InfoPanel>
           )}
         </div>
@@ -348,15 +471,14 @@ function Expediente({ dossier }: { dossier: Dossier }) {
           </details>
           <section className={styles.decision}>
             <h3>Dictamen técnico</h3>
-            {!puedeDevolver && !puedeAprobar ? (
-              <p className={styles.lead}>
-                Su rol puede consultar este expediente, pero no emitir decisiones técnicas.
-              </p>
-            ) : decisionHabilitada ? (
+            {decisionHabilitada ? (
               <DecisionRevision
+                dossier={dossier}
                 resultados={resultados}
+                transiciones={transiciones}
                 puedeDevolver={puedeDevolver}
                 puedeAprobar={puedeAprobar}
+                onRealizada={transicionRealizada}
               />
             ) : (
               <p className={styles.lead}>
@@ -373,10 +495,18 @@ function Expediente({ dossier }: { dossier: Dossier }) {
 
 function Revision() {
   const [params] = useSearchParams();
-  const { items, loading, error } = useDossiers();
-  const dossier = items.find((item) => item.dossierId === params.get('dossierId')) ?? items[0];
+  const pedido = params.get('dossierId');
+  const { items, loading, error, reload } = useDossiers();
+  const enLista = items.find((item) => item.dossierId === pedido);
+  // Un expediente fuera de los primeros 25 del listado se consulta por su identificador.
+  const detalle = useRecurso(
+    pedido && !loading && !enLista ? () => dossiersApi.get(pedido) : null,
+    [pedido, loading, Boolean(enLista)],
+  );
+  const dossier = enLista ?? detalle.data ?? (pedido ? undefined : items[0]);
 
-  if (loading) {
+  // Tras una transición el listado se recarga sin desmontar el expediente abierto.
+  if ((loading && items.length === 0) || (detalle.loading && !detalle.data)) {
     return <p className={styles.loading}>Consultando expedientes…</p>;
   }
   if (!dossier) {
@@ -384,6 +514,7 @@ function Revision() {
       <div className={styles.page}>
         <EmptyState title="Seleccione un expediente">
           {error ||
+            detalle.error ||
             'No hay expedientes visibles para su usuario. Abra uno desde Gestión documental para revisarlo.'}
         </EmptyState>
         <Link className={styles.backLink} to="/expedientes">
@@ -392,7 +523,16 @@ function Revision() {
       </div>
     );
   }
-  return <Expediente key={dossier.dossierId} dossier={dossier} />;
+  return (
+    <Expediente
+      key={dossier.dossierId}
+      dossier={dossier}
+      onCambio={() => {
+        reload();
+        detalle.reload();
+      }}
+    />
+  );
 }
 
 export function RevisionPage() {
