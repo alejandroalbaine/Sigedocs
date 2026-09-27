@@ -14,7 +14,13 @@ import {
   X,
 } from 'lucide-react';
 import { downloadJson } from '../../common/utils/download.ts';
+import { ESTADOS_UNDERGRAD, GRUPOS_ESTADO } from '../../common/workflow/estados.ts';
+import { claseEstado } from '../documental/estadoBadge.ts';
 import styles from '../documental/documental.module.css';
+
+function etiquetaGrupo(grupo: string) {
+  return GRUPOS_ESTADO.find((item) => item.id === grupo)?.etiqueta ?? grupo;
+}
 
 export function UiKitPage() {
   const [accordionState, setAccordionState] = useState({ open: false, version: 0 });
@@ -158,32 +164,16 @@ export function UiKitPage() {
         <summary>
           <Archive size={19} />
           <span>
-            3. Distintivos de ciclo vital documental
-            <small>Identificadores de conservación archivística</small>
+            3. Distintivos de estado del expediente
+            <small>Los 11 estados del flujo de pregrado y grado (ADR-014)</small>
           </span>
         </summary>
         <div className={styles.kitGrid}>
-          {[
-            ['Vigencia activa', 'Archivo de gestión'],
-            ['En trámite legal', 'Flujo corriente'],
-            ['Cotejo técnico', 'Mesa de control'],
-            ['Subsanación', 'Alerta de reparo'],
-            ['Custodia permanente', 'Archivo histórico'],
-          ].map(([status, description], index) => (
-            <article className={styles.kitState} key={status}>
-              <span
-                className={
-                  index === 3
-                    ? styles.badgeWarning
-                    : index === 4
-                      ? styles.badge
-                      : styles.badgeSuccess
-                }
-              >
-                {status}
-              </span>
-              <strong>{description}</strong>
-              <p className={styles.subtle}>Patrón cromático institucional con texto explícito.</p>
+          {Object.entries(ESTADOS_UNDERGRAD).map(([code, state]) => (
+            <article className={styles.kitState} key={code}>
+              <span className={claseEstado(code)}>{state.nombre}</span>
+              <strong>{code}</strong>
+              <p className={styles.subtle}>Grupo: {etiquetaGrupo(state.grupo)}.</p>
             </article>
           ))}
         </div>

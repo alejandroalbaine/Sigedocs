@@ -2,6 +2,8 @@ import { useMemo, useState, type SyntheticEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Download, FileSearch, List, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useDossiers } from '../documental/useDossiers.ts';
+import { claseEstado } from '../documental/estadoBadge.ts';
+import { tonoDeEstado } from '../../common/workflow/estados.ts';
 import styles from '../documental/documental.module.css';
 
 export function BusquedaPage() {
@@ -28,10 +30,10 @@ export function BusquedaPage() {
           <p className={`${styles.eyebrow} ${styles.eyebrowOrange}`}>
             SIGESDOC &nbsp; › &nbsp; Módulo de consulta &nbsp; › &nbsp; Búsqueda avanzada
           </p>
-          <h1>Búsqueda Avanzada y Recuperación de Expedientes</h1>
+          <h1>Búsqueda avanzada de expedientes</h1>
           <p>
-            Localización exhaustiva en el fondo documental de la UAPA conforme a la Ley General de
-            Archivos 481-08 y el Cuadro General de Clasificación.
+            Localice expedientes curriculares por código, título o asignatura dentro de su alcance
+            autorizado.
           </p>
         </div>
         <form className={styles.headerActions} onSubmit={submit}>
@@ -46,7 +48,7 @@ export function BusquedaPage() {
             <X size={16} /> Limpiar filtros
           </button>
           <button className={`${styles.button} ${styles.buttonOrange}`}>
-            <Search size={16} /> Ejecutar Búsqueda Booleana <kbd>Ctrl+Enter</kbd>
+            <Search size={16} /> Buscar
           </button>
         </form>
       </header>
@@ -57,8 +59,8 @@ export function BusquedaPage() {
             <SlidersHorizontal size={18} />
           </span>
           <h2>Filtros Avanzados</h2>
-          <span className={styles.badgeWarning}>4 activos</span>
-          <span className={styles.subtle}>• Metadatos TRD, Nivel de Reserva y Fechas</span>
+          {currentQuery && <span className={styles.badgeWarning}>1 activo</span>}
+          <span className={styles.subtle}>• Texto, nivel académico y estado</span>
         </summary>
         <form className={styles.filters} onSubmit={submit}>
           <div className={styles.field}>
@@ -122,7 +124,7 @@ export function BusquedaPage() {
               )}
             </h2>
             <span className={styles.subtle}>
-              Tiempo de respuesta del motor documental · datos según alcance autorizado
+              Resultados según el alcance autorizado por el servidor
             </span>
           </div>
         </div>
@@ -140,20 +142,18 @@ export function BusquedaPage() {
         {!loading && items.length === 0 && (
           <p className={styles.empty}>No se encontraron expedientes.</p>
         )}
-        {items.slice(0, 3).map((item, index) => (
+        {items.map((item) => (
           <details
-            className={`${styles.result} ${index === 1 ? styles.resultWarning : ''}`}
+            className={`${styles.result} ${
+              tonoDeEstado(item.currentState.code) === 'warning' ? styles.resultWarning : ''
+            }`}
             key={item.dossierId}
           >
             <summary>
               <span className={styles.code}>{item.code}</span>
               <strong>{item.title}</strong>
               <span className={styles.badge}>{item.schoolCode}</span>
-              <span
-                className={index === 1 ? `${styles.badge} ${styles.badgeWarning}` : styles.badge}
-              >
-                {item.currentState.name}
-              </span>
+              <span className={claseEstado(item.currentState.code)}>{item.currentState.name}</span>
               <span className={styles.subtle}>
                 {item.currentVersion.label} &nbsp; • &nbsp; expediente digital
               </span>
@@ -181,24 +181,7 @@ export function BusquedaPage() {
 
       <div className={styles.pager}>
         <span>
-          Mostrando <strong>1 - {Math.min(3, items.length)}</strong> de{' '}
-          <strong>{items.length}</strong> expedientes
-        </span>
-        <span className={styles.pages}>
-          <button className={styles.pageButton} disabled>
-            ‹
-          </button>
-          <button className={`${styles.pageButton} ${styles.pageButtonActive}`}>1</button>
-          <button className={styles.pageButton} disabled>
-            2
-          </button>
-          <button className={styles.pageButton} disabled>
-            3
-          </button>
-          <span>…</span>
-          <button className={styles.pageButton} disabled>
-            ›
-          </button>
+          Mostrando <strong>{items.length}</strong> expedientes (máximo 25 por consulta)
         </span>
       </div>
     </div>

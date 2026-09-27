@@ -1,28 +1,18 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import {
-  Archive,
   BarChart3,
-  Clock3,
+  CircleCheck,
   Download,
-  Landmark,
+  FileStack,
+  Info,
   LockKeyhole,
-  ShieldCheck,
-  Truck,
+  RotateCcw,
+  SearchCheck,
 } from 'lucide-react';
 import { downloadCsv } from '../../common/utils/download.ts';
 import { useDossiers } from '../documental/useDossiers.ts';
+import { contarPorGrupo, GRUPOS_ESTADO, segmentosDona } from '../../common/workflow/estados.ts';
 import styles from '../documental/documental.module.css';
-
-const stateGroups = [
-  {
-    label: 'Recepcionado',
-    color: '#001f4d',
-    test: (code: string) => code.includes('RECE') || code.includes('DRAFT'),
-  },
-  { label: 'En revisión', color: '#ff8319', test: (code: string) => code.includes('REVIEW') },
-  { label: 'Concluido', color: '#4f6da8', test: (code: string) => code.includes('FINAL') },
-  { label: 'Otros estados', color: '#c9181f', test: () => true },
-];
 
 export function ReportesPage() {
   const { items, error } = useDossiers();
@@ -44,19 +34,10 @@ export function ReportesPage() {
     [filtered],
   );
   const maxMonth = Math.max(1, ...byMonth);
-  const counts = stateGroups.map((group, index) => ({
-    ...group,
-    count: filtered.filter(
-      (item) =>
-        group.test(item.currentState.code) &&
-        !stateGroups.slice(0, index).some((previous) => previous.test(item.currentState.code)),
-    ).length,
-  }));
-  const review = counts[1]?.count ?? 0;
-  const final = counts[2]?.count ?? 0;
-  const archived = filtered.filter(
-    (item) => item.currentState.code === 'ARCHIVED_IMPLEMENTED',
-  ).length;
+  const conteo = contarPorGrupo(filtered.map((item) => item.currentState.code));
+  const legend = GRUPOS_ESTADO.filter((group) => group.id !== 'otros' || conteo.otros > 0);
+  const total = filtered.length;
+  const share = (value: number) => (total === 0 ? 0 : Math.round((value / total) * 100));
 
   function exportReport() {
     downloadCsv(
@@ -78,12 +59,12 @@ export function ReportesPage() {
       <header className={styles.reportHeader}>
         <div>
           <p className={styles.eyebrow}>
-            Auditoría trimestral <span className={styles.badge}>Resolución AGN-02-2024</span>
+            Seguimiento <span className={styles.badge}>RF-15</span>
           </p>
-          <h1>Estadísticas y Auditoría Archivística Institucional</h1>
+          <h1>Reportes y estadísticas</h1>
           <p>
-            Monitoreo cuantitativo del fondo documental, cumplimiento de la Ley 481-08 y flujos de
-            retención.
+            Estado, volumen y avance de los expedientes curriculares visibles según su rol y
+            alcance.
           </p>
         </div>
         <div className={styles.reportFilters}>
@@ -120,39 +101,35 @@ export function ReportesPage() {
       </header>
       {error && <div className={styles.error}>{error}</div>}
       <div className={styles.auditHash}>
-        <ShieldCheck size={17} /> Marco legal 481-08 / AGN{' '}
-        <span className={styles.badge}>Integridad según registros visibles</span>
+        <Info size={17} /> Cifras calculadas con los expedientes que el servidor autoriza para su
+        usuario.
       </div>
       <section className={styles.metrics} aria-label="Indicadores de auditoría">
-        {[
+        {(
           [
-            BarChart3,
-            'Índice digitalización',
-            filtered.length ? '100%' : '0%',
-            'Expedientes visibles digitalizados',
-          ],
-          [Archive, 'Transferencias archivo central', final, 'Expedientes concluidos'],
-          [Clock3, 'Tasa oportunidad radicación', review, 'En revisión según alcance'],
-          [Landmark, 'Custodia permanente AGN', archived, 'Expedientes transferidos'],
-        ].map(([Icon, label, value, description]) => {
-          const MetricIcon = Icon as typeof BarChart3;
-          return (
-            <article className={styles.metric} key={String(label)}>
-              <MetricIcon size={23} />
-              <span>{label as string}</span>
-              <strong>{value as string | number}</strong>
-              <small className={styles.subtle}>{description as string}</small>
-              <div className={styles.metricLine} />
-            </article>
-          );
-        })}
+            [FileStack, 'Expedientes visibles', total, 'Según periodo y unidad'],
+            [SearchCheck, 'En revisión', conteo.revision, 'Revisión y reevaluación'],
+            [RotateCcw, 'Requieren ajustes', conteo.ajustes, 'Devueltos con observaciones'],
+            [CircleCheck, 'Definitivos', conteo.cierre, 'Versión definitiva o archivada'],
+          ] as const
+        ).map(([MetricIcon, label, value, description], index) => (
+          <article className={styles.metric} key={label}>
+            <MetricIcon size={23} />
+            <span>{label}</span>
+            <strong>{value}</strong>
+            <small className={styles.subtle}>{description}</small>
+            <div className={styles.metricLine}>
+              <i style={{ width: `${index === 0 ? (total ? 100 : 0) : share(value)}%` }} />
+            </div>
+          </article>
+        ))}
       </section>
 
       <details className={styles.reportModule} open>
         <summary>
           <BarChart3 size={19} />
           <span>
-            <strong>Análisis gráfico y tendencias TRD</strong>
+            <strong>Análisis gráfico y tendencias</strong>
             <small>Evolución mensual y distribución por estado</small>
           </span>
           <span>Minimizar / desplegar</span>
@@ -194,23 +171,17 @@ export function ReportesPage() {
             <div className={styles.retentionChart}>
               <div
                 className={styles.donut}
-                style={
-                  {
-                    '--donut-fill': filtered.length
-                      ? '#001f4d 0 35%, #ff8319 35% 70%, #4f6da8 70% 88%, #c9181f 88% 100%'
-                      : '#dfe5f7 0 100%',
-                  } as CSSProperties
-                }
+                style={{ '--donut-fill': segmentosDona(conteo) } as CSSProperties}
               >
                 <strong>{filtered.length}</strong>
                 <small>Total visible</small>
               </div>
               <ul>
-                {counts.map((item) => (
-                  <li key={item.label}>
-                    <i style={{ background: item.color }} />
-                    {item.label}
-                    <b>{item.count}</b>
+                {legend.map((group) => (
+                  <li key={group.id}>
+                    <i style={{ background: group.color }} />
+                    {group.etiqueta}
+                    <b>{conteo[group.id]}</b>
                   </li>
                 ))}
               </ul>
@@ -223,10 +194,10 @@ export function ReportesPage() {
         <summary>
           <LockKeyhole size={19} />
           <span>
-            <strong>Trazabilidad y control de documentación</strong>
-            <small>Vista de expedientes accesibles para el usuario autenticado</small>
+            <strong>Expedientes del periodo</strong>
+            <small>Vista de solo lectura de los expedientes accesibles para su usuario</small>
           </span>
-          <span className={styles.badgeWarning}>Confidencial</span>
+          <span className={styles.badge}>Solo lectura</span>
         </summary>
         <div className={styles.reportTableWrap}>
           <table className={styles.reportTable}>
@@ -260,27 +231,6 @@ export function ReportesPage() {
               No existen expedientes para los filtros seleccionados.
             </p>
           )}
-        </div>
-      </details>
-
-      <details className={styles.reportModule}>
-        <summary>
-          <Truck size={19} />
-          <span>
-            <strong>Próximas remesas y transferencias secundarias</strong>
-            <small>Calendario de migración hacia Archivo Central y AGN</small>
-          </span>
-          <span>Minimizar / desplegar</span>
-        </summary>
-        <div className={styles.emptyRow}>
-          <Truck size={28} />
-          <p>
-            La programación de remesas permanecerá deshabilitada hasta que backend publique su
-            contrato oficial.
-          </p>
-          <button className={styles.button} disabled>
-            Programar nueva remesa
-          </button>
         </div>
       </details>
     </div>

@@ -10,7 +10,7 @@ import {
   FilePlus2,
   Inbox,
   Info,
-  Landmark,
+  RotateCcw,
   Search,
   ShieldCheck,
 } from 'lucide-react';
@@ -20,23 +20,27 @@ import { EmptyState } from '../../common/components/index.ts';
 import { downloadCsv } from '../../common/utils/download.ts';
 import { formatLongDate } from '../../common/utils/format.ts';
 import { useDossiers } from '../documental/useDossiers.ts';
-import type { Dossier } from '../documental/types.ts';
+import {
+  contarPorGrupo,
+  GRUPOS_ESTADO,
+  grupoDeEstado,
+  segmentosDona,
+  tonoDeEstado,
+} from '../../common/workflow/estados.ts';
 import styles from './DashboardPage.module.css';
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-function statusClass(code: string) {
-  if (code === 'FINAL' || code.includes('APPROVED')) return styles.statusSuccess;
-  if (code.includes('REVIEW')) return styles.statusWarning;
-  return styles.statusNeutral;
-}
+const STATUS_CLASS = {
+  neutral: styles.statusNeutral,
+  info: styles.statusInfo,
+  warning: styles.statusWarning,
+  success: styles.statusSuccess,
+  final: styles.statusFinal,
+};
 
-function stateGroup(item: Dossier): 'received' | 'review' | 'final' | 'other' {
-  const code = item.currentState.code;
-  if (code === 'FINAL' || code.includes('APPROVED')) return 'final';
-  if (code.includes('REVIEW')) return 'review';
-  if (code === 'RECEIVED') return 'received';
-  return 'other';
+function statusClass(code: string) {
+  return STATUS_CLASS[tonoDeEstado(code)];
 }
 
 export function DashboardPage() {
@@ -58,13 +62,10 @@ export function DashboardPage() {
       : dossiers;
   }, [dossiers, search]);
 
-  const counts = useMemo(() => {
-    const result = { received: 0, review: 0, final: 0, other: 0 };
-    dossiers.forEach((item) => {
-      result[stateGroup(item)] += 1;
-    });
-    return result;
-  }, [dossiers]);
+  const counts = useMemo(
+    () => contarPorGrupo(dossiers.map((item) => item.currentState.code)),
+    [dossiers],
+  );
 
   const monthly = useMemo(() => {
     const current = new Date();
@@ -79,21 +80,16 @@ export function DashboardPage() {
       return {
         label: MONTHS[month],
         created: items.length,
-        completed: items.filter((item) => stateGroup(item) === 'final').length,
+        completed: items.filter((item) => grupoDeEstado(item.currentState.code) === 'cierre')
+          .length,
       };
     });
   }, [dossiers]);
   const maxMonthly = Math.max(1, ...monthly.flatMap((item) => [item.created, item.completed]));
   const total = dossiers.length;
   const percent = (value: number) => (total === 0 ? 0 : Math.round((value / total) * 100));
-  const receivedStop = percent(counts.received);
-  const reviewStop = receivedStop + percent(counts.review);
-  const finalStop = reviewStop + percent(counts.final);
-  const donutStyle = {
-    '--received-stop': `${receivedStop}%`,
-    '--review-stop': `${reviewStop}%`,
-    '--final-stop': `${finalStop}%`,
-  } as CSSProperties;
+  const donutStyle = { '--donut-fill': segmentosDona(counts) } as CSSProperties;
+  const legend = GRUPOS_ESTADO.filter((group) => group.id !== 'otros' || counts.otros > 0);
 
   function exportReport() {
     downloadCsv(
@@ -158,46 +154,46 @@ export function DashboardPage() {
           {error && <div className={styles.error}>{error}</div>}
           {dossiers.length === 0 && !error && (
             <p className={styles.dataNotice}>
-              no hay datos simulados: los indicadores permanecen en cero hasta recibir expedientes
+              No hay datos simulados: los indicadores permanecen en cero hasta recibir expedientes
               del backend.
             </p>
           )}
 
           <ul className={styles.metrics} aria-label="Indicadores">
             <li>
-              <span>Acervo documental</span>
-              <b>Total Documentos Custodiados</b>
+              <span>Expedientes</span>
+              <b>Total visibles</b>
               <strong>{total}</strong>
-              <small>Expedientes visibles según alcance</small>
+              <small>Según su rol y alcance</small>
               <i>
                 <Archive size={21} />
               </i>
             </li>
             <li>
-              <span>Mesa de entrada</span>
-              <b>Pendientes de Clasificación</b>
-              <strong>{counts.received}</strong>
-              <small>Requieren asignación de serie y caja</small>
+              <span>Recepción</span>
+              <b>Recepcionados o asignados</b>
+              <strong>{counts.recepcion}</strong>
+              <small>Aún no inician la revisión</small>
               <i>
                 <Inbox size={21} />
               </i>
             </li>
             <li>
-              <span>Comisiones académicas</span>
-              <b>En Revisión Curricular</b>
-              <strong>{counts.review}</strong>
-              <small>Planes y programas en vicerrectoría</small>
+              <span>Revisión técnico-curricular</span>
+              <b>En revisión</b>
+              <strong>{counts.revision}</strong>
+              <small>Revisión, reenvío o reevaluación</small>
               <i>
                 <ClipboardCheck size={21} />
               </i>
             </li>
             <li>
-              <span>Ley 481-08 / TRD</span>
-              <b>Archivo Histórico UAPA</b>
-              <strong>{counts.final}</strong>
-              <small>Expedientes con valor permanente</small>
+              <span>Correcciones</span>
+              <b>Requieren ajustes</b>
+              <strong>{counts.ajustes}</strong>
+              <small>Devueltos con observaciones</small>
               <i>
-                <Landmark size={21} />
+                <RotateCcw size={21} />
               </i>
             </li>
           </ul>
@@ -243,7 +239,7 @@ export function DashboardPage() {
               <header>
                 <div>
                   <h2>Estado de Trámite</h2>
-                  <p>Frecuencia y ciclo vital de retención</p>
+                  <p>Distribución por etapa del flujo curricular</p>
                 </div>
               </header>
               <div className={styles.donutContent}>
@@ -257,22 +253,12 @@ export function DashboardPage() {
                   </span>
                 </div>
                 <ul>
-                  <li>
-                    <b className={styles.navyKey} />
-                    Recepcionado <strong>{percent(counts.received)}%</strong>
-                  </li>
-                  <li>
-                    <b className={styles.orangeKey} />
-                    En revisión <strong>{percent(counts.review)}%</strong>
-                  </li>
-                  <li>
-                    <b className={styles.blueKey} />
-                    Concluido <strong>{percent(counts.final)}%</strong>
-                  </li>
-                  <li>
-                    <b className={styles.redKey} />
-                    Otros estados <strong>{percent(counts.other)}%</strong>
-                  </li>
+                  {legend.map((group) => (
+                    <li key={group.id}>
+                      <b className={styles.legendKey} style={{ background: group.color }} />
+                      {group.etiqueta} <strong>{percent(counts[group.id])}%</strong>
+                    </li>
+                  ))}
                 </ul>
               </div>
               <div className={styles.calibration}>
@@ -354,37 +340,34 @@ export function DashboardPage() {
               </footer>
             </article>
 
-            <aside className={styles.alerts} aria-label="Alertas TRD">
+            <aside className={styles.alerts} aria-label="Tareas pendientes">
               <header>
                 <div>
                   <h2>
-                    <BellRing size={20} /> Alertas TRD
+                    <BellRing size={20} /> Tareas pendientes
                   </h2>
-                  <p>Vencimientos bajo Tabla de Retención (Ley 481-08)</p>
+                  <p>Calculadas con los expedientes visibles para su usuario</p>
                 </div>
-                <span>Ruta pendiente</span>
               </header>
-              <div className={styles.alertCardDanger}>
-                <b>Vencimiento TRD</b>
-                <p>
-                  Los plazos de transferencia aparecerán cuando backend publique el servicio de
-                  alertas.
-                </p>
-                <button disabled>Proceder a Transferencia →</button>
-              </div>
               <div className={styles.alertCardWarning}>
-                <b>Pendiente Dictamen</b>
-                <p>{counts.review} expedientes visibles están actualmente en revisión.</p>
-                <button disabled>Notificar Comisiones →</button>
+                <b>Requieren ajustes</b>
+                <p>{counts.ajustes} expedientes esperan corrección y reenvío.</p>
               </div>
               <div className={styles.alertCardNeutral}>
-                <b>Auditoría Interna</b>
-                <p>La revisión consolidada estará disponible con el endpoint de auditoría.</p>
-                <button disabled>Abrir Cuadro de Cotejo →</button>
+                <b>En revisión</b>
+                <p>{counts.revision} expedientes están en revisión o reevaluación.</p>
               </div>
-              <button className={styles.allAlerts} disabled>
-                Ver todas las alertas ↗
-              </button>
+              <div className={styles.alertCardNeutral}>
+                <b>Pendientes de asignación</b>
+                <p>{counts.recepcion} expedientes están recepcionados o asignados.</p>
+              </div>
+              <Link className={styles.allAlerts} to="/expedientes">
+                Ver expedientes →
+              </Link>
+              <p className={styles.alertNote}>
+                Las notificaciones automáticas (RF-14) se incorporarán cuando el backend registre
+                los eventos del flujo.
+              </p>
             </aside>
           </section>
         </>
