@@ -48,12 +48,15 @@ export function ProfileMenu({ user, roles, onLogout }: ProfileMenuProps) {
           setAbierto((valor) => !valor);
         }}
       >
-        <span className={styles.avatar} aria-hidden="true">
-          {initials(user.name)}
-        </span>
         <span className={styles.who}>
           <strong>{user.name}</strong>
           <small>{roles || 'Usuario institucional'}</small>
+        </span>
+        <span className={styles.chevron} aria-hidden="true">
+          ⌄
+        </span>
+        <span className={styles.avatar} aria-hidden="true">
+          {initials(user.name)}
         </span>
         <span className="visually-hidden">Perfil y sesión</span>
       </button>

@@ -11,7 +11,7 @@ const ESTADOS_OBSERVACION = [
 ] as const;
 
 /**
- * Formulario completo pero deshabilitado: `POST /api/v1/expedientes/{id}/observaciones`
+ * Formulario completo pero deshabilitado: `POST /api/v1/dossiers/{dossierId}/observations`
  * figura como confirmado en endpoints.md del backend, pero aún no está implementado.
  * El autor y la fecha los determina el servidor a partir de la sesión (campos reservados),
  * por eso aquí solo se muestran.

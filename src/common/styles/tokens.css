@@ -15,6 +15,25 @@
   --orange-strong: #b85b0b;
   --orange-soft: #ffad66;
 
+  /* Sistema institucional Minimal Zen v2.4.0 (Figma) */
+  --institutional-navy: #00163f;
+  --institutional-orange: #ff8928;
+  --institutional-orange-text: #642f00;
+  --institutional-canvas: #f2f3ff;
+  --institutional-selection: #d9e2ff;
+  --institutional-ink: #131b2e;
+  --institutional-text: #444650;
+  --institutional-muted: #747781;
+  --institutional-line: #c4c6d1;
+  --institutional-white: #fff;
+  --institutional-success: #00a66f;
+  --institutional-success-soft: #d9fae9;
+  --institutional-warning: #9a4d00;
+  --institutional-warning-soft: #fff4df;
+  --institutional-danger: #ba1a1a;
+  --institutional-danger-soft: #ffdad6;
+  --institutional-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+
   /* Texto */
   --ink: #17243a;
   --ink-strong: #3e4857;
@@ -89,6 +108,7 @@
   --shadow-button-hover: 0 9px 20px rgb(245 130 32 / 30%);
   --shadow-selected: 0 7px 16px rgb(8 42 99 / 18%);
   --shadow-dialog: 0 22px 70px rgb(0 0 0 / 25%);
+  --institutional-overlay: rgb(0 21 54 / 55%);
 
   /* Tipografía */
   --font-sans: arial, helvetica, sans-serif;

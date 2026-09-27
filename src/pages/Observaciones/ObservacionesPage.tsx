@@ -26,8 +26,8 @@ function Observaciones() {
   return (
     <>
       <Alert kind="info">
-        El registro permanecerá deshabilitado hasta que el backend publique las rutas de expedientes
-        y observaciones.
+        El contrato de observaciones está documentado. El control permanece deshabilitado hasta que
+        su ruta de escritura esté implementada y verificada de extremo a extremo.
       </Alert>
       <Card title="Nueva observación">
         <FormularioObservacion autor={user.name} />
@@ -51,7 +51,7 @@ export function ObservacionesPage() {
     <div className={styles.stack}>
       <title>Registro de observaciones | SIGESDOC</title>
       <PageHeader eyebrow="Expedientes" title="Registro de observaciones" />
-      <RequirePermission permission="expedientes.editar" action="registrar observaciones">
+      <RequirePermission permission="observations.create" action="registrar observaciones">
         <Observaciones />
       </RequirePermission>
     </div>

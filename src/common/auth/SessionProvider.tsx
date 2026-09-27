@@ -42,6 +42,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [client]);
 
+  useEffect(() => {
+    function sessionExpired() {
+      setSession(ANONYMOUS);
+      setRoleNames(new Map());
+    }
+    window.addEventListener('sigesdoc:session-expired', sessionExpired);
+    return () => {
+      window.removeEventListener('sigesdoc:session-expired', sessionExpired);
+    };
+  }, []);
+
   const authenticated = session.status === 'authenticated';
   useEffect(() => {
     if (!authenticated) return;
@@ -49,7 +60,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     client
       .request('roles')
       .then((roles) => {
-        if (active) setRoleNames(new Map(roles.map((role) => [role.codigo, role.nombre])));
+        if (active) setRoleNames(new Map(roles.map((role) => [role.code, role.name])));
       })
       .catch(() => {
         // Sin nombres se muestran los códigos: no bloquea el uso de la aplicación.

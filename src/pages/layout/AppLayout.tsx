@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router';
+import { useState, type SyntheticEvent } from 'react';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router';
+import { Bell, Building2, CircleHelp, Menu, Search, X } from 'lucide-react';
 import { errorMessage } from '../../common/api/errors.ts';
 import { roleLabels, useCurrentUser, useSession } from '../../common/auth/SessionContext.ts';
 import { Alert } from '../../common/components/Alert/Alert.tsx';
@@ -9,10 +10,12 @@ import { ProfileMenu } from './ProfileMenu.tsx';
 
 /** Estructura común de las pantallas internas: navegación por permisos, perfil y contenido. */
 export function AppLayout() {
+  const navigate = useNavigate();
   const user = useCurrentUser();
   const { roleNames, logout } = useSession();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [errorCierre, setErrorCierre] = useState('');
+  const [busqueda, setBusqueda] = useState('');
   const items = visibleNavigation(user.permissions);
 
   function cerrarMenu() {
@@ -31,6 +34,12 @@ export function AppLayout() {
     }
   }
 
+  function buscar(event: SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const termino = busqueda.trim();
+    void navigate(termino ? `/busqueda?q=${encodeURIComponent(termino)}` : '/busqueda');
+  }
+
   return (
     <div className={styles.app}>
       <a className="skip-link" href="#contenido">
@@ -43,31 +52,44 @@ export function AppLayout() {
         aria-label="Menú principal"
       >
         <Link to="/" className={styles.brand} onClick={cerrarMenu}>
-          <span className={styles.brandName}>
-            SIGES<strong>DOC</strong>
+          <span className={styles.brandLogo}>
+            <img src="/LogoSIGESDOC.png" alt="" />
           </span>
-          <span className={styles.brandCaption}>Sistema de Gestión Documental Curricular</span>
+          <span>
+            <span className={styles.brandName}>SIGESDOC</span>
+            <span className={styles.brandCaption}>
+              UAPA · ARCHIVO
+              <br />
+              CURRICULAR
+            </span>
+          </span>
         </Link>
 
         <nav aria-labelledby="nav-label">
           <p id="nav-label" className={styles.navLabel}>
-            Módulos
+            Navegación institucional
           </p>
           <ul className={styles.nav}>
             {items.map((item) => (
               <li key={item.label}>
                 {item.to ? (
                   <NavLink to={item.to} end className={styles.navItem ?? ''} onClick={cerrarMenu}>
-                    <span className={styles.navIcon} aria-hidden="true">
-                      {item.icon}
-                    </span>
+                    <item.icon
+                      className={styles.navIcon}
+                      size={17}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
                     {item.label}
                   </NavLink>
                 ) : (
                   <span className={`${styles.navItem} ${styles.pending}`}>
-                    <span className={styles.navIcon} aria-hidden="true">
-                      {item.icon}
-                    </span>
+                    <item.icon
+                      className={styles.navIcon}
+                      size={17}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
                     {item.label}
                     <span className={styles.pendingTag}>Pronto</span>
                   </span>
@@ -76,6 +98,22 @@ export function AppLayout() {
             ))}
           </ul>
         </nav>
+
+        <footer className={styles.sidebarFooter}>
+          <div className={styles.legalCard}>
+            <span>Marco jurídico</span>
+            <strong>Normativa Ley 481-08</strong>
+            <small>Versión v2.4.0 (AGN / UAPA)</small>
+          </div>
+          <button
+            type="button"
+            className={styles.supportButton}
+            disabled
+            title="Canal pendiente de integración"
+          >
+            <CircleHelp size={15} aria-hidden="true" /> Soporte UAPA
+          </button>
+        </footer>
       </aside>
 
       {menuAbierto && (
@@ -99,9 +137,39 @@ export function AppLayout() {
               setMenuAbierto((abierto) => !abierto);
             }}
           >
-            ☰
+            {menuAbierto ? (
+              <X size={20} aria-hidden="true" />
+            ) : (
+              <Menu size={20} aria-hidden="true" />
+            )}
           </button>
-          <span className={styles.topbarTitle}>Universidad Abierta para Adultos</span>
+          <div className={styles.productPath}>
+            <Building2 size={16} aria-hidden="true" />
+            <span>SIGESDOC</span>
+            <span className={styles.pathSeparator}>/</span>
+            <strong>Sistema de Gestión Documental Institucional</strong>
+          </div>
+          <form className={styles.globalSearch} role="search" onSubmit={buscar}>
+            <Search size={16} aria-hidden="true" />
+            <input
+              type="search"
+              aria-label="Buscar por código, serie o descriptor"
+              placeholder="Buscar por código, serie o descriptor..."
+              value={busqueda}
+              onChange={(event) => {
+                setBusqueda(event.target.value);
+              }}
+            />
+          </form>
+          <button
+            type="button"
+            className={styles.notifications}
+            aria-label="Notificaciones"
+            disabled
+            title="Las notificaciones estarán disponibles cuando backend publique la ruta"
+          >
+            <Bell size={18} strokeWidth={1.8} aria-hidden="true" />
+          </button>
           <ProfileMenu
             user={user}
             roles={roleLabels(user, roleNames)}

@@ -23,7 +23,7 @@ const TAMANOS = [10, 20, 50] as const;
 
 /**
  * Sin contrato de trazabilidad no hay eventos. Cuando el backend publique
- * `GET /api/v1/expedientes/{id}/eventos-de-auditoria`, esta lista vendrá del cliente de API
+ * `GET /api/v1/dossiers/{dossierId}/audit-events`, esta lista vendrá del cliente de API
  * y la pantalla no necesita otros cambios.
  */
 const EVENTOS: readonly EventoTrazabilidad[] = [];
@@ -42,8 +42,8 @@ function Historial() {
   return (
     <>
       <Alert kind="info">
-        La interfaz está integrada con la sesión, pero el backend todavía no publica el contrato de
-        trazabilidad.
+        La trazabilidad se consulta por expediente. Seleccione uno desde Gestión documental cuando
+        la ruta de auditoría esté habilitada.
       </Alert>
       <Card title="Filtros y búsqueda">
         <Filtros
@@ -100,7 +100,7 @@ export function HistorialPage() {
         title="Historial y trazabilidad"
         description="Cronología auditable de las acciones sobre los expedientes curriculares."
       />
-      <RequirePermission permission="auditoria.consultar" action="consultar la trazabilidad">
+      <RequirePermission permission="audit.read" action="consultar la trazabilidad">
         <Historial />
       </RequirePermission>
     </div>

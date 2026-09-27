@@ -52,7 +52,7 @@ export function describir<K extends string>(
 
 /**
  * Forma provisional de un evento de trazabilidad (la que usaba la interfaz anterior).
- * El contrato real será `GET /api/v1/expedientes/{id}/eventos-de-auditoria`; cuando se
+ * El contrato real será `GET /api/v1/dossiers/{dossierId}/audit-events`; cuando se
  * publique, este tipo se reemplaza por el de contract.ts.
  */
 export interface EventoTrazabilidad {

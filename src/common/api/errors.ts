@@ -24,24 +24,43 @@ export class ApiError extends Error {
 const UNAVAILABLE = 'El servicio no está disponible en este momento. Inténtelo más tarde.';
 
 /**
- * Mensajes por `codigo` del catálogo del backend (ADR-006 y shared/errors).
+ * Mensajes por `code` del contrato final y por sus alias transitorios (ADR-006/ADR-011).
  * La interfaz nunca muestra `title` ni `detail` del servidor.
  */
 export const messagesByCode: Readonly<Record<string, string>> = Object.freeze({
+  INVALID_CREDENTIALS: 'Correo o contraseña incorrectos.',
   CREDENCIALES_INVALIDAS: 'Correo o contraseña incorrectos.',
+  USER_INACTIVE: 'Su cuenta está inactiva. Comuníquese con la Mesa de Ayuda TI.',
   USUARIO_INACTIVO: 'Su cuenta está inactiva. Comuníquese con la Mesa de Ayuda TI.',
+  USER_WITHOUT_ROLE: 'Su cuenta no tiene un rol asignado. Solicite acceso a la Mesa de Ayuda TI.',
   USUARIO_SIN_ROL: 'Su cuenta no tiene un rol asignado. Solicite acceso a la Mesa de Ayuda TI.',
+  SESSION_MISSING: 'Inicie sesión para continuar.',
   SESION_AUSENTE: 'Inicie sesión para continuar.',
+  SESSION_EXPIRED: 'Su sesión expiró. Inicie sesión nuevamente.',
   SESION_EXPIRADA: 'Su sesión expiró. Inicie sesión nuevamente.',
+  SESSION_INVALID: 'Su sesión ya no es válida. Inicie sesión nuevamente.',
   SESION_INVALIDA: 'Su sesión ya no es válida. Inicie sesión nuevamente.',
+  UNAUTHENTICATED: 'Su sesión ha expirado. Inicie sesión nuevamente.',
   NO_AUTENTICADO: 'Su sesión ha expirado. Inicie sesión nuevamente.',
+  TOO_MANY_REQUESTS: 'Demasiados intentos. Espere unos minutos antes de volver a intentar.',
   DEMASIADOS_INTENTOS: 'Demasiados intentos. Espere unos minutos antes de volver a intentar.',
+  FORBIDDEN: 'No tiene permiso para realizar esta acción.',
   ACCESO_DENEGADO: 'No tiene permiso para realizar esta acción.',
+  VALIDATION_FAILED: 'Revise los campos indicados.',
   VALIDACION_FALLIDA: 'Revise los campos indicados.',
+  MALFORMED_REQUEST: 'La solicitud no pudo procesarse. Recargue la página e inténtelo de nuevo.',
   SOLICITUD_MALFORMADA: 'La solicitud no pudo procesarse. Recargue la página e inténtelo de nuevo.',
+  NOT_FOUND: 'El recurso solicitado no está disponible.',
   RECURSO_NO_ENCONTRADO: 'El recurso solicitado no está disponible.',
+  SERVICE_UNAVAILABLE: UNAVAILABLE,
   SERVICIO_NO_DISPONIBLE: UNAVAILABLE,
+  DEPENDENCY_UNAVAILABLE: UNAVAILABLE,
   DEPENDENCIA_NO_DISPONIBLE: UNAVAILABLE,
+  CONFLICT: 'La información cambió o entra en conflicto. Actualice la página e inténtelo de nuevo.',
+  INVALID_TRANSITION: 'El movimiento solicitado no está permitido en el estado actual.',
+  IMMUTABLE_VERSION: 'Esta versión ya no puede modificarse.',
+  NO_VALID_TEMPLATE_VERSION: 'No existe una plantilla vigente para este expediente.',
+  INTERNAL_ERROR: UNAVAILABLE,
   ERROR_INTERNO: UNAVAILABLE,
 });
 

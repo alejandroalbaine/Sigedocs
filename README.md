@@ -7,15 +7,19 @@ repositorio no contiene servidor ni acceso a base de datos.
 
 ## Estado
 
-| Módulo                    | Estado                                                                     |
-| ------------------------- | -------------------------------------------------------------------------- |
-| Acceso, sesión y permisos | Integrado con el backend real (`/api/v1/sessions`, `/users/current`).      |
-| Panel principal           | Estructura completa; métricas en cero hasta que exista su contrato.        |
-| Revisión de expediente    | Checklist y dictamen navegables; no envía decisiones.                      |
-| Registro de observaciones | Formulario deshabilitado hasta que el backend publique la ruta.            |
-| Historial y trazabilidad  | Filtros, orden y detalle listos; sin eventos hasta que exista el contrato. |
+| Módulo                    | Estado                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------- |
+| Acceso, sesión y permisos | Integrado con el backend real (`/api/v1/sessions`, `/users/current`).             |
+| Panel principal           | Indicadores y actividad alimentados por expedientes autorizados.                  |
+| Gestión y búsqueda        | Integradas con `GET /api/v1/dossiers` y alcance por rol.                          |
+| Registro de expediente    | Integrado con `POST /api/v1/dossiers`; código, versión y estado son del servidor. |
+| Revisión de expediente    | Estructura visual lista; decisiones deshabilitadas hasta integrar transiciones.   |
+| Registro de observaciones | Contrato conocido; escritura deshabilitada hasta implementar la ruta.             |
+| Historial y trazabilidad  | Filtros y detalle listos; espera la ruta de auditoría documental.                 |
+| Reportes y UI Kit         | Exportación local CSV/JSON activa; PDF/Excel oficial espera una ruta del backend. |
 
-Ninguna pantalla muestra datos inventados ni presenta como guardada una operación que no se envió.
+Los cinco expedientes locales usados para revisión son datos de desarrollo en PostgreSQL, no
+constantes del frontend. Ninguna pantalla presenta como guardada una operación que no se envió.
 
 ## Tecnologías
 
@@ -78,7 +82,8 @@ src/
 │   ├── revision/
 │   └── trazabilidad/
 ├── pages/         Una carpeta por ruta: Página.tsx, su CSS y su test
-│   ├── Login/  Dashboard/  Revision/  Observaciones/  Historial/  NotFound/
+│   ├── Login/ Dashboard/ Gestion/ Registro/ Busqueda/ Reportes/ UiKit/
+│   ├── Revision/ Observaciones/ Historial/ NotFound/ documental/
 │   └── layout/    AppLayout, navegación por permisos, menú de perfil y page.module.css
 ├── router.tsx     Rutas (router.test.tsx prueba redirecciones y sesión)
 └── main.tsx
@@ -93,6 +98,8 @@ El contrato lo define el backend (ADR-009); la fuente son `SIGESDOC_BACKEND/docs
 refleja y **valida cada respuesta**: si el backend cambia la forma de un recurso, la interfaz
 muestra "respuesta no válida" en lugar de fallar en silencio. Detalles de sesión, CORS,
 errores y permisos en [docs/integracion-api.md](docs/integracion-api.md).
+La última comparación formal con los archivos entregados está en
+[docs/cumplimiento-contratos.md](docs/cumplimiento-contratos.md).
 
 ## Seguridad
 

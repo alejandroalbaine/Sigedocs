@@ -1,7 +1,8 @@
 /**
  * Contrato de la API de SIGESDOC_BACKEND tal como lo publica (ADR-005, ADR-009).
  * La fuente es el backend: estos tipos y sus validadores lo reflejan, no lo definen.
- * Las propiedades de dominio van en inglés camelCase; los errores usan `codigo` y `errores`.
+ * El contrato final usa inglés camelCase (`code`, `errors`, `meta.pagination`). Mientras REF-02
+ * termina en backend, los validadores aceptan también los alias anteriores documentados.
  */
 
 /** Identidad pública del usuario autenticado. `permissions` son códigos `modulo.accion`. */
@@ -39,14 +40,14 @@ export interface StatusResponse {
   status: string;
 }
 
-/** `GET /api/v1/roles`. */
+/** `GET /api/v1/roles`. Los alias antiguos se aceptan mientras termina REF-02. */
 export interface Role {
-  rolId: string;
-  codigo: string;
-  nombre: string;
+  roleId: string;
+  code: string;
+  name: string;
 }
 
-/** Error de campo dentro de un Problem Details `VALIDACION_FALLIDA`. */
+/** Error de campo dentro de un Problem Details `VALIDATION_FAILED`. */
 export interface FieldError {
   field: string;
   code: string;
@@ -118,28 +119,36 @@ export function parseRoles(data: unknown): Role[] {
   return data.map((item, index) => {
     const role = record(item, `roles[${index}]`);
     return {
-      rolId: text(role.rolId, 'rolId'),
-      codigo: text(role.codigo, 'codigo'),
-      nombre: text(role.nombre, 'nombre'),
+      roleId: text(role.roleId ?? role.rolId, 'roleId'),
+      code: text(role.code ?? role.codigo, 'code'),
+      name: text(role.name ?? role.nombre, 'name'),
     };
   });
 }
 
 export function parseFieldErrors(value: unknown): FieldError[] {
   if (!Array.isArray(value)) return [];
-  return value
-    .filter(isRecord)
-    .flatMap((error) =>
-      typeof error.campo === 'string'
-        ? [{ field: error.campo, code: typeof error.codigo === 'string' ? error.codigo : '' }]
-        : [],
-    );
+  return value.filter(isRecord).flatMap((error) =>
+    typeof (error.field ?? error.campo) === 'string'
+      ? [
+          {
+            field: (error.field ?? error.campo) as string,
+            code:
+              typeof (error.code ?? error.codigo) === 'string'
+                ? ((error.code ?? error.codigo) as string)
+                : '',
+          },
+        ]
+      : [],
+  );
 }
 
 export function problemCode(problem: unknown): string {
-  return isRecord(problem) && typeof problem.codigo === 'string' ? problem.codigo : '';
+  if (!isRecord(problem)) return '';
+  const code = problem.code ?? problem.codigo;
+  return typeof code === 'string' ? code : '';
 }
 
 export function problemFieldErrors(problem: unknown): FieldError[] {
-  return isRecord(problem) ? parseFieldErrors(problem.errores) : [];
+  return isRecord(problem) ? parseFieldErrors(problem.errors ?? problem.errores) : [];
 }

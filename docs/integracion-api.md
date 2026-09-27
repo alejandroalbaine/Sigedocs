@@ -13,8 +13,10 @@
 | Identidad actual    | `GET /api/v1/users/current`       | `parseCurrentUser`   |
 | Cerrar sesión       | `DELETE /api/v1/sessions/current` | `204 No Content`     |
 | Nombres de rol      | `GET /api/v1/roles`               | `parseRoles`         |
+| Listar expedientes  | `GET /api/v1/dossiers`            | `Dossier[]`          |
+| Crear expediente    | `POST /api/v1/dossiers`           | `Dossier`            |
 
-Las respuestas exitosas se leen desde `data`; `meta` se ignora. Cada operación declara su
+Las respuestas exitosas se leen desde `data`; las colecciones normalizan `meta.pagination`. Cada operación declara su
 validador en `src/common/api/client.ts`. Si la respuesta no cumple el contrato, el cliente
 lanza `ApiError` con "respuesta no válida" y registra en consola qué campo falló.
 
@@ -33,7 +35,8 @@ interface SessionUser {
 
 - Login: `data = { sessionState, expiresAt, user }`.
 - Identidad actual: `data = { user }`.
-- Los nombres legibles de rol salen de `GET /api/v1/roles` (`codigo → nombre`). Si esa
+- Los nombres legibles de rol salen de `GET /api/v1/roles` (`code → name`). Durante REF-02 se
+  aceptan también `codigo → nombre`. Si esa
   consulta falla, se muestran los códigos.
 
 ## Configuración por entorno
@@ -62,7 +65,8 @@ pasar a `SameSite=None` con HTTPS.
 ## Errores
 
 Los errores llegan como Problem Details (`application/problem+json`). La interfaz decide por
-`codigo` y nunca muestra `title` ni `detail`. Catálogo cubierto en `src/common/api/errors.ts`:
+`code` y nunca muestra `title` ni `detail`. Mientras concluye REF-02 acepta el alias documentado
+`codigo`. Catálogo cubierto en `src/common/api/errors.ts`:
 
 - Acceso: `CREDENCIALES_INVALIDAS`, `USUARIO_INACTIVO`, `USUARIO_SIN_ROL` (403).
 - Sesión (ADR-006): `SESION_AUSENTE`, `SESION_EXPIRADA`, `SESION_INVALIDA`, `NO_AUTENTICADO`.
@@ -70,8 +74,9 @@ Los errores llegan como Problem Details (`application/problem+json`). La interfa
   `DEMASIADOS_INTENTOS`, `RECURSO_NO_ENCONTRADO`.
 - Disponibilidad: `SERVICIO_NO_DISPONIBLE`, `DEPENDENCIA_NO_DISPONIBLE`, `ERROR_INTERNO`.
 
-Un código desconocido usa un mensaje genérico según el estado HTTP. Con `VALIDACION_FALLIDA`,
-los campos de `errores` se marcan con `aria-invalid`. El cliente espera como máximo diez segundos
+Un código desconocido usa un mensaje genérico según el estado HTTP. Con `VALIDATION_FAILED`,
+los campos de `errors` se marcan con `aria-invalid`; también se aceptan temporalmente
+`VALIDACION_FALLIDA` y `errores`. El cliente espera como máximo diez segundos
 y no reintenta.
 
 Un 401 al verificar la sesión deja la interfaz sin sesión y `RequireSession` vuelve a `/login`
@@ -80,31 +85,30 @@ error con opción de reintentar, sin confundirlo con falta de sesión.
 
 ## Permisos
 
-El catálogo de la migración `002_seguridad_base` está tipado en
-`src/common/auth/permissions.ts`. Correspondencia **provisional** opción → permiso, pendiente
-de la matriz oficial (ADR-010 del backend):
+El catálogo está tipado en `src/common/auth/permissions.ts`. La interfaz usa los códigos finales
+en inglés y reconoce los alias anteriores únicamente durante REF-02:
 
-| Opción                                 | Permiso                 |
-| -------------------------------------- | ----------------------- |
-| Gestión documental · Búsqueda avanzada | `expedientes.consultar` |
-| Registrar documento                    | `expedientes.crear`     |
-| Detalle y revisión                     | `expedientes.aprobar`   |
-| Observaciones                          | `expedientes.editar`    |
-| Historial y trazabilidad · Reportes    | `auditoria.consultar`   |
+| Opción                                 | Permiso                      |
+| -------------------------------------- | ---------------------------- |
+| Gestión documental · Búsqueda avanzada | `dossiers.read`              |
+| Registrar documento                    | `dossiers.create`            |
+| Detalle y revisión                     | `workflow.approve_for_pilot` |
+| Observaciones                          | `observations.create`        |
+| Historial y trazabilidad · Reportes    | `audit.read`                 |
 
 La navegación está en `src/pages/layout/navigation.ts`. Ocultar opciones no es control de
 acceso: el backend autoriza cada operación.
 
 ## Módulos sin contrato implementado
 
-`endpoints.md` del backend lista las rutas de expedientes, observaciones, transiciones y
-eventos de auditoría, pero los módulos todavía no están implementados. Mientras tanto:
+`endpoints.md` confirma las rutas de observaciones, transiciones y auditoría, pero el backend
+ejecutable revisado todavía no las expone. Sí expone `GET/POST /api/v1/dossiers`. Mientras tanto:
 
-- el panel muestra ceros y estados vacíos;
+- el panel usa los expedientes reales accesibles y muestra ceros solo si la colección viene vacía;
 - observaciones no permite enviar el formulario;
-- historial no muestra eventos (`GET /api/v1/expedientes/{id}/eventos-de-auditoria`);
+- historial no muestra eventos (`GET /api/v1/dossiers/{dossierId}/audit-events`);
 - revisión permite recorrer el checklist, pero no declara que guardó decisiones
-  (`POST /api/v1/expedientes/{id}/transiciones`).
+  (`POST /api/v1/dossiers/{dossierId}/transitions`).
 
 Para habilitar cada uno: agregar la ruta y su validador al cliente, copiar la respuesta real a
 `src/test/backend.ts`, cubrirla con pruebas y recién entonces conectar la pantalla.

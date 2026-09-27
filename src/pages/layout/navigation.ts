@@ -1,8 +1,20 @@
 import { hasPermission, type Permission } from '../../common/auth/permissions.ts';
+import {
+  BarChart3,
+  BookOpenCheck,
+  ClipboardCheck,
+  FileClock,
+  FilePlus2,
+  FolderKanban,
+  LayoutDashboard,
+  MessageSquareText,
+  SearchCheck,
+  type LucideIcon,
+} from 'lucide-react';
 
 export interface NavItem {
   label: string;
-  icon: string;
+  icon: LucideIcon;
   /** Sin ruta: el módulo existe en el catálogo pero el backend aún no publica su contrato. */
   to?: string;
   /** Sin permiso: visible para cualquier usuario autenticado. */
@@ -14,19 +26,55 @@ export interface NavItem {
  * matriz oficial (ADR-010 del backend).
  */
 export const NAVIGATION: readonly NavItem[] = [
-  { label: 'Panel principal', icon: '⌂', to: '/' },
-  { label: 'Gestión documental', icon: '▣', permission: 'expedientes.consultar' },
-  { label: 'Registrar documento', icon: '＋', permission: 'expedientes.crear' },
-  { label: 'Búsqueda avanzada', icon: '⌕', permission: 'expedientes.consultar' },
-  { label: 'Detalle y revisión', icon: '▤', to: '/revision', permission: 'expedientes.aprobar' },
-  { label: 'Observaciones', icon: '✎', to: '/observaciones', permission: 'expedientes.editar' },
+  { label: 'Panel principal', icon: LayoutDashboard, to: '/' },
+  {
+    label: 'Gestión documental',
+    icon: FolderKanban,
+    to: '/expedientes',
+    permission: 'dossiers.read',
+  },
+  {
+    label: 'Registrar documento',
+    icon: FilePlus2,
+    to: '/expedientes/nuevo',
+    permission: 'dossiers.create',
+  },
+  {
+    label: 'Búsqueda avanzada',
+    icon: SearchCheck,
+    to: '/busqueda',
+    permission: 'dossiers.read',
+  },
+  {
+    label: 'Detalle y revisión',
+    icon: ClipboardCheck,
+    to: '/revision',
+    permission: 'dossiers.read',
+  },
+  {
+    label: 'Observaciones',
+    icon: MessageSquareText,
+    to: '/observaciones',
+    permission: 'observations.create',
+  },
   {
     label: 'Historial y trazabilidad',
-    icon: '◷',
+    icon: FileClock,
     to: '/historial',
-    permission: 'auditoria.consultar',
+    permission: 'audit.read',
   },
-  { label: 'Reportes y estadísticas', icon: '▥', permission: 'auditoria.consultar' },
+  {
+    label: 'Reportes y estadísticas',
+    icon: BarChart3,
+    to: '/reportes',
+    permission: 'audit.read',
+  },
+  {
+    label: 'Biblioteca UI Kit',
+    icon: BookOpenCheck,
+    to: '/ui-kit',
+    permission: 'templates.manage',
+  },
 ];
 
 export function visibleNavigation(permissions: readonly string[]): NavItem[] {

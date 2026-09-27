@@ -6,6 +6,7 @@ import styles from './LoginForm.module.css';
  * contraseña: es el valor de SEED_PASSWORD del backend.
  */
 const CUENTAS = [
+  ['admin.integral@uapa.edu.do', 'Administrador Integral (todas las funciones)'],
   ['admin.sistema@uapa.edu.do', 'Admin del Sistema'],
   ['dir.curricular@uapa.edu.do', 'Dir. Gestión Curricular'],
   ['especialista.curricular@uapa.edu.do', 'Especialista Curricular'],

@@ -12,7 +12,7 @@ export type AccionRevision = 'borrador' | 'correccion' | 'rechazo' | 'aprobacion
 
 /**
  * Mismas reglas que legacy/revision.js. Ninguna acción se envía: el backend aún no publica
- * `POST /api/v1/expedientes/{id}/transiciones` (endpoints.md, "Propuesto").
+ * `POST /api/v1/dossiers/{dossierId}/transitions` cuando backend implemente esa ruta confirmada.
  */
 export function validarAccion(
   accion: AccionRevision,

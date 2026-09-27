@@ -1,4 +1,5 @@
 import { useRef, useState, type SubmitEvent } from 'react';
+import { LockKeyhole, Mail } from 'lucide-react';
 import { useApi } from '../../../common/api/ApiContext.ts';
 import type { SessionUser } from '../../../common/api/contract.ts';
 import { ApiError, errorMessage } from '../../../common/api/errors.ts';
@@ -94,7 +95,7 @@ export function LoginForm({ onSuccess, onForgotPassword }: LoginFormProps) {
         type="email"
         inputMode="email"
         autoComplete="username"
-        icon="@"
+        icon={<Mail size={22} />}
         help="Utilice su cuenta institucional @uapa.edu.do."
         value={email}
         onChange={(event) => {
@@ -111,7 +112,7 @@ export function LoginForm({ onSuccess, onForgotPassword }: LoginFormProps) {
         name="password"
         type={showPassword ? 'text' : 'password'}
         autoComplete="current-password"
-        icon="▣"
+        icon={<LockKeyhole size={21} />}
         value={password}
         onChange={(event) => {
           setPassword(event.target.value);
