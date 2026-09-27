@@ -55,25 +55,26 @@ export function resumirChecklist(resultados: readonly ResultadoCriterio[]) {
 }
 
 /** Decisiones del especialista según ADR-014: devolver (T3/T7) o aprobar para pilotaje (T4/T8). */
-export type AccionRevision = 'borrador' | 'devolver' | 'aprobar';
+export type AccionRevision = 'devolver' | 'aprobar';
+
+/** Códigos de transición de ADR-014 §3 que corresponden a cada decisión técnica. */
+export const TRANSICIONES_DECISION: Readonly<Record<AccionRevision, readonly string[]>> = {
+  devolver: ['REQUEST_CHANGES', 'REQUEST_CHANGES_AGAIN'],
+  aprobar: ['APPROVE_FOR_PILOT', 'APPROVE_FOR_PILOT_AFTER_REEVALUATION'],
+};
+
+export const CODIGOS_DECISION: readonly string[] = Object.values(TRANSICIONES_DECISION).flat();
 
 /**
- * Reglas REG-01 y REG-06 del Informe Módulo II. Ninguna acción se envía todavía: el backend no
- * implementa `POST /api/v1/dossiers/{dossierId}/transitions` (contrato confirmado, ADR-014 §4).
+ * Reglas REG-01 y REG-06 del Informe Módulo II. Devuelve el error que impide la decisión o
+ * `null` si puede enviarse; el servidor vuelve a validar la transición (REG-05).
  */
 export function validarAccion(
   accion: AccionRevision,
   observaciones: string,
   resultados: readonly ResultadoCriterio[],
-): { kind: AlertKind; texto: string } {
+): { kind: AlertKind; texto: string } | null {
   const { completo, noCumple } = resumirChecklist(resultados);
-  if (accion === 'borrador') {
-    return {
-      kind: 'info',
-      texto:
-        'El borrador se conserva solo en esta pantalla hasta que exista la ruta de revisiones.',
-    };
-  }
   if (accion === 'devolver') {
     if (noCumple === 0) {
       return {
@@ -87,21 +88,32 @@ export function validarAccion(
         texto: 'La devolución exige observaciones que expliquen cada incumplimiento.',
       };
     }
+    return null;
   }
-  if (accion === 'aprobar') {
-    if (!completo) {
-      return { kind: 'error', texto: 'Evalúe todos los criterios antes de aprobar.' };
-    }
-    if (noCumple > 0) {
-      return {
-        kind: 'error',
-        texto: 'Hay criterios obligatorios en "No cumple": la aprobación queda bloqueada (REG-06).',
-      };
-    }
+  if (!completo) {
+    return { kind: 'error', texto: 'Evalúe todos los criterios antes de aprobar.' };
   }
-  return {
-    kind: 'info',
-    texto:
-      'La decisión no se envió: el backend todavía no implementa la ruta de transiciones del flujo.',
-  };
+  if (noCumple > 0) {
+    return {
+      kind: 'error',
+      texto: 'Hay criterios obligatorios en "No cumple": la aprobación queda bloqueada (REG-06).',
+    };
+  }
+  return null;
+}
+
+/**
+ * El contrato MVP no tiene ruta propia para los resultados del checklist; se conservan en la
+ * observación de la transición para que queden en el historial del expediente.
+ */
+export function componerObservacion(
+  resultados: readonly ResultadoCriterio[],
+  observaciones: string,
+): string {
+  const lineas = CRITERIOS.map((criterio, indice) => {
+    const resultado = OPCIONES_RESULTADO.find((opcion) => opcion.valor === resultados[indice]);
+    return `- ${criterio.texto}: ${resultado?.etiqueta ?? 'Sin evaluar'}`;
+  });
+  const texto = observaciones.trim();
+  return [`Checklist técnico-curricular:`, ...lineas, ...(texto ? ['', texto] : [])].join('\n');
 }

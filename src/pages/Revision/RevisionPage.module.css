@@ -387,6 +387,24 @@
   font-weight: 700;
 }
 
+.subheading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 24px 0 12px;
+  color: var(--institutional-navy);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.flow-block {
+  margin-top: 8px;
+}
+
+.preserve {
+  white-space: pre-line;
+}
+
 .loading {
   padding: 48px;
   color: var(--institutional-muted);

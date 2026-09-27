@@ -1,27 +1,48 @@
-import { useEffect, useState } from 'react';
-import { domainRequest } from '../../common/api/domainClient.ts';
+import { useCallback, useEffect, useState } from 'react';
+import { dossiersApi } from '../../common/api/dossiers.ts';
 import { errorMessage } from '../../common/api/errors.ts';
 import type { Dossier } from './types.ts';
 
+interface Resultado {
+  clave: string;
+  items: Dossier[];
+  error: string;
+}
+
+/** Expedientes visibles para el usuario (`GET /dossiers`), validados contra el contrato. */
 export function useDossiers(query = '') {
-  const [items, setItems] = useState<Dossier[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [version, setVersion] = useState(0);
+  const clave = `${query}#${String(version)}`;
+  const [resultado, setResultado] = useState<Resultado>({ clave: '', items: [], error: '' });
+
   useEffect(() => {
     let active = true;
-    domainRequest<Dossier[]>(`/dossiers?limit=25${query}`)
+    dossiersApi
+      .list(query)
       .then(({ data }) => {
-        if (active) setItems(data);
+        if (active) setResultado({ clave, items: data, error: '' });
       })
       .catch((reason: unknown) => {
-        if (active) setError(errorMessage(reason, 'No fue posible consultar los expedientes.'));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+        if (active) {
+          setResultado((actual) => ({
+            clave,
+            items: actual.items,
+            error: errorMessage(reason, 'No fue posible consultar los expedientes.'),
+          }));
+        }
       });
     return () => {
       active = false;
     };
-  }, [query]);
-  return { items, loading, error };
+  }, [query, clave]);
+
+  const reload = useCallback(() => {
+    setVersion((current) => current + 1);
+  }, []);
+  return {
+    items: resultado.items,
+    loading: resultado.clave !== clave,
+    error: resultado.error,
+    reload,
+  };
 }

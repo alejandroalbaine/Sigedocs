@@ -155,7 +155,7 @@ export function LoginForm({ onSuccess, onForgotPassword }: LoginFormProps) {
         </Button>
       </div>
 
-      <Button type="submit" fullWidth loading={enviando}>
+      <Button type="submit" variant="accent" fullWidth loading={enviando}>
         <span>{enviando ? 'Verificando credenciales…' : 'Iniciar sesión segura'}</span>
         {!enviando && (
           <span className={styles.arrow} aria-hidden="true">

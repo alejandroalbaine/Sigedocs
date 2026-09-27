@@ -7,19 +7,26 @@ repositorio no contiene servidor ni acceso a base de datos.
 
 ## Estado
 
-| Módulo                    | Estado                                                                            |
-| ------------------------- | --------------------------------------------------------------------------------- |
-| Acceso, sesión y permisos | Integrado con el backend real (`/api/v1/sessions`, `/users/current`).             |
-| Panel principal           | Indicadores y actividad alimentados por expedientes autorizados.                  |
-| Gestión y búsqueda        | Integradas con `GET /api/v1/dossiers` y alcance por rol.                          |
-| Registro de expediente    | Integrado con `POST /api/v1/dossiers`; código, versión y estado son del servidor. |
-| Revisión de expediente    | Estructura visual lista; decisiones deshabilitadas hasta integrar transiciones.   |
-| Registro de observaciones | Contrato conocido; escritura deshabilitada hasta implementar la ruta.             |
-| Historial y trazabilidad  | Filtros y detalle listos; espera la ruta de auditoría documental.                 |
-| Reportes y UI Kit         | Exportación local CSV/JSON activa; PDF/Excel oficial espera una ruta del backend. |
+El frontend implementa el contrato MVP completo (`contratos/endpoints.md` §1–§9). Cada pantalla
+funciona en cuanto el backend publica su ruta; mientras una ruta confirmada no exista, la pantalla
+lo indica como "pendiente" y nunca muestra datos simulados. Lo que falta del lado del servidor está
+en [docs/pendientes-backend.md](docs/pendientes-backend.md).
 
-Los cinco expedientes locales usados para revisión son datos de desarrollo en PostgreSQL, no
-constantes del frontend. Ninguna pantalla presenta como guardada una operación que no se envió.
+| Módulo                    | Rutas del contrato                                             | Backend `develop` (27/09) |
+| ------------------------- | -------------------------------------------------------------- | ------------------------- |
+| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...` | Implementado              |
+| Panel, gestión y búsqueda | `GET /dossiers`                                                | Pendiente (DOS-01)        |
+| Registro de expediente    | `POST /dossiers`                                               | Pendiente (DOS-01)        |
+| Detalle y revisión        | `GET /dossiers/{id}`, `/versions`, `/available-transitions`    | Pendiente (DOS-02, WF-01) |
+| Decisiones y flujo        | `POST /dossiers/{id}/transitions`                              | Pendiente (WF-02)         |
+| Asignación                | `GET /users`, `POST /dossiers/{id}/assignments`                | Pendiente (WF-03)         |
+| Observaciones             | `GET/POST /dossiers/{id}/observations`                         | Pendiente (WF-04)         |
+| Historial y trazabilidad  | `GET /dossiers/{id}/transitions`, `/audit-events`              | Pendiente (AUD-01)        |
+| Reportes y Biblioteca UI  | Se calculan con `GET /dossiers`; exportación CSV/JSON local    | Pendiente (DOS-01)        |
+
+Los expedientes que aparecen en capturas o videos anteriores provenían de un modo de prueba: el
+backend todavía no expone `/dossiers`. Ninguna pantalla presenta como guardada una operación que
+no se envió.
 
 ## Tecnologías
 

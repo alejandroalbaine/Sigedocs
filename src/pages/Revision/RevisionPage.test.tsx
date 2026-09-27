@@ -1,10 +1,12 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
+  adminIntegral,
   adminSistema,
   dossier,
   especialista,
   signedInBackend,
+  stubApi,
   stubDossiers,
 } from '../../test/backend.ts';
 import { renderApp } from '../../test/renderApp.tsx';
@@ -70,7 +72,7 @@ test('la aprobación exige todos los criterios y se bloquea con un "No cumple" (
 
   await marcar(0, 'Cumple');
   await userEvent.click(aprobar);
-  expect(screen.getByText(/La decisión no se envió/)).toBeInTheDocument();
+  expect(screen.getByText(/no se envió/)).toBeInTheDocument();
 });
 
 test('devolver exige un incumplimiento y observaciones (REG-01)', async () => {
@@ -87,7 +89,7 @@ test('devolver exige un incumplimiento y observaciones (REG-01)', async () => {
 
   await userEvent.type(screen.getByLabelText('Observaciones del revisor'), 'Faltan competencias.');
   await userEvent.click(devolver);
-  expect(screen.getByText(/La decisión no se envió/)).toBeInTheDocument();
+  expect(screen.getByText(/no se envió/)).toBeInTheDocument();
 });
 
 test('un rol de solo consulta no ve decisiones técnicas', async () => {
@@ -104,4 +106,88 @@ test('fuera de revisión las decisiones y el checklist quedan deshabilitados', a
   const criterios = screen.getAllByRole('group', { name: /Contrastar con/ });
   expect(criterios).toHaveLength(5);
   for (const grupo of criterios) expect(grupo).toBeDisabled();
+});
+
+test('con la ruta publicada, devolver envía la transición del contrato', async () => {
+  const llamadas = stubApi({
+    'GET /api/v1/dossiers': [enRevision],
+    [`GET /api/v1/dossiers/${enRevision.dossierId}/available-transitions`]: [
+      {
+        transitionId: 't3',
+        code: 'REQUEST_CHANGES',
+        name: 'Solicitar cambios',
+        toState: { code: 'CHANGES_REQUIRED', name: 'Requiere ajustes' },
+        requiresObservation: true,
+      },
+    ],
+    [`POST /api/v1/dossiers/${enRevision.dossierId}/transitions`]: {
+      historyId: 'h1',
+      fromState: { code: 'IN_REVIEW', name: 'En revisión' },
+      toState: { code: 'CHANGES_REQUIRED', name: 'Requiere ajustes' },
+      versionId: enRevision.currentVersion.versionId,
+      newVersionId: 'v2',
+      occurredAt: '2026-09-27T10:00:00.000Z',
+    },
+  });
+  renderApp(signedInBackend(especialista), '/revision');
+  const devolver = await screen.findByRole('button', { name: 'Devolver con observaciones' });
+  // El servidor no ofrece aprobar a este usuario: el botón no aparece.
+  expect(screen.queryByRole('button', { name: 'Aprobar para pilotaje' })).not.toBeInTheDocument();
+
+  await marcar(2, 'No cumple');
+  await userEvent.type(screen.getByLabelText('Observaciones del revisor'), 'Faltan competencias.');
+  await userEvent.click(devolver);
+
+  expect(
+    await screen.findByText(/Transición registrada: En revisión → Requiere ajustes/),
+  ).toBeVisible();
+  const envio = llamadas.find((llamada) => llamada.key.startsWith('POST'));
+  expect(envio?.body).toMatchObject({
+    transitionId: 't3',
+    versionId: enRevision.currentVersion.versionId,
+  });
+  expect((envio?.body as { observation: string }).observation).toMatch(
+    /Competencias fundamentales y específicas: No cumple[\s\S]*Faltan competencias\./,
+  );
+});
+
+test('la Dirección asigna el expediente a un especialista', async () => {
+  const recibido = dossier();
+  const llamadas = stubApi({
+    'GET /api/v1/dossiers': [recibido],
+    'GET /api/v1/users': [
+      { userId: 'esp-1', name: 'Especialista Curricular', roles: ['CURRICULUM_SPECIALIST'] },
+      { userId: 'vra-1', name: 'Vicerrectoría', roles: ['VRA'] },
+    ],
+    [`POST /api/v1/dossiers/${recibido.dossierId}/assignments`]: {
+      assignmentId: 'a1',
+      specialist: { userId: 'esp-1', name: 'Especialista Curricular' },
+      assignedBy: { userId: adminIntegral.userId, name: adminIntegral.name },
+      assignedAt: '2026-09-27T10:00:00.000Z',
+    },
+  });
+  renderApp(
+    signedInBackend({
+      ...adminIntegral,
+      permissions: [...adminIntegral.permissions, 'workflow.assign'],
+    }),
+    '/revision',
+  );
+  await userEvent.click(await screen.findByRole('button', { name: /6\. Workflow/ }));
+  const selector = await screen.findByLabelText('Especialista curricular');
+  expect(within(selector).queryByText('Vicerrectoría')).not.toBeInTheDocument();
+  await userEvent.selectOptions(selector, 'esp-1');
+  await userEvent.click(screen.getByRole('button', { name: 'Asignar' }));
+  expect(await screen.findByText('Expediente asignado a Especialista Curricular.')).toBeVisible();
+  expect(llamadas.find((llamada) => llamada.key.startsWith('POST'))?.body).toEqual({
+    specialistId: 'esp-1',
+  });
+});
+
+test('las pestañas con rutas no implementadas lo dicen sin inventar datos', async () => {
+  stubDossiers([enRevision]);
+  renderApp(signedInBackend(especialista), '/revision');
+  await userEvent.click(await screen.findByRole('button', { name: /5\. Versiones/ }));
+  expect(await screen.findByText(/GET \/dossiers\/\{id\}\/versions/)).toBeVisible();
+  expect(screen.getByText(/aún no la implementa/)).toBeVisible();
 });

@@ -202,7 +202,7 @@ export function DashboardPage() {
             <article className={styles.chartCard}>
               <header>
                 <div>
-                  <h2>Ingreso y Radicación Mensual de Documentos</h2>
+                  <h2>Expedientes registrados por mes</h2>
                   <p>Histórico calculado con los expedientes visibles en el backend.</p>
                 </div>
                 <div className={styles.legend}>
@@ -214,7 +214,7 @@ export function DashboardPage() {
                   </span>
                 </div>
               </header>
-              <div className={styles.barChart} aria-label="Radicación mensual">
+              <div className={styles.barChart} aria-label="Expedientes registrados por mes">
                 {monthly.map((item) => (
                   <div className={styles.barGroup} key={item.label}>
                     <div className={styles.bars}>

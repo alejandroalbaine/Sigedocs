@@ -157,8 +157,8 @@ export function AppLayout() {
             <Search size={16} aria-hidden="true" />
             <input
               type="search"
-              aria-label="Buscar por código, serie o descriptor"
-              placeholder="Buscar por código, serie o descriptor..."
+              aria-label="Buscar expedientes por código, título o asignatura"
+              placeholder="Buscar por código, título o asignatura..."
               value={busqueda}
               onChange={(event) => {
                 setBusqueda(event.target.value);

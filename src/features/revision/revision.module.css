@@ -126,3 +126,38 @@
   justify-content: flex-end;
   gap: var(--space-2);
 }
+
+.flow-actions {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.flow-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.flow-action > div {
+  display: grid;
+  gap: 2px;
+}
+
+.flow-hint {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.flow-observation {
+  grid-column: 1 / -1;
+  min-height: 72px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
