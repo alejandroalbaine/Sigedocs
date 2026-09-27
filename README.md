@@ -29,24 +29,49 @@ constantes del frontend. Ninguna pantalla presenta como guardada una operación 
 - Vitest + Testing Library.
 - ESLint, Stylelint y Prettier con la misma configuración que el backend.
 
-## Puesta en marcha
+## Inicio rápido
 
-Requisitos: Node.js 22 (ver `.nvmrc`) y el backend corriendo en local.
+Requisitos: Git, Node.js 22 (ver `.nvmrc`) y el backend ejecutándose en
+`http://localhost:3000`.
 
-1. En `SIGESDOC_BACKEND`, levante la API y la base de datos siguiendo su README. Para tener una
-   cuenta por rol, siembre los usuarios de prueba:
-   `SEED_PASSWORD=<clave> node database/scripts/usuarios-prueba.mjs`.
-   Su `.env` debe incluir `ALLOWED_ORIGINS=http://localhost:5173`.
-2. En este repositorio:
+1. Descargue y prepare el frontend:
 
-   ```bash
-   npm install
-   cp .env.example .env   # VITE_API_BASE_URL=http://localhost:3000
-   npm run dev
-   ```
+```bash
+git clone https://github.com/alejandroalbaine/Sigedocs.git
+cd Sigedocs
+git switch develop
+npm ci
+npm run setup
+npm run dev
+```
 
-3. Abra <http://localhost:5173>. En desarrollo, el login lista los correos de prueba; la
-   contraseña es el `SEED_PASSWORD` que usó al sembrarlos.
+2. Abra <http://localhost:5173>. El comando `setup` crea `.env` desde `.env.example` sin
+   sobrescribir una configuración existente.
+
+3. En `SIGESDOC_BACKEND`, levante la API y PostgreSQL siguiendo su README. Para tener cuentas de
+   prueba debe ejecutar su siembra con un `SEED_PASSWORD`. El backend debe permitir exactamente
+   `http://localhost:5173` en `ALLOWED_ORIGINS`.
+
+La aplicación puede abrir sin backend, pero el acceso y los datos reales necesitan la API. En
+desarrollo, el login lista los correos de prueba; la contraseña es el `SEED_PASSWORD` utilizado en
+el backend.
+
+### Opción con Docker
+
+Si ya tiene Docker Desktop, no necesita instalar Node.js en su computadora:
+
+```bash
+docker compose up --build
+```
+
+Abra <http://localhost:5173>. Para detenerlo:
+
+```bash
+docker compose down
+```
+
+Docker levanta únicamente el frontend. El backend continúa ejecutándose desde su propio
+repositorio en el puerto `3000`.
 
 En VS Code, `F5` levanta Vite y abre Chrome con el depurador conectado.
 
@@ -54,6 +79,7 @@ En VS Code, `F5` levanta Vite y abre Chrome con el depurador conectado.
 
 ```bash
 npm run dev           # Servidor de desarrollo
+npm run setup         # Crea .env desde la plantilla si todavía no existe
 npm run build         # Verificación de tipos y build de producción en dist/
 npm run preview       # Sirve dist/ localmente
 npm test              # Pruebas
@@ -61,9 +87,11 @@ npm run lint          # ESLint
 npm run lint:css      # Stylelint (rechaza colores fuera de tokens.css)
 npm run format        # Prettier
 npm run typecheck     # TypeScript
+npm run check         # Ejecuta todas las comprobaciones antes de un Pull Request
 ```
 
-El CI ejecuta lint, estilos, formato, tipos, pruebas y build en cada PR hacia `main`.
+El CI ejecuta lint, estilos, formato, tipos, pruebas y build en cada cambio dirigido a `develop` o
+`main`.
 
 ## Estructura
 
@@ -92,6 +120,8 @@ src/
 Las reglas (dónde va cada cosa, idioma, estilos) están en [CONTRIBUTING.md](CONTRIBUTING.md).
 El procedimiento sencillo para trabajar entre dos personas está en
 [docs/flujo-git-colaboracion.md](docs/flujo-git-colaboracion.md).
+La guía ampliada de instalación y solución de problemas está en
+[docs/puesta-en-marcha.md](docs/puesta-en-marcha.md).
 
 ## Contrato con el backend
 

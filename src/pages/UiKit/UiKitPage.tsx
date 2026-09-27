@@ -20,10 +20,7 @@ export function UiKitPage() {
   const [accordionState, setAccordionState] = useState({ open: false, version: 0 });
   const [modalOpen, setModalOpen] = useState(false);
   const [justification, setJustification] = useState('');
-  const sectionProps = (id: number) => ({
-    key: `${accordionState.version}-${id}`,
-    open: accordionState.open || undefined,
-  });
+  const sectionKey = (id: number) => `${accordionState.version}-${id}`;
   function exportTokens() {
     const computed = getComputedStyle(document.documentElement);
     const names = [
@@ -77,7 +74,11 @@ export function UiKitPage() {
         </div>
       </header>
 
-      <details className={styles.accordion} {...sectionProps(1)}>
+      <details
+        key={sectionKey(1)}
+        className={styles.accordion}
+        open={accordionState.open || undefined}
+      >
         <summary>
           <Layers3 size={19} />
           <span>
@@ -112,7 +113,11 @@ export function UiKitPage() {
         </div>
       </details>
 
-      <details className={styles.accordion} {...sectionProps(2)}>
+      <details
+        key={sectionKey(2)}
+        className={styles.accordion}
+        open={accordionState.open || undefined}
+      >
         <summary>
           <BadgeCheck size={19} />
           <span>
@@ -145,7 +150,11 @@ export function UiKitPage() {
         </div>
       </details>
 
-      <details className={styles.accordion} {...sectionProps(3)}>
+      <details
+        key={sectionKey(3)}
+        className={styles.accordion}
+        open={accordionState.open || undefined}
+      >
         <summary>
           <Archive size={19} />
           <span>
@@ -180,7 +189,11 @@ export function UiKitPage() {
         </div>
       </details>
 
-      <details className={styles.accordion} {...sectionProps(4)}>
+      <details
+        key={sectionKey(4)}
+        className={styles.accordion}
+        open={accordionState.open || undefined}
+      >
         <summary>
           <ShieldAlert size={19} />
           <span>
@@ -212,7 +225,11 @@ export function UiKitPage() {
         </div>
       </details>
 
-      <details className={styles.accordion} {...sectionProps(5)}>
+      <details
+        key={sectionKey(5)}
+        className={styles.accordion}
+        open={accordionState.open || undefined}
+      >
         <summary>
           <LockKeyhole size={19} />
           <span>
