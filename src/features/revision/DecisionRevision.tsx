@@ -1,21 +1,24 @@
 import { useState } from 'react';
-import { Alert, type AlertKind } from '../../common/components/Alert/Alert.tsx';
-import { Button } from '../../common/components/Button/Button.tsx';
-import { Field } from '../../common/components/Field/Field.tsx';
-import { validarAccion, type AccionRevision } from './reglas.ts';
+import { Alert, Button, Field, type AlertKind } from '../../common/components/index.ts';
+import { validarAccion, type AccionRevision, type ResultadoCriterio } from './reglas.ts';
 import styles from './revision.module.css';
 
-export interface DecisionRevisionProps {
-  /** Si todos los requisitos del checklist están verificados. */
-  checklistCompleto: boolean;
+interface DecisionRevisionProps {
+  resultados: readonly ResultadoCriterio[];
+  puedeDevolver: boolean;
+  puedeAprobar: boolean;
 }
 
-export function DecisionRevision({ checklistCompleto }: DecisionRevisionProps) {
+export function DecisionRevision({
+  resultados,
+  puedeDevolver,
+  puedeAprobar,
+}: DecisionRevisionProps) {
   const [observaciones, setObservaciones] = useState('');
   const [aviso, setAviso] = useState<{ kind: AlertKind; texto: string } | null>(null);
 
   function preparar(accion: AccionRevision) {
-    setAviso(validarAccion(accion, observaciones, checklistCompleto));
+    setAviso(validarAccion(accion, observaciones, resultados));
   }
 
   return (
@@ -25,7 +28,7 @@ export function DecisionRevision({ checklistCompleto }: DecisionRevisionProps) {
           <textarea
             {...control}
             value={observaciones}
-            placeholder="Escriba las observaciones encontradas durante la revisión…"
+            placeholder="Describa cada incumplimiento y la corrección esperada…"
             onChange={(event) => {
               setObservaciones(event.target.value);
             }}
@@ -45,32 +48,27 @@ export function DecisionRevision({ checklistCompleto }: DecisionRevisionProps) {
         >
           Guardar borrador
         </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            preparar('correccion');
-          }}
-        >
-          Solicitar corrección
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            preparar('rechazo');
-          }}
-        >
-          Rechazar
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => {
-            preparar('aprobacion');
-          }}
-        >
-          Aprobar revisión
-        </Button>
+        {puedeDevolver && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              preparar('devolver');
+            }}
+          >
+            Devolver con observaciones
+          </Button>
+        )}
+        {puedeAprobar && (
+          <Button
+            size="sm"
+            onClick={() => {
+              preparar('aprobar');
+            }}
+          >
+            Aprobar para pilotaje
+          </Button>
+        )}
       </div>
     </div>
   );
