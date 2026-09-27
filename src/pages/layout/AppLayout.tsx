@@ -101,9 +101,9 @@ export function AppLayout() {
 
         <footer className={styles.sidebarFooter}>
           <div className={styles.legalCard}>
-            <span>Marco jurídico</span>
-            <strong>Normativa Ley 481-08</strong>
-            <small>Versión v2.4.0 (AGN / UAPA)</small>
+            <span>Referencia normativa</span>
+            <strong>Ley General de Archivos 481-08</strong>
+            <small>SIGESDOC · MVP pregrado y grado</small>
           </div>
           <button
             type="button"
