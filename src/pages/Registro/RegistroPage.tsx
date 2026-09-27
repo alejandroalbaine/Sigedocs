@@ -27,8 +27,8 @@ const stepNames = [
   'Información General',
   'Clasificación & Alcance',
   'Archivo Digital',
-  'Retención y Control',
-  'Revisión y Firma',
+  'Retención',
+  'Confirmación',
 ];
 
 function loadDraft() {
@@ -146,23 +146,14 @@ export function RegistroPage() {
   return (
     <div className={styles.page}>
       <title>Registrar expediente | SIGESDOC</title>
-      <div className={styles.compliance}>
-        <span>
-          <ShieldCheck size={18} /> Módulo Oficial de Radicación Archivística
-        </span>
-        <span>
-          <span className={styles.badgeWarning}>Sesión Cifrada SHA-256</span>{' '}
-          <span className={styles.badge}>AGN v2.4</span>
-        </span>
-      </div>
       <header>
         <p className={`${styles.eyebrow} ${styles.eyebrowOrange}`}>
-          Gestión curricular institucional · Trámite generado por el servidor
+          Expediente Curricular Digital · CU-18
         </p>
-        <h1>Registro y Radicación de Expediente Documental</h1>
+        <h1>Registrar expediente curricular</h1>
         <p className={styles.subtle}>
-          Proceso oficial de cinco pasos conforme a la Ley 481-08. Solo se envían a la API los
-          campos aceptados por su contrato.
+          Asistente de cinco pasos. Solo se envían al servidor los campos que acepta su contrato: el
+          código, la versión 1.0 y el estado inicial los asigna el servidor.
         </p>
       </header>
 
@@ -299,7 +290,7 @@ export function RegistroPage() {
                   <FileText size={18} />{' '}
                   <strong>{file?.name ?? 'Documento principal pendiente'}</strong>
                 </span>
-                <span className={styles.badge}>PDF/A</span>
+                <span className={styles.badge}>PDF o Word</span>
               </header>
               <div className={styles.fileRow}>
                 <span className={styles.fileIcon}>
@@ -313,7 +304,7 @@ export function RegistroPage() {
                   </strong>
                   <small>
                     {fileHash
-                      ? `SHA-256 ${fileHash}…`
+                      ? `Huella local SHA-256 ${fileHash}…`
                       : 'La carga definitiva se habilitará con la ruta de archivos.'}
                   </small>
                 </span>
@@ -384,19 +375,10 @@ export function RegistroPage() {
                 </small>
               </div>
             </section>
-            <details className={styles.legalAccordion} open>
-              <summary>
-                <span>
-                  <ShieldCheck size={18} />{' '}
-                  <strong>Garantías Forenses y Protocolo Jurídico Ley 481-08</strong>
-                </span>
-                <span className={styles.badge}>3 normativas</span>
-              </summary>
-              <p>
-                La integridad local se verifica mediante hash. OCR, X.509 y sellado de tiempo
-                permanecerán identificados como pendientes hasta disponer de rutas oficiales.
-              </p>
-            </details>
+            <p className={styles.deferredNote}>
+              <ShieldCheck size={16} /> Gestión archivística diferida (Informe Módulo II, §5.1):
+              estos valores se conservan en el borrador y no se envían al servidor.
+            </p>
           </>
         )}
 

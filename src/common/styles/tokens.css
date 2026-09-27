@@ -82,6 +82,15 @@
   --chart-3: #d9a02d;
   --chart-4: #b42318;
   --chart-grid: #e2e7ef;
+
+  /* Grupos de estado del flujo (common/workflow/estados.ts, ADR-014) */
+  --state-reception: #082a63;
+  --state-review: #1296db;
+  --state-changes: #f58220;
+  --state-approval: #0b67b2;
+  --state-final: #1b7f5a;
+  --state-other: #788496;
+  --state-empty: #eaf4fc;
   --chart-text: #788496;
 
   /* Transparencias */

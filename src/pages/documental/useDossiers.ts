@@ -5,10 +5,9 @@ import type { Dossier } from './types.ts';
 
 export function useDossiers(query = '') {
   const [items, setItems] = useState<Dossier[]>([]);
-  const [loading, setLoading] = useState(import.meta.env.MODE !== 'test');
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
-    if (import.meta.env.MODE === 'test') return;
     let active = true;
     domainRequest<Dossier[]>(`/dossiers?limit=25${query}`)
       .then(({ data }) => {

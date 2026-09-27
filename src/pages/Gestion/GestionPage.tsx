@@ -1,24 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import {
-  Download,
-  FileArchive,
-  FilePlus2,
-  RefreshCw,
-  ShieldCheck,
-  SlidersHorizontal,
-} from 'lucide-react';
+import { Download, FileArchive, FilePlus2, SlidersHorizontal } from 'lucide-react';
 import { useCurrentUser } from '../../common/auth/SessionContext.ts';
 import { hasPermission } from '../../common/auth/permissions.ts';
 import { downloadCsv } from '../../common/utils/download.ts';
 import { useDossiers } from '../documental/useDossiers.ts';
+import { claseEstado } from '../documental/estadoBadge.ts';
 import styles from '../documental/documental.module.css';
 
-function estadoClase(codigo: string) {
-  if (codigo === 'FINAL' || codigo.includes('APPROVED')) return styles.badgeSuccess;
-  if (codigo.includes('REVIEW')) return styles.badgeWarning;
-  return '';
-}
+const PAGE_SIZE = 10;
 
 export function GestionPage() {
   const user = useCurrentUser();
@@ -50,6 +40,11 @@ export function GestionPage() {
   ];
   const units = [...new Set(items.map((item) => item.schoolCode))].sort();
   const activeFilters = Number(Boolean(stateFilter)) + Number(Boolean(unitFilter));
+  const [page, setPage] = useState(1);
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const firstIndex = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = visible.slice(firstIndex, firstIndex + PAGE_SIZE);
 
   function toggle(id: string) {
     setSelected((current) => {
@@ -63,13 +58,25 @@ export function GestionPage() {
   function exportDossiers() {
     downloadCsv(
       'sigesdoc-expedientes.csv',
-      ['Código', 'Título', 'Serie', 'Unidad', 'Asignatura', 'Estado', 'Creado'],
+      [
+        'Código',
+        'Título',
+        'Programa',
+        'Unidad',
+        'Asignatura',
+        'Responsable',
+        'Versión',
+        'Estado',
+        'Creado',
+      ],
       visible.map((item) => [
         item.code,
         item.title,
         item.degreeProgramCode,
         item.schoolCode,
         item.subjectCode,
+        item.assignedSpecialist?.name ?? 'Sin asignar',
+        item.currentVersion.label,
         item.currentState.name,
         item.createdAt,
       ]),
@@ -82,17 +89,16 @@ export function GestionPage() {
       <header className={styles.hero}>
         <div>
           <p className={styles.eyebrow}>
-            <FileArchive size={16} /> Módulo archivístico central &nbsp; • &nbsp; Norma Ley 481-08 /
-            AGN
+            <FileArchive size={16} /> Expedientes curriculares &nbsp; • &nbsp; RF-01 / RF-09
           </p>
-          <h1>Gestión Documental y Archivo Curricular</h1>
+          <h1>Gestión documental</h1>
           <p>
-            Catálogo general de expedientes, resoluciones y programas académicos bajo custodia
-            institucional de la Universidad Abierta para Adultos (UAPA).
+            Expedientes curriculares digitales visibles según su rol y alcance, con su estado,
+            responsable y versión vigente.
           </p>
         </div>
         <div className={styles.total}>
-          <span>Total custodia activa</span>
+          <span>Total visibles</span>
           <strong>{items.length.toLocaleString('es-DO')}</strong>
           <small>expedientes</small>
         </div>
@@ -206,10 +212,6 @@ export function GestionPage() {
             <span>│</span>
             <span>{selected.size} expedientes seleccionados</span>
           </span>
-          <span className={styles.repository}>
-            <i className={styles.onlineDot} /> Repositorio conectado: UAPA-SAN-01{' '}
-            <RefreshCw size={14} />
-          </span>
         </div>
 
         {loading ? (
@@ -225,16 +227,18 @@ export function GestionPage() {
                 <tr>
                   <th aria-label="Desplegar" />
                   <th aria-label="Seleccionar" />
-                  <th>Código radicación</th>
-                  <th>Nombre / título del expediente</th>
-                  <th>Serie documental</th>
-                  <th>Unidad productora</th>
+                  <th>Código</th>
+                  <th>Título del expediente</th>
+                  <th>Programa</th>
+                  <th>Unidad académica</th>
+                  <th>Responsable</th>
+                  <th>Versión</th>
                   <th>Fecha creación</th>
                   <th>Estado</th>
                 </tr>
               </thead>
               <tbody>
-                {visible.slice(0, 10).map((item) => (
+                {pageItems.map((item) => (
                   <tr key={item.dossierId}>
                     <td className={styles.rowToggle}>›</td>
                     <td>
@@ -253,21 +257,19 @@ export function GestionPage() {
                       <Link className={styles.title} to={`/revision?dossierId=${item.dossierId}`}>
                         {item.title}
                       </Link>
-                      <span className={styles.subtle}>
-                        {item.subjectCode} · {item.currentVersion.label}
-                      </span>
+                      <span className={styles.subtle}>{item.subjectCode}</span>
                     </td>
                     <td>
-                      <span className={styles.badge}>
-                        {item.degreeProgramCode || 'Planes de Estudio'}
-                      </span>
+                      <span className={styles.badge}>{item.degreeProgramCode}</span>
                     </td>
                     <td>{item.schoolCode}</td>
+                    <td>{item.assignedSpecialist?.name ?? 'Sin asignar'}</td>
+                    <td className={styles.code}>{item.currentVersion.label}</td>
                     <td className={styles.code}>
                       {new Date(item.createdAt).toLocaleDateString('es-DO')}
                     </td>
                     <td>
-                      <span className={`${styles.badge} ${estadoClase(item.currentState.code)}`}>
+                      <span className={claseEstado(item.currentState.code)}>
                         {item.currentState.name}
                       </span>
                     </td>
@@ -279,35 +281,53 @@ export function GestionPage() {
         )}
         <div className={styles.pager}>
           <span>
-            Mostrando <strong>1 - {Math.min(10, visible.length)}</strong> de{' '}
-            <strong>{visible.length}</strong> expedientes
+            Mostrando{' '}
+            <strong>
+              {visible.length === 0 ? 0 : firstIndex + 1} - {firstIndex + pageItems.length}
+            </strong>{' '}
+            de <strong>{visible.length}</strong> expedientes
           </span>
-          <span className={styles.pages}>
-            <button className={styles.pageButton} disabled>
-              ‹
-            </button>
-            <button className={`${styles.pageButton} ${styles.pageButtonActive}`}>1</button>
-            <button className={styles.pageButton} disabled>
-              2
-            </button>
-            <button className={styles.pageButton} disabled>
-              3
-            </button>
-            <span>…</span>
-            <button className={styles.pageButton} disabled>
-              ›
-            </button>
-          </span>
+          {pageCount > 1 && (
+            <span className={styles.pages}>
+              <button
+                type="button"
+                className={styles.pageButton}
+                aria-label="Página anterior"
+                disabled={currentPage === 1}
+                onClick={() => {
+                  setPage(currentPage - 1);
+                }}
+              >
+                ‹
+              </button>
+              {Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => (
+                <button
+                  type="button"
+                  key={number}
+                  className={`${styles.pageButton} ${number === currentPage ? styles.pageButtonActive : ''}`}
+                  aria-current={number === currentPage ? 'page' : undefined}
+                  onClick={() => {
+                    setPage(number);
+                  }}
+                >
+                  {number}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={styles.pageButton}
+                aria-label="Página siguiente"
+                disabled={currentPage === pageCount}
+                onClick={() => {
+                  setPage(currentPage + 1);
+                }}
+              >
+                ›
+              </button>
+            </span>
+          )}
         </div>
       </section>
-
-      <div className={styles.compliance}>
-        <span>
-          <ShieldCheck size={16} /> Cumplimiento Normativo y Alertas Archivísticas (Ley 481-08 /
-          AGN) <span className={styles.badge}>3 activas</span>
-        </span>
-        <span>3 activas · Desplegar⌄</span>
-      </div>
     </div>
   );
 }

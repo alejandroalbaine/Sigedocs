@@ -345,6 +345,16 @@
   background: var(--institutional-warning-soft);
 }
 
+.badgeInfo {
+  color: var(--info-strong);
+  background: var(--info-soft);
+}
+
+.badgeFinal {
+  color: var(--on-brand);
+  background: var(--success);
+}
+
 .pager {
   min-height: 52px;
   display: flex;
@@ -396,19 +406,17 @@
   background: var(--institutional-warning-soft);
 }
 
-.compliance {
-  min-height: 44px;
+.deferredNote {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  border: 1px solid var(--institutional-line);
+  gap: 8px;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px dashed var(--institutional-line);
   border-radius: 8px;
-  color: var(--institutional-navy);
-  background: var(--institutional-white);
+  color: var(--institutional-text);
+  background: var(--institutional-canvas);
   font-size: 12px;
-  font-weight: 600;
-  box-shadow: var(--institutional-shadow);
 }
 
 .filters {
@@ -987,10 +995,8 @@
   background: var(--institutional-selection);
 }
 
-.metricLine::before {
-  content: '';
+.metricLine i {
   display: block;
-  width: 72%;
   height: 100%;
   border-radius: inherit;
   background: var(--institutional-navy);
@@ -1395,6 +1401,11 @@
 
   .steps {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Con los pasos en varias filas la línea de avance no conecta nada y desborda la pantalla. */
+  .step::after {
+    display: none;
   }
 }
 

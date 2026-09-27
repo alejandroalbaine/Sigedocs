@@ -1,4 +1,6 @@
+import { vi } from 'vitest';
 import { createApiClient, type ApiClient } from '../common/api/client.ts';
+import type { Dossier } from '../pages/documental/types.ts';
 
 /**
  * Respuestas con la forma exacta que produce SIGESDOC_BACKEND:
@@ -22,6 +24,21 @@ export const adminSistema = {
   email: 'admin.sistema@uapa.edu.do',
   roles: ['ADMIN_SISTEMA'],
   permissions: ['usuarios.administrar', 'auditoria.consultar'],
+};
+
+/** Cuenta con permisos de consulta y auditoría (como admin.integral en la siembra local). */
+export const adminIntegral = {
+  userId: '10000000-0000-4000-8000-000000000001',
+  name: 'Administrador inicial',
+  email: 'admin.integral@uapa.edu.do',
+  roles: ['ADMIN_SISTEMA', 'DIR_GESTION_CURRICULAR'],
+  permissions: [
+    'auditoria.consultar',
+    'usuarios.administrar',
+    'expedientes.aprobar',
+    'expedientes.consultar',
+    'plantillas.administrar',
+  ],
 };
 
 export const sinPermisos = {
@@ -118,4 +135,42 @@ export function signedInBackend(user: BackendUser): FakeBackend {
     'GET /api/v1/users/current': () => responses.currentUser(user),
     'DELETE /api/v1/sessions/current': responses.logout,
   });
+}
+
+/** Expediente con la forma exacta del contrato `Dossier` (endpoints.md §4). */
+export function dossier(overrides: Partial<Dossier> = {}): Dossier {
+  return {
+    dossierId: '20000000-0000-4000-8000-000000000001',
+    code: 'ECD-2026-0001',
+    title: 'Ingeniería de Software I',
+    documentType: 'course_program',
+    academicLevel: 'bachelor',
+    schoolCode: 'ESC-ING',
+    degreeProgramCode: 'ISW',
+    subjectCode: 'ISW-201',
+    workflowId: '30000000-0000-4000-8000-000000000001',
+    currentState: { code: 'RECEIVED', name: 'Recepcionado', isEditable: true },
+    currentVersion: { versionId: '40000000-0000-4000-8000-000000000001', label: 'v1.0' },
+    template: {
+      templateId: '50000000-0000-4000-8000-000000000001',
+      templateVersionId: '60000000-0000-4000-8000-000000000001',
+    },
+    assignedSpecialist: null,
+    createdBy: { userId: '10000000-0000-4000-8000-000000000019', name: 'Coordinador de Programa' },
+    createdAt: '2026-09-20T14:00:00.000Z',
+    ...overrides,
+  };
+}
+
+/**
+ * Las páginas documentales usan `fetch` global (domainClient). Por defecto `setup.ts` responde
+ * una lista vacía; esta función sustituye la respuesta de `GET /api/v1/dossiers`.
+ */
+export function stubDossiers(items: Dossier[]): void {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() =>
+      Promise.resolve(json({ data: items, meta: { pagination: { nextCursor: null, limit: 25 } } })),
+    ),
+  );
 }
