@@ -165,7 +165,7 @@
 }
 
 .button {
-  min-height: 40px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1113,6 +1113,127 @@
   );
   background-size: 200% 100%;
   animation: kit-shimmer 1.5s infinite;
+}
+
+.buttonDanger {
+  border-color: var(--danger);
+  color: var(--white);
+  background: var(--danger);
+}
+
+.kitBody {
+  display: grid;
+  gap: 20px;
+}
+
+.kitSubtitle {
+  margin: 0 0 10px;
+  color: var(--institutional-navy);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.swatchGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.swatch {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--institutional-line);
+  border-radius: var(--radius-md);
+  background: var(--institutional-white);
+}
+
+.swatchColor {
+  height: 56px;
+  margin-bottom: 6px;
+  border: 1px solid var(--institutional-line);
+  border-radius: var(--radius-sm);
+}
+
+.swatch strong {
+  color: var(--institutional-ink);
+  font-size: var(--text-md);
+}
+
+.swatch code {
+  color: var(--institutional-text);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.typeScale {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.typeScale li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--institutional-line);
+}
+
+.kitType28 {
+  color: var(--institutional-navy);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+.kitType18 {
+  color: var(--institutional-navy);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.kitType14 {
+  color: var(--institutional-ink);
+  font-size: var(--text-md);
+}
+
+.kitType12 {
+  color: var(--institutional-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.kitBadge {
+  justify-self: start;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.fieldError {
+  color: var(--danger);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.dialogContent {
+  display: grid;
+  gap: 16px;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .buttonMatrix {
