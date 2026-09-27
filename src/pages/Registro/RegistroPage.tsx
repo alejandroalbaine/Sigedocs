@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   UploadCloud,
 } from 'lucide-react';
-import { domainRequest } from '../../common/api/domainClient.ts';
+import { dossiersApi } from '../../common/api/dossiers.ts';
 import { errorMessage } from '../../common/api/errors.ts';
 import type { CreateDossierInput, Dossier } from '../documental/types.ts';
 import styles from '../documental/documental.module.css';
@@ -127,10 +127,7 @@ export function RegistroPage() {
     setSaving(true);
     setMessage('');
     try {
-      const { data } = await domainRequest<Dossier>('/dossiers', {
-        method: 'POST',
-        body: JSON.stringify(form),
-      });
+      const { data } = await dossiersApi.create(form);
       setCreated(data);
       localStorage.removeItem('sigesdoc:dossier-draft');
       setMessage(
