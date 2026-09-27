@@ -110,7 +110,7 @@ export function GestionPage() {
           <input
             className={`${styles.input} ${styles.search}`}
             type="search"
-            placeholder="Buscar por código, título, unidad, serie documental o descriptor..."
+            placeholder="Buscar por código, título, unidad, programa o asignatura..."
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
