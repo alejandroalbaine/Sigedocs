@@ -2,7 +2,7 @@
   margin-bottom: 18px;
   padding: var(--space-3) 14px;
   border-left: 4px solid;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   font-size: var(--text-md);
   line-height: 1.4;
 }

@@ -16,7 +16,22 @@ html {
 body {
   margin: 0;
   min-width: 320px;
+  font-size: var(--text-md);
   line-height: 1.5;
+}
+
+h1 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+/* En móvil, 16 px evita que iOS acerque la pantalla al enfocar un campo. */
+@media (width <= 620px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 button,

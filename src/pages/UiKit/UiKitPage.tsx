@@ -53,7 +53,8 @@ export function UiKitPage() {
       <header className={`${styles.hero} ${styles.kitHeader}`}>
         <div>
           <p className={styles.eyebrow}>
-            <span className={styles.badge}>Design System v2.4.0 · Minimal Zen</span> WCAG 2.2 AA
+            <span className={styles.badge}>Versión Minimalista v.2</span> Paleta y tipografía del
+            documento base de Figma
           </p>
           <h1>
             Librería de Componentes UI &amp;

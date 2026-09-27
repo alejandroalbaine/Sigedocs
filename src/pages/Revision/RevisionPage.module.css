@@ -4,7 +4,7 @@
   gap: 16px;
   padding: 0 24px 40px;
   color: var(--institutional-ink);
-  font-family: inter, arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .breadcrumb {
@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   color: var(--institutional-muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 
 .breadcrumb strong {
@@ -41,24 +41,24 @@
 
 .hero-title > small {
   color: var(--institutional-text);
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 
 .hero-title h1 {
   margin: 2px 0 12px;
   color: var(--institutional-navy);
-  font-size: 30px;
+  font-size: var(--text-2xl);
   line-height: 1.18;
 }
 
 .code {
   width: fit-content;
   padding: 4px 10px;
-  border-radius: 2px;
-  color: var(--institutional-orange);
+  border-radius: var(--radius-sm);
+  color: var(--institutional-white);
   background: var(--institutional-orange-text);
-  font-family: 'Liberation Mono', monospace;
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
 }
 
 .context {
@@ -70,7 +70,7 @@
 
 .context dt {
   color: var(--institutional-muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -79,7 +79,7 @@
 .context dd {
   margin: 4px 0 0;
   color: var(--institutional-navy);
-  font-size: 13px;
+  font-size: var(--text-md);
   font-weight: 600;
 }
 
@@ -93,10 +93,10 @@
   min-height: 40px;
   padding: 0 16px;
   border: 0;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   color: var(--institutional-text);
   background: var(--institutional-canvas);
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -123,7 +123,7 @@
   border: 0;
   color: var(--institutional-text);
   background: transparent;
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -169,7 +169,7 @@
   grid-row: span 2;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   color: var(--institutional-white);
   background: var(--institutional-navy);
 }
@@ -191,7 +191,7 @@
   gap: 12px;
   padding: 12px 16px;
   color: var(--institutional-navy);
-  font-size: 13px;
+  font-size: var(--text-md);
   font-weight: 700;
   cursor: pointer;
   list-style: none;
@@ -220,7 +220,7 @@
 .decision h3 {
   margin: 0 0 12px;
   color: var(--institutional-muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -235,7 +235,7 @@
 .info-panel > h2 {
   margin: 0 0 24px;
   color: var(--institutional-navy);
-  font-size: 21px;
+  font-size: var(--text-lg);
 }
 
 .metadata-grid {
@@ -254,7 +254,7 @@
 
 .metadata-grid dt {
   color: var(--institutional-muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -331,22 +331,22 @@
   margin: 20px 0 0;
   padding: 12px 16px;
   border: 1px dashed var(--institutional-line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--institutional-text);
   background: var(--institutional-canvas);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .lead {
   margin: 0 0 16px;
   color: var(--institutional-text);
-  font-size: 13px;
+  font-size: var(--text-md);
 }
 
 .criteria-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--text-md);
 }
 
 .criteria-table th,
@@ -358,7 +358,7 @@
 
 .criteria-table th {
   color: var(--institutional-muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
   text-transform: uppercase;
 }
 
@@ -374,10 +374,10 @@
 .stages li {
   padding: 8px 12px;
   border: 1px solid var(--institutional-line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--institutional-text);
   background: var(--institutional-white);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .stages .stage-current {

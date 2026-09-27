@@ -12,27 +12,31 @@
   --blue-bright: #1296db;
   --orange: #f58220;
   --orange-hover: #e97311;
-  --orange-strong: #b85b0b;
+  --orange-strong: #c95e00;
+
+  /* Texto sobre naranja y texto naranja pequeño: contraste AA (5.3:1 y 5.5:1). */
+  --on-accent: #082a63;
+  --accent-text: #a85100;
   --orange-soft: #ffad66;
 
-  /* Sistema institucional Minimal Zen v2.4.0 (Figma) */
-  --institutional-navy: #00163f;
-  --institutional-orange: #ff8928;
-  --institutional-orange-text: #642f00;
-  --institutional-canvas: #f2f3ff;
-  --institutional-selection: #d9e2ff;
+  /* Sistema institucional: paleta oficial del documento base de Figma (Versión Minimalista v.2) */
+  --institutional-navy: #082a63;
+  --institutional-orange: #f58220;
+  --institutional-orange-text: #a85100;
+  --institutional-canvas: #f4f7fb;
+  --institutional-selection: #eaf4fc;
   --institutional-ink: #131b2e;
   --institutional-text: #444650;
-  --institutional-muted: #747781;
+  --institutional-muted: #6b6e78;
   --institutional-line: #c4c6d1;
   --institutional-white: #fff;
-  --institutional-success: #00a66f;
+  --institutional-success: #1b7f5a;
   --institutional-success-soft: #d9fae9;
-  --institutional-warning: #9a4d00;
-  --institutional-warning-soft: #fff4df;
-  --institutional-danger: #ba1a1a;
-  --institutional-danger-soft: #ffdad6;
-  --institutional-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  --institutional-warning: #9a6700;
+  --institutional-warning-soft: #fff8e6;
+  --institutional-danger: #b42318;
+  --institutional-danger-soft: #fff0ee;
+  --institutional-shadow: 0 2px 8px rgb(8 42 99 / 8%);
 
   /* Texto */
   --ink: #17243a;
@@ -46,10 +50,10 @@
   --canvas: #f4f7fb;
   --surface-raised: #fbfcff;
   --surface-hover: #f3f6fa;
-  --soft-blue: #eaf0ff;
-  --tint: #eef1ff;
-  --tint-strong: #e4eafe;
-  --nav-current: #e9edff;
+  --soft-blue: #eaf4fc;
+  --tint: #eaf4fc;
+  --tint-strong: #dcecf9;
+  --nav-current: #eaf4fc;
 
   /* Bordes */
   --line: #d9e1ec;
@@ -72,14 +76,14 @@
   --danger-soft: #fff0ee;
   --warning-strong: #77520a;
   --warning-soft: #fff0cf;
-  --info: #315993;
-  --info-strong: #263f70;
-  --info-soft: #eef4ff;
+  --info: #0b67b2;
+  --info-strong: #082a63;
+  --info-soft: #eaf4fc;
 
   /* Gráficos (los lee common/charts en tiempo de dibujo) */
   --chart-1: #082a63;
   --chart-2: #f58220;
-  --chart-3: #d9a02d;
+  --chart-3: #1296db;
   --chart-4: #b42318;
   --chart-grid: #e2e7ef;
 
@@ -104,37 +108,37 @@
   --backdrop: rgb(4 18 42 / 62%);
 
   /* Degradados */
-  --gradient-page: linear-gradient(135deg, #eef3ff 0%, #f8f9fd 52%, #edf2ff 100%);
+  --gradient-page: linear-gradient(#f4f7fb, #f4f7fb);
   --gradient-brand:
-    radial-gradient(circle at 85% 12%, rgb(18 150 219 / 28%), transparent 30%),
-    radial-gradient(circle at 10% 76%, rgb(245 130 32 / 10%), transparent 25%),
-    linear-gradient(145deg, #0a377c 0%, #082a63 45%, #061f4b 100%);
+    radial-gradient(circle at 85% 12%, rgb(18 150 219 / 18%), transparent 32%),
+    linear-gradient(#082a63, #082a63);
 
   /* Sombras */
-  --shadow: 0 18px 50px rgb(8 42 99 / 14%);
-  --shadow-sm: 0 8px 24px rgb(8 42 99 / 7%);
-  --shadow-button: 0 7px 15px rgb(245 130 32 / 22%);
-  --shadow-button-hover: 0 9px 20px rgb(245 130 32 / 30%);
-  --shadow-selected: 0 7px 16px rgb(8 42 99 / 18%);
+  --shadow: 0 2px 8px rgb(8 42 99 / 8%);
+  --shadow-sm: 0 2px 8px rgb(8 42 99 / 8%);
+  --shadow-button: 0 2px 8px rgb(8 42 99 / 8%);
+  --shadow-button-hover: 0 2px 8px rgb(8 42 99 / 8%);
+  --shadow-selected: 0 2px 8px rgb(8 42 99 / 8%);
   --shadow-dialog: 0 22px 70px rgb(0 0 0 / 25%);
   --institutional-overlay: rgb(0 21 54 / 55%);
 
-  /* Tipografía */
-  --font-sans: arial, helvetica, sans-serif;
+  /* Tipografía (documento base): títulos 28 bold, subtítulos 18 semibold, texto 14, etiquetas 12 */
+  --font-sans: 'Inter Variable', inter, roboto, arial, sans-serif;
+  --font-mono: 'Liberation Mono', ui-monospace, monospace;
   --text-xs: 12px;
-  --text-sm: 13px;
+  --text-sm: 12px;
   --text-md: 14px;
-  --text-base: 16px;
-  --text-lg: 17px;
-  --text-xl: 22px;
+  --text-base: 14px;
+  --text-lg: 18px;
+  --text-xl: 18px;
   --text-2xl: 28px;
 
   /* Radios */
-  --radius-xs: 6px;
-  --radius-sm: 9px;
+  --radius-xs: 8px;
+  --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 22px;
+  --radius-lg: 12px;
+  --radius-xl: 12px;
   --radius-pill: 999px;
 
   /* Espaciado */

@@ -94,13 +94,13 @@ export function DashboardPage() {
   function exportReport() {
     downloadCsv(
       `sigesdoc-panel-${new Date().toISOString().slice(0, 10)}.csv`,
-      ['Código', 'Título', 'Serie', 'Unidad', 'Responsable', 'Estado', 'Fecha'],
+      ['Código', 'Título', 'Programa', 'Unidad', 'Responsable', 'Estado', 'Fecha'],
       dossiers.map((item) => [
         item.code,
         item.title,
         item.degreeProgramCode,
         item.schoolCode,
-        item.createdBy.name,
+        item.assignedSpecialist?.name ?? 'Sin asignar',
         item.currentState.name,
         item.createdAt,
       ]),
@@ -293,8 +293,8 @@ export function DashboardPage() {
                     <tr>
                       <th>Código único</th>
                       <th>Título del documento</th>
-                      <th>Serie documental</th>
-                      <th>Unidad de origen</th>
+                      <th>Programa</th>
+                      <th>Unidad académica</th>
                       <th>Responsable</th>
                       <th>Estado</th>
                     </tr>
@@ -309,7 +309,7 @@ export function DashboardPage() {
                         </td>
                         <td>{item.degreeProgramCode}</td>
                         <td>{item.schoolCode}</td>
-                        <td>{item.createdBy.name}</td>
+                        <td>{item.assignedSpecialist?.name ?? 'Sin asignar'}</td>
                         <td>
                           <span
                             className={`${styles.status} ${statusClass(item.currentState.code)}`}
