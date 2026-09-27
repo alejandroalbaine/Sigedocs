@@ -36,7 +36,7 @@
   width: 46px;
   color: var(--subtle);
   text-align: center;
-  font-size: 19px;
+  font-size: var(--text-lg);
 }
 
 .input {

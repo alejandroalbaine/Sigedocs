@@ -143,6 +143,10 @@ export function AppLayout() {
               <Menu size={20} aria-hidden="true" />
             )}
           </button>
+          <Link to="/" className={styles.mobileBrand} aria-label="SIGESDOC, ir al panel principal">
+            <img src="/LogoSIGESDOC.png" alt="" />
+            <span>SIGESDOC</span>
+          </Link>
           <div className={styles.productPath}>
             <Building2 size={16} aria-hidden="true" />
             <span>SIGESDOC</span>
