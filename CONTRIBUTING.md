@@ -2,10 +2,12 @@
 
 ## Flujo de trabajo
 
-`main` es la versión estable: nadie desarrolla directamente sobre ella.
+`main` es la versión estable y `develop` reúne el trabajo del equipo. Nadie desarrolla
+directamente sobre ninguna de las dos; cada tarea sale desde `develop` y vuelve mediante Pull
+Request.
 
 ```bash
-git switch main && git pull
+git switch develop && git pull
 git switch -c feature/nombre-breve
 # … cambios …
 npm run lint && npm run lint:css && npm run typecheck && npm test
@@ -13,7 +15,9 @@ git commit -m "feat: descripción concreta"
 git push -u origin feature/nombre-breve
 ```
 
-Abra un Pull Request con la plantilla y pida revisión. No se mergea con el CI en rojo.
+Abra un Pull Request hacia `develop` con la plantilla y pida revisión. No se integra con el CI en
+rojo. Cuando una versión esté completa y revisada, el líder abre un Pull Request de `develop` hacia
+`main`.
 
 Ramas: `feature/`, `fix/`, `docs/`, `test/`, `refactor/`. Commits con el mismo prefijo
 (`feat: agregar filtro por fecha`, `fix: mantener la sesión al recargar`).
@@ -58,7 +62,8 @@ a él (`reglas.ts`, `consulta.ts`, `catalogos.ts`).
   validador en `contract.ts` y sus pruebas, usando la forma exacta que documenta el backend.
 - No se agregan rutas supuestas. Si el backend no publicó un contrato, la pantalla muestra un
   estado pendiente y no simula que guardó nada.
-- Los errores se eligen por `codigo` (`src/common/api/errors.ts`); nunca se muestra `detail`.
+- Los errores se eligen por `code` (`src/common/api/errors.ts`); durante REF-02 también se acepta el
+  alias documentado `codigo`. Nunca se muestra `detail`.
 - Las opciones se protegen con `<Can permission>` o `RequirePermission`, nunca por nombre de
   rol. Los códigos de permiso están tipados en `src/common/auth/permissions.ts`.
 

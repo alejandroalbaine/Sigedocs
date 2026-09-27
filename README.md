@@ -90,6 +90,8 @@ src/
 ```
 
 Las reglas (dónde va cada cosa, idioma, estilos) están en [CONTRIBUTING.md](CONTRIBUTING.md).
+El procedimiento sencillo para trabajar entre dos personas está en
+[docs/flujo-git-colaboracion.md](docs/flujo-git-colaboracion.md).
 
 ## Contrato con el backend
 
