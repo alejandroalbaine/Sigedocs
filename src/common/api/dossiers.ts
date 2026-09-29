@@ -7,6 +7,8 @@ import { ContractError } from './contract.ts';
 import { ApiError, INVALID_RESPONSE } from './errors.ts';
 import {
   parseAssignment,
+  parseCatalog,
+  parseVersionDetail,
   parseAuditEvents,
   parseAvailableTransitions,
   parseDossier,
@@ -19,6 +21,7 @@ import {
   parseVersions,
   type CreateDossierInput,
 } from './dossierContract.ts';
+import { parseTemplateDefinition } from './templateContract.ts';
 
 async function request<T>(
   path: string,
@@ -29,7 +32,10 @@ async function request<T>(
   try {
     return meta ? { data: parse(data), meta } : { data: parse(data) };
   } catch (error) {
-    if (error instanceof ContractError) throw new ApiError(INVALID_RESPONSE);
+    const fueraDeContrato =
+      error instanceof ContractError ||
+      (error instanceof Error && error.message.startsWith('Plantilla fuera de contrato'));
+    if (fueraDeContrato) throw new ApiError(INVALID_RESPONSE);
     throw error;
   }
 }
@@ -83,4 +89,21 @@ export const dossiersApi = {
     return request(`/dossiers/${id(dossierId)}/audit-events${suffix}`, parseAuditEvents);
   },
   specialists: () => request('/users', parseSpecialists),
+  version: (dossierId: string, versionId: string) =>
+    request(`/dossiers/${id(dossierId)}/versions/${id(versionId)}`, parseVersionDetail),
+  saveContent: (dossierId: string, versionId: string, content: Record<string, unknown>) =>
+    request(`/dossiers/${id(dossierId)}/versions/${id(versionId)}`, parseVersionDetail, {
+      method: 'PATCH',
+      body: JSON.stringify({ content }),
+    }),
+};
+
+/** Motor de plantillas (template-data-contract.md §9). */
+export const templatesApi = {
+  version: (templateId: string, templateVersionId: string) =>
+    request(
+      `/templates/${id(templateId)}/versions/${id(templateVersionId)}`,
+      parseTemplateDefinition,
+    ),
+  catalog: (catalog: string) => request(`/institutional-catalogs/${id(catalog)}`, parseCatalog),
 };

@@ -110,6 +110,46 @@ function parseOptions(value: unknown, path: string): TemplateOption[] | undefine
   });
 }
 
+const RULE_SCOPES = ['field', 'section', 'document'] as const;
+const RULE_TYPES = ['length', 'pattern', 'range', 'cardinality', 'sum_equals'] as const;
+
+/**
+ * Reglas declarativas (§6). Las de tipo post-MVP (`visible_if`, `required_if`) se ignoran en el
+ * cliente: el backend es la autoridad final (TPL-03).
+ */
+function parseRules(
+  value: unknown,
+  path: string,
+  defaultScope: TemplateRule['scope'],
+): TemplateRule[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) throw new Error(`Plantilla fuera de contrato: ${path}`);
+  return value.flatMap((item, index) => {
+    const where = `${path}[${String(index)}]`;
+    const rule = record(item, where);
+    const type = text(rule.type, `${where}.type`);
+    if (!(RULE_TYPES as readonly string[]).includes(type)) return [];
+    // El §5 del contrato abrevia las reglas de campo a `{ type, params }`; el §6 da la forma
+    // completa. Se aceptan ambas y se deduce el alcance por la ubicación de la regla.
+    const scope = rule.scope === undefined ? defaultScope : text(rule.scope, `${where}.scope`);
+    if (!(RULE_SCOPES as readonly string[]).includes(scope)) {
+      throw new Error(`Plantilla fuera de contrato: ${where}.scope`);
+    }
+    const parsed: TemplateRule = {
+      ruleId: typeof rule.ruleId === 'string' ? rule.ruleId : where,
+      code: typeof rule.code === 'string' ? rule.code : type.toUpperCase(),
+      scope: scope as TemplateRule['scope'],
+      type: type as TemplateRule['type'],
+      params: record(rule.params ?? {}, `${where}.params`),
+      message: typeof rule.message === 'string' ? rule.message : '',
+      severity: rule.severity === 'warning' ? 'warning' : 'error',
+      isActive: rule.isActive !== false,
+    };
+    if (rule.target !== undefined) parsed.target = record(rule.target, `${where}.target`);
+    return [parsed];
+  });
+}
+
 function parseField(value: unknown, path: string, depth: number): TemplateField {
   const field = record(value, path);
   const type = text(field.type, `${path}.type`);
@@ -165,6 +205,8 @@ function parseField(value: unknown, path: string, depth: number): TemplateField 
   if (type === 'repeatable_group' && !parsed.config?.fields) {
     throw new Error(`Plantilla fuera de contrato: ${path}.config.fields`);
   }
+  const rules = parseRules(field.rules, `${path}.rules`, 'field');
+  if (rules) parsed.rules = rules;
   return parsed;
 }
 
@@ -201,6 +243,9 @@ export function parseTemplateDefinition(value: unknown): TemplateDefinition {
       ...(version.validTo === null || typeof version.validTo === 'string'
         ? { validTo: version.validTo }
         : {}),
+      ...(version.rules === undefined
+        ? {}
+        : { rules: parseRules(version.rules, 'template.version.rules', 'document') ?? [] }),
       sections: version.sections.map((item, index) => {
         const section = record(item, `template.version.sections[${index}]`);
         if (!Array.isArray(section.fields)) {
@@ -214,6 +259,12 @@ export function parseTemplateDefinition(value: unknown): TemplateDefinition {
           position: number(section.position, 'section.position'),
           isActive: boolean(section.isActive, 'section.isActive'),
           isRequired: boolean(section.isRequired, 'section.isRequired'),
+          ...(section.rules === undefined
+            ? {}
+            : {
+                rules:
+                  parseRules(section.rules, `sections[${String(index)}].rules`, 'section') ?? [],
+              }),
           fields: section.fields.map((field, fieldIndex) =>
             parseField(field, `sections[${index}].fields[${fieldIndex}]`, 0),
           ),

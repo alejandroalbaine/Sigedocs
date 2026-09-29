@@ -52,6 +52,17 @@ export interface DossierVersion {
   approvedAt: string | null;
 }
 
+/** `GET /dossiers/{id}/versions/{versionId}`: la versión con su plantilla y su contenido (§5). */
+export interface DossierVersionDetail extends DossierVersion {
+  templateVersionId: string;
+  content: Record<string, unknown>;
+}
+
+export interface CatalogOption {
+  value: string;
+  label: string;
+}
+
 export interface AvailableTransition {
   transitionId: string;
   code: string;
@@ -333,3 +344,24 @@ export function parseSpecialists(value: unknown): SpecialistOption[] {
       name: text(user.name ?? user.nombre, `users[${String(i)}].name`),
     }));
 }
+
+export function parseVersionDetail(value: unknown): DossierVersionDetail {
+  const [base] = parseVersions([value]);
+  const v = record(value, 'version');
+  const content = v.content ?? {};
+  return {
+    ...(base as DossierVersion),
+    templateVersionId: text(v.templateVersionId, 'version.templateVersionId'),
+    content: record(content, 'version.content'),
+  };
+}
+
+/** `GET /institutional-catalogs/{catalog}` (template-data-contract.md §5): opciones `{ value, label }`. */
+export const parseCatalog = (value: unknown): CatalogOption[] =>
+  list(value, 'catalog', (item, i) => {
+    const option = record(item, `catalog[${String(i)}]`);
+    return {
+      value: text(option.value ?? option.code, 'catalog.value'),
+      label: text(option.label ?? option.name, 'catalog.label'),
+    };
+  });

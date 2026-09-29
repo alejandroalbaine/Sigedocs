@@ -1,3 +1,4 @@
+import programa from '../../test/fixtures/course-program-template.json';
 import { expect, test } from 'vitest';
 import { parseTemplateDefinition, TEMPLATE_FIELD_TYPES } from './templateContract.ts';
 
@@ -77,4 +78,16 @@ test('rechaza un tercer nivel de grupo repetible', () => {
     },
   });
   expect(() => parseTemplateDefinition(definition([nested]))).toThrow(/config\.fields/);
+});
+
+test('acepta la plantilla real del Programa de Asignatura con sus reglas', () => {
+  const plantilla = parseTemplateDefinition(programa);
+  expect(plantilla.version.sections).toHaveLength(9);
+  expect(plantilla.version.rules?.[0]).toMatchObject({ type: 'sum_equals', scope: 'document' });
+  const competencias = plantilla.version.sections.find(
+    (s) => s.key === 'competencias_fundamentales',
+  );
+  const grupo = competencias?.fields[0];
+  expect(grupo?.type).toBe('repeatable_group');
+  expect(grupo?.rules?.some((rule) => rule.type === 'cardinality')).toBe(true);
 });
