@@ -46,6 +46,7 @@ const LEGACY_BY_CURRENT: Partial<Record<Permission, Permission>> = {
   'workflow.request_changes': 'expedientes.aprobar',
   'audit.read': 'auditoria.consultar',
   'templates.manage': 'plantillas.administrar',
+  'users.manage': 'usuarios.administrar',
 };
 
 export function normalizePermissions(value: unknown): Set<string> {

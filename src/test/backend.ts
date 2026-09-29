@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import { createApiClient, type ApiClient } from '../common/api/client.ts';
+import type { ManagedUser } from '../common/api/userContract.ts';
 import type { Dossier } from '../pages/documental/types.ts';
 
 /**
@@ -195,4 +196,18 @@ export function stubApi(rutas: Record<string, unknown>) {
 /** Atajo: solo `GET /api/v1/dossiers` con los expedientes dados. */
 export function stubDossiers(items: Dossier[]) {
   return stubApi({ 'GET /api/v1/dossiers': items });
+}
+
+/** Usuario administrado con la forma exacta del contrato `User` (endpoints.md §2). */
+export function usuarioGestionado(overrides: Partial<ManagedUser> = {}): ManagedUser {
+  return {
+    userId: '10000000-0000-4000-8000-000000000019',
+    name: 'Coordinador de Programa',
+    email: 'coord.programa@uapa.edu.do',
+    isActive: true,
+    schoolCode: null,
+    roles: [{ roleId: 'r9', code: 'PROGRAM_COORDINATOR', name: 'Coordinador de Programa' }],
+    createdAt: '2026-09-25T14:00:00.000Z',
+    ...overrides,
+  };
 }

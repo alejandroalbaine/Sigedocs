@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   MessageSquareText,
   SearchCheck,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -68,6 +69,12 @@ export const NAVIGATION: readonly NavItem[] = [
     icon: BarChart3,
     to: '/reportes',
     permission: 'audit.read',
+  },
+  {
+    label: 'Usuarios y roles',
+    icon: UsersRound,
+    to: '/usuarios',
+    permission: 'users.manage',
   },
   {
     label: 'Biblioteca UI Kit',
