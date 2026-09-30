@@ -1,6 +1,6 @@
 .alert {
-  margin-bottom: 18px;
-  padding: var(--space-3) 14px;
+  margin-bottom: var(--space-3);
+  padding: 10px var(--space-3);
   border-left: 4px solid;
   border-radius: var(--radius-sm);
   font-size: var(--text-md);

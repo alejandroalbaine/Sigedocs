@@ -1,8 +1,7 @@
 /* stylelint-disable no-descending-specificity */
 .page {
   display: grid;
-  gap: 16px;
-  padding: 0 24px 40px;
+  gap: var(--page-gap);
   color: var(--institutional-ink);
   font-family: var(--font-sans);
 }
@@ -24,12 +23,13 @@
 }
 
 .hero {
-  min-height: 250px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 28px;
-  padding: 24px;
+  gap: var(--space-5);
+  padding: var(--card-pad);
+  border: 1px solid var(--institutional-line);
+  border-radius: var(--radius-sm);
   background: var(--institutional-white);
 }
 
@@ -45,7 +45,7 @@
 }
 
 .hero-title h1 {
-  margin: 2px 0 12px;
+  margin: 2px 0 var(--space-2);
   color: var(--institutional-navy);
   font-size: var(--text-2xl);
   line-height: 1.18;
@@ -90,8 +90,8 @@
 }
 
 .hero-actions button {
-  min-height: 40px;
-  padding: 0 16px;
+  min-height: var(--control-h);
+  padding: 0 14px;
   border: 0;
   border-radius: var(--radius-sm);
   color: var(--institutional-text);
@@ -111,7 +111,7 @@
 }
 
 .tabs {
-  min-height: 50px;
+  min-height: 44px;
   display: flex;
   overflow-x: auto;
   background: var(--institutional-white);
@@ -119,7 +119,7 @@
 
 .tabs button {
   min-width: max-content;
-  padding: 0 18px;
+  padding: 0 var(--space-4);
   border: 0;
   color: var(--institutional-text);
   background: transparent;
@@ -156,7 +156,7 @@
 }
 
 .reviewer {
-  min-height: 72px;
+  min-height: 60px;
   display: grid;
   grid-template-columns: 40px 1fr;
   align-content: center;
@@ -164,8 +164,8 @@
 }
 
 .reviewer > span {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   grid-row: span 2;
   display: grid;
   place-items: center;
@@ -184,7 +184,7 @@
 }
 
 .review-block summary {
-  min-height: 62px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -226,14 +226,13 @@
 }
 
 .info-panel {
-  min-height: 460px;
-  padding: 28px;
+  padding: var(--card-pad);
   border: 1px solid var(--institutional-line);
   background: var(--institutional-white);
 }
 
 .info-panel > h2 {
-  margin: 0 0 24px;
+  margin: 0 0 var(--space-4);
   color: var(--institutional-navy);
   font-size: var(--text-lg);
 }
@@ -247,7 +246,7 @@
 
 .metadata-grid div,
 .version-card {
-  padding: 18px;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--institutional-line);
   background: var(--institutional-canvas);
 }
@@ -289,7 +288,7 @@
   position: relative;
   display: grid;
   gap: 5px;
-  padding: 4px 0 24px 30px;
+  padding: 4px 0 var(--space-4) 30px;
   border-left: 2px solid var(--institutional-selection);
 }
 
@@ -315,7 +314,7 @@
 }
 
 .empty-state {
-  min-height: 280px;
+  min-height: 200px;
   display: grid;
   place-items: center;
   align-content: center;
@@ -406,7 +405,7 @@
 }
 
 .loading {
-  padding: 48px;
+  padding: var(--space-8);
   color: var(--institutional-muted);
   text-align: center;
 }
@@ -430,10 +429,6 @@
 }
 
 @media (width <= 680px) {
-  .page {
-    padding-inline: 12px;
-  }
-
   .metadata-grid {
     grid-template-columns: 1fr;
   }
