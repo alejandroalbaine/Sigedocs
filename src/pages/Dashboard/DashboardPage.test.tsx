@@ -1,10 +1,13 @@
 import { screen, within } from '@testing-library/react';
 import {
   adminIntegral,
+  adminSistema,
   dossier,
   especialista,
+  problem,
   signedInBackend,
   sinPermisos,
+  stubApi,
   stubDossiers,
 } from '../../test/backend.ts';
 import { renderApp } from '../../test/renderApp.tsx';
@@ -15,11 +18,36 @@ test('sin permisos muestra el estado válido sin módulos', async () => {
   expect(screen.queryByRole('list', { name: 'Indicadores' })).not.toBeInTheDocument();
 });
 
-test('con permisos muestra la estructura en cero, sin datos inventados', async () => {
+test('con permisos y sin expedientes muestra la estructura en cero, sin datos inventados', async () => {
+  stubDossiers([]);
   renderApp(signedInBackend(especialista), '/');
-  expect(await screen.findByRole('list', { name: 'Indicadores' })).toBeInTheDocument();
-  expect(screen.getByText(/no hay datos simulados/i)).toBeInTheDocument();
+  expect(await screen.findByText(/aún no hay expedientes registrados/i)).toBeInTheDocument();
+  expect(screen.getByRole('list', { name: 'Indicadores' })).toBeInTheDocument();
   expect(screen.getByText('Sin registros disponibles.')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /exportar/i })).not.toBeInTheDocument();
+});
+
+test('si el módulo de expedientes aún no existe (404) muestra un aviso neutro, no un error', async () => {
+  stubApi({});
+  renderApp(signedInBackend(especialista), '/');
+  expect(await screen.findByText(/está en preparación/)).toBeInTheDocument();
+  expect(screen.queryByText(/no está disponible/i)).not.toBeInTheDocument();
+});
+
+test('un error real del servidor se sigue mostrando', async () => {
+  stubApi({ 'GET /api/v1/dossiers': problem(500, 'INTERNAL_ERROR') });
+  renderApp(signedInBackend(especialista), '/');
+  expect(await screen.findByText(/el servicio no está disponible/i)).toBeInTheDocument();
+  expect(screen.queryByText(/está en preparación/)).not.toBeInTheDocument();
+});
+
+test('un rol sin dossiers.read no consulta expedientes y ve sus accesos', async () => {
+  const llamadas = stubApi({});
+  renderApp(signedInBackend(adminSistema), '/');
+  const accesos = await screen.findByRole('region', { name: 'Accesos de su rol' });
+  expect(within(accesos).getByRole('link', { name: /usuarios y roles/i })).toBeInTheDocument();
+  expect(llamadas.some((llamada) => llamada.key === 'GET /api/v1/dossiers')).toBe(false);
+  expect(screen.queryByRole('list', { name: 'Indicadores' })).not.toBeInTheDocument();
 });
 
 test('el Panel y Reportes clasifican los estados igual (ADR-014)', async () => {

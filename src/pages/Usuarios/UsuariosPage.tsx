@@ -86,8 +86,7 @@ function Usuarios() {
         {aviso && <Alert kind="success">{aviso}</Alert>}
         {usuarios.pendiente ? (
           <Alert kind="info">
-            La gestión de usuarios está confirmada en el contrato, pero el servidor aún no la
-            implementa. No se muestran usuarios simulados.
+            La gestión de usuarios está en preparación y aparecerá aquí en cuanto esté disponible.
           </Alert>
         ) : usuarios.error ? (
           <Alert kind="error">{usuarios.error}</Alert>

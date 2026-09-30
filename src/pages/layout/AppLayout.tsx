@@ -1,6 +1,6 @@
 import { useState, type SyntheticEvent } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router';
-import { Bell, Building2, CircleHelp, Menu, Search, X } from 'lucide-react';
+import { Building2, Menu, Search, X } from 'lucide-react';
 import { errorMessage } from '../../common/api/errors.ts';
 import { roleLabels, useCurrentUser, useSession } from '../../common/auth/SessionContext.ts';
 import { Alert } from '../../common/components/Alert/Alert.tsx';
@@ -105,14 +105,6 @@ export function AppLayout() {
             <strong>Ley General de Archivos 481-08</strong>
             <small>SIGESDOC · MVP pregrado y grado</small>
           </div>
-          <button
-            type="button"
-            className={styles.supportButton}
-            disabled
-            title="Canal pendiente de integración"
-          >
-            <CircleHelp size={15} aria-hidden="true" /> Soporte UAPA
-          </button>
         </footer>
       </aside>
 
@@ -165,15 +157,6 @@ export function AppLayout() {
               }}
             />
           </form>
-          <button
-            type="button"
-            className={styles.notifications}
-            aria-label="Notificaciones"
-            disabled
-            title="Las notificaciones estarán disponibles cuando backend publique la ruta"
-          >
-            <Bell size={18} strokeWidth={1.8} aria-hidden="true" />
-          </button>
           <ProfileMenu
             user={user}
             roles={roleLabels(user, roleNames)}

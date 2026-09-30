@@ -61,14 +61,8 @@ export const routes: RouteObject[] = [
         ),
       },
       { path: 'usuarios', element: <UsuariosPage /> },
-      {
-        path: 'ui-kit',
-        element: (
-          <RequirePermission permission="templates.manage" action="consultar la biblioteca UI">
-            <UiKitPage />
-          </RequirePermission>
-        ),
-      },
+      // Herramienta interna del equipo (Figma ↔ código): solo existe en desarrollo.
+      ...(import.meta.env.DEV ? [{ path: 'ui-kit', element: <UiKitPage /> }] : []),
       { path: '*', element: <NotFoundPage /> },
     ],
   },

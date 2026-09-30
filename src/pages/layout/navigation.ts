@@ -1,7 +1,6 @@
 import { hasPermission, type Permission } from '../../common/auth/permissions.ts';
 import {
   BarChart3,
-  BookOpenCheck,
   ClipboardCheck,
   FileClock,
   FilePlus2,
@@ -75,12 +74,6 @@ export const NAVIGATION: readonly NavItem[] = [
     icon: UsersRound,
     to: '/usuarios',
     permission: 'users.manage',
-  },
-  {
-    label: 'Biblioteca UI Kit',
-    icon: BookOpenCheck,
-    to: '/ui-kit',
-    permission: 'templates.manage',
   },
 ];
 

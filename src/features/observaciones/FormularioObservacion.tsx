@@ -41,7 +41,7 @@ export function FormularioObservacion({ dossier, onRegistrada }: FormularioObser
       setAviso({
         kind: esRutaPendiente(reason) ? 'info' : 'error',
         texto: esRutaPendiente(reason)
-          ? 'No se registró: el servidor aún no implementa la ruta de observaciones.'
+          ? 'No se registró: el registro de observaciones aún está en preparación.'
           : errorMessage(reason, 'No fue posible registrar la observación.'),
       });
     } finally {

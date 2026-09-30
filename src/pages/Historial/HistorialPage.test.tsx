@@ -25,7 +25,7 @@ test('si la ruta de auditoría no existe aún, lo dice sin inventar eventos', as
   stubDossiers([expediente]);
   renderApp(signedInBackend(auditoria), '/historial');
   expect(await screen.findByRole('search', { name: 'Filtros de trazabilidad' })).toBeVisible();
-  expect(await screen.findByText(/el servidor aún no la implementa/)).toBeVisible();
+  expect(await screen.findByText(/está en preparación/)).toBeVisible();
 });
 
 test('muestra los eventos del contrato y envía los filtros al servidor', async () => {
