@@ -66,21 +66,31 @@ el backend.
 
 ### Opción con Docker
 
-Si ya tiene Docker Desktop, no necesita instalar Node.js en su computadora:
+El frontend puede ejecutarse en producción mediante Docker y Nginx.
+
+Para construir la imagen y levantar el contenedor:
 
 ```bash
 docker compose up --build
 ```
 
-Abra <http://localhost:5173>. Para detenerlo:
+Abra <http://localhost:5173>.
+
+El puerto `5173` del equipo se redirige al puerto `80` del contenedor, donde Nginx sirve el build de producción generado por Vite.
+
+Para detener el contenedor:
 
 ```bash
 docker compose down
 ```
 
-Docker levanta únicamente el frontend. El backend continúa ejecutándose desde su propio
-repositorio en el puerto `3000`.
+La variable `VITE_API_BASE_URL` se configura durante el proceso de build. Por defecto utiliza:
 
+```text
+http://localhost:3000
+```
+
+Docker levanta únicamente el frontend. El backend continúa ejecutándose desde su propio repositorio.
 En VS Code, `F5` levanta Vite y abre Chrome con el depurador conectado.
 
 ## Comandos
