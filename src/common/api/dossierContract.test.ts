@@ -55,3 +55,15 @@ test('de /users conserva solo especialistas cuando llegan roles', () => {
   ]);
   expect(lista.map((usuario) => usuario.userId)).toEqual(['a', 'b']);
 });
+
+test('de /users también reconoce roles con la forma del contrato ({ code })', () => {
+  const lista = parseSpecialists([
+    {
+      userId: 'a',
+      name: 'Especialista',
+      roles: [{ roleId: 'r1', code: 'CURRICULUM_SPECIALIST', name: 'Especialista curricular' }],
+    },
+    { userId: 'c', name: 'VRA', roles: [{ roleId: 'r2', code: 'VRA', name: 'Vicerrectoría' }] },
+  ]);
+  expect(lista.map((usuario) => usuario.userId)).toEqual(['a']);
+});
