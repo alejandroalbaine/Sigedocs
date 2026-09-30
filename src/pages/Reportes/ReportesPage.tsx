@@ -10,12 +10,13 @@ import {
   SearchCheck,
 } from 'lucide-react';
 import { downloadCsv } from '../../common/utils/download.ts';
+import { EnPreparacion } from '../documental/EnPreparacion.tsx';
 import { useDossiers } from '../documental/useDossiers.ts';
 import { contarPorGrupo, GRUPOS_ESTADO, segmentosDona } from '../../common/workflow/estados.ts';
 import styles from '../documental/documental.module.css';
 
 export function ReportesPage() {
-  const { items, error } = useDossiers();
+  const { items, error, pendiente } = useDossiers();
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [unit, setUnit] = useState('');
   const units = [...new Set(items.map((item) => item.schoolCode))].sort();
@@ -58,9 +59,7 @@ export function ReportesPage() {
       <title>Reportes y estadísticas | SIGESDOC</title>
       <header className={styles.reportHeader}>
         <div>
-          <p className={styles.eyebrow}>
-            Seguimiento <span className={styles.badge}>RF-15</span>
-          </p>
+          <p className={styles.eyebrow}>Seguimiento</p>
           <h1>Reportes y estadísticas</h1>
           <p>
             Estado, volumen y avance de los expedientes curriculares visibles según su rol y
@@ -94,12 +93,15 @@ export function ReportesPage() {
               <option key={item}>{item}</option>
             ))}
           </select>
-          <button className={`${styles.button} ${styles.buttonOrange}`} onClick={exportReport}>
-            <Download size={16} /> Exportar informe (CSV)
-          </button>
+          {total > 0 && (
+            <button className={`${styles.button} ${styles.buttonOrange}`} onClick={exportReport}>
+              <Download size={16} /> Exportar informe (CSV)
+            </button>
+          )}
         </div>
       </header>
       {error && <div className={styles.error}>{error}</div>}
+      {pendiente && <EnPreparacion />}
       <div className={styles.auditHash}>
         <Info size={17} /> Cifras calculadas con los expedientes que el servidor autoriza para su
         usuario.

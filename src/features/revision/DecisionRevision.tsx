@@ -80,7 +80,7 @@ export function DecisionRevision({
       setAviso({
         kind: esRutaPendiente(reason) ? 'info' : 'error',
         texto: esRutaPendiente(reason)
-          ? 'La decisión no se envió: el servidor aún no implementa la ruta de transiciones.'
+          ? 'La decisión no se envió: esta acción del flujo aún está en preparación.'
           : errorMessage(reason, 'No fue posible registrar la decisión.'),
       });
     } finally {

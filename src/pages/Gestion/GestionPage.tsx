@@ -4,6 +4,7 @@ import { Download, FileArchive, FilePlus2, SlidersHorizontal } from 'lucide-reac
 import { useCurrentUser } from '../../common/auth/SessionContext.ts';
 import { hasPermission } from '../../common/auth/permissions.ts';
 import { downloadCsv } from '../../common/utils/download.ts';
+import { EnPreparacion } from '../documental/EnPreparacion.tsx';
 import { useDossiers } from '../documental/useDossiers.ts';
 import { claseEstado } from '../documental/estadoBadge.ts';
 import styles from '../documental/documental.module.css';
@@ -13,12 +14,11 @@ const PAGE_SIZE = 10;
 export function GestionPage() {
   const user = useCurrentUser();
   const canCreate = hasPermission(user.permissions, 'dossiers.create');
-  const { items, loading, error } = useDossiers();
+  const { items, loading, error, pendiente } = useDossiers();
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [stateFilter, setStateFilter] = useState('');
   const [unitFilter, setUnitFilter] = useState('');
-  const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const visible = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase('es');
     return items.filter((item) => {
@@ -45,15 +45,6 @@ export function GestionPage() {
   const currentPage = Math.min(page, pageCount);
   const firstIndex = (currentPage - 1) * PAGE_SIZE;
   const pageItems = visible.slice(firstIndex, firstIndex + PAGE_SIZE);
-
-  function toggle(id: string) {
-    setSelected((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
 
   function exportDossiers() {
     downloadCsv(
@@ -89,7 +80,7 @@ export function GestionPage() {
       <header className={styles.hero}>
         <div>
           <p className={styles.eyebrow}>
-            <FileArchive size={16} /> Expedientes curriculares &nbsp; • &nbsp; RF-01 / RF-09
+            <FileArchive size={16} /> Expedientes curriculares
           </p>
           <h1>Gestión documental</h1>
           <p>
@@ -128,21 +119,15 @@ export function GestionPage() {
           <SlidersHorizontal size={16} /> Filtros Avanzados{' '}
           <span className={styles.badge}>{activeFilters} activos</span>
         </button>
-        <button className={styles.button} onClick={exportDossiers}>
-          <Download size={16} /> Exportar
-        </button>
-        {canCreate ? (
+        {visible.length > 0 && (
+          <button className={styles.button} onClick={exportDossiers}>
+            <Download size={16} /> Exportar
+          </button>
+        )}
+        {canCreate && (
           <Link className={`${styles.button} ${styles.buttonOrange}`} to="/expedientes/nuevo">
             <FilePlus2 size={16} /> Nuevo Registro
           </Link>
-        ) : (
-          <button
-            className={`${styles.button} ${styles.buttonOrange}`}
-            disabled
-            title="Su rol no tiene el permiso dossiers.create"
-          >
-            <FilePlus2 size={16} /> Nuevo Registro
-          </button>
         )}
       </div>
 
@@ -194,29 +179,11 @@ export function GestionPage() {
       )}
 
       {error && <div className={styles.error}>{error}</div>}
-      <section className={styles.panel} aria-labelledby="gestion-title">
-        <div className={styles.selectionBar}>
-          <span className={styles.selectionMeta}>
-            <input
-              className={styles.rowCheck}
-              type="checkbox"
-              aria-label="Seleccionar todos los expedientes visibles"
-              checked={visible.length > 0 && visible.every((item) => selected.has(item.dossierId))}
-              onChange={(event) => {
-                setSelected(
-                  event.target.checked ? new Set(visible.map((item) => item.dossierId)) : new Set(),
-                );
-              }}
-            />
-            <strong id="gestion-title">Selección masiva</strong>
-            <span>│</span>
-            <span>{selected.size} expedientes seleccionados</span>
-          </span>
-        </div>
-
+      {pendiente && <EnPreparacion />}
+      <section className={styles.panel} aria-label="Expedientes">
         {loading ? (
           <p className={styles.empty}>Consultando expedientes…</p>
-        ) : visible.length === 0 ? (
+        ) : pendiente ? null : visible.length === 0 ? (
           <p className={styles.empty}>
             No hay expedientes que coincidan con su búsqueda y alcance.
           </p>
@@ -225,8 +192,6 @@ export function GestionPage() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th aria-label="Desplegar" />
-                  <th aria-label="Seleccionar" />
                   <th>Código</th>
                   <th>Título del expediente</th>
                   <th>Programa</th>
@@ -240,18 +205,6 @@ export function GestionPage() {
               <tbody>
                 {pageItems.map((item) => (
                   <tr key={item.dossierId}>
-                    <td className={styles.rowToggle}>›</td>
-                    <td>
-                      <input
-                        className={styles.rowCheck}
-                        type="checkbox"
-                        aria-label={`Seleccionar ${item.code}`}
-                        checked={selected.has(item.dossierId)}
-                        onChange={() => {
-                          toggle(item.dossierId);
-                        }}
-                      />
-                    </td>
                     <td className={styles.code}>▱ {item.code}</td>
                     <td>
                       <Link className={styles.title} to={`/revision?dossierId=${item.dossierId}`}>

@@ -13,6 +13,7 @@ import {
 } from '../../common/components/index.ts';
 import { admiteDecisionTecnica } from '../../common/workflow/estados.ts';
 import { FormularioObservacion } from '../../features/observaciones/FormularioObservacion.tsx';
+import { EnPreparacion } from '../documental/EnPreparacion.tsx';
 import { useDossiers } from '../documental/useDossiers.ts';
 import styles from '../layout/page.module.css';
 
@@ -32,7 +33,7 @@ const COLUMNAS: readonly Column<Observation>[] = [
 ];
 
 function Observaciones() {
-  const { items, loading, error } = useDossiers();
+  const { items, loading, error, pendiente } = useDossiers();
   const revisables = items.filter((item) => admiteDecisionTecnica(item.currentState.code));
   const [elegido, setElegido] = useState('');
   const dossier =
@@ -46,11 +47,12 @@ function Observaciones() {
 
   if (loading) return <p>Consultando expedientes…</p>;
   if (error) return <Alert kind="error">{error}</Alert>;
+  if (pendiente) return <EnPreparacion />;
   if (!dossier) {
     return (
       <Alert kind="info">
         Ningún expediente visible está En revisión o En reevaluación: solo en esas etapas se
-        registran observaciones (WF-04).
+        registran observaciones.
       </Alert>
     );
   }
@@ -83,10 +85,7 @@ function Observaciones() {
       </Card>
       <Card title={`Observaciones de ${dossier.code} · ${dossier.currentVersion.label}`}>
         {lista.pendiente ? (
-          <Alert kind="info">
-            La consulta de observaciones está confirmada en el contrato, pero el servidor aún no la
-            implementa.
-          </Alert>
+          <EnPreparacion modulo="La consulta de observaciones" />
         ) : lista.error ? (
           <Alert kind="error">{lista.error}</Alert>
         ) : (
@@ -111,7 +110,7 @@ export function ObservacionesPage() {
       <PageHeader
         eyebrow="Expedientes"
         title="Registro de observaciones"
-        description="Hallazgos de la revisión técnico-curricular sobre la versión vigente (RF-06)."
+        description="Hallazgos de la revisión técnico-curricular sobre la versión vigente."
       />
       <RequirePermission permission="observations.create" action="registrar observaciones">
         <Observaciones />

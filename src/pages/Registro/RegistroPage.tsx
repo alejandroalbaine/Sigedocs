@@ -88,7 +88,7 @@ export function RegistroPage() {
         .slice(0, 20),
     );
     setMessage(
-      'Archivo validado localmente. La carga definitiva espera la ruta oficial del backend.',
+      'Archivo revisado en este equipo. La carga al expediente estará disponible próximamente.',
     );
   }
 
@@ -144,13 +144,11 @@ export function RegistroPage() {
     <div className={styles.page}>
       <title>Registrar expediente | SIGESDOC</title>
       <header>
-        <p className={`${styles.eyebrow} ${styles.eyebrowOrange}`}>
-          Expediente Curricular Digital · CU-18
-        </p>
+        <p className={`${styles.eyebrow} ${styles.eyebrowOrange}`}>Expediente Curricular Digital</p>
         <h1>Registrar expediente curricular</h1>
         <p className={styles.subtle}>
-          Asistente de cinco pasos. Solo se envían al servidor los campos que acepta su contrato: el
-          código, la versión 1.0 y el estado inicial los asigna el servidor.
+          Asistente de cinco pasos. El código del expediente, la versión 1.0 y el estado inicial se
+          asignan automáticamente al registrar.
         </p>
       </header>
 
@@ -270,8 +268,10 @@ export function RegistroPage() {
             >
               <UploadCloud size={34} />
               <span>
-                <strong>Arrastre el documento principal o haga clic para examinar</strong>
-                <small>PDF/A o DOCX institucional · máximo 50 MB</small>
+                <strong>Seleccione el documento principal para revisarlo</strong>
+                <small>
+                  PDF o Word · la carga del archivo al expediente estará disponible próximamente
+                </small>
               </span>
             </button>
             <input
@@ -302,7 +302,7 @@ export function RegistroPage() {
                   <small>
                     {fileHash
                       ? `Huella local SHA-256 ${fileHash}…`
-                      : 'La carga definitiva se habilitará con la ruta de archivos.'}
+                      : 'La carga del archivo al expediente estará disponible próximamente.'}
                   </small>
                 </span>
                 {fileUrl && (

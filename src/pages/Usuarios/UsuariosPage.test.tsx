@@ -43,7 +43,7 @@ test('con el permiso transitorio usuarios.administrar muestra el menú y la pant
 test('si el servidor aún no implementa /users lo indica sin simular datos', async () => {
   stubApi({});
   renderApp(signedInBackend(adminSistema), '/usuarios');
-  expect(await screen.findByText(/el servidor aún no la implementa/)).toBeVisible();
+  expect(await screen.findByText(/está en preparación/)).toBeVisible();
   expect(screen.getByRole('button', { name: 'Nuevo usuario' })).toBeDisabled();
 });
 

@@ -188,6 +188,6 @@ test('las pestañas con rutas no implementadas lo dicen sin inventar datos', asy
   stubDossiers([enRevision]);
   renderApp(signedInBackend(especialista), '/revision');
   await userEvent.click(await screen.findByRole('button', { name: /5\. Versiones/ }));
-  expect(await screen.findByText(/GET \/dossiers\/\{id\}\/versions/)).toBeVisible();
-  expect(screen.getByText(/aún no la implementa/)).toBeVisible();
+  expect(await screen.findByText(/el historial de versiones está en preparación/i)).toBeVisible();
+  expect(screen.queryByText(/GET \//)).not.toBeInTheDocument();
 });
