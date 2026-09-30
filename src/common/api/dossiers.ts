@@ -2,9 +2,8 @@
  * Llamadas del contrato MVP de expedientes. Toda respuesta pasa por su validador de
  * dossierContract.ts; si no cumple, se lanza "respuesta no válida".
  */
-import { domainRequest, type PageMeta } from './domainClient.ts';
-import { ContractError } from './contract.ts';
-import { ApiError, INVALID_RESPONSE } from './errors.ts';
+import { validatedRequest as request } from './domainClient.ts';
+import { ApiError } from './errors.ts';
 import {
   parseAssignment,
   parseAuditEvents,
@@ -19,20 +18,6 @@ import {
   parseVersions,
   type CreateDossierInput,
 } from './dossierContract.ts';
-
-async function request<T>(
-  path: string,
-  parse: (data: unknown) => T,
-  init?: RequestInit,
-): Promise<{ data: T; meta?: PageMeta }> {
-  const { data, meta } = await domainRequest<unknown>(path, init);
-  try {
-    return meta ? { data: parse(data), meta } : { data: parse(data) };
-  } catch (error) {
-    if (error instanceof ContractError) throw new ApiError(INVALID_RESPONSE);
-    throw error;
-  }
-}
 
 const id = (value: string) => encodeURIComponent(value);
 const post = (body: unknown): RequestInit => ({ method: 'POST', body: JSON.stringify(body) });
