@@ -11,12 +11,17 @@ import {
 } from 'lucide-react';
 import { downloadCsv } from '../../common/utils/download.ts';
 import { EnPreparacion } from '../documental/EnPreparacion.tsx';
+import { useCurrentUser } from '../../common/auth/SessionContext.ts';
+import { hasPermission } from '../../common/auth/permissions.ts';
+import { Alert } from '../../common/components/index.ts';
 import { useDossiers } from '../documental/useDossiers.ts';
 import { contarPorGrupo, GRUPOS_ESTADO, segmentosDona } from '../../common/workflow/estados.ts';
 import styles from '../documental/documental.module.css';
 
 export function ReportesPage() {
-  const { items, error, pendiente } = useDossiers();
+  const user = useCurrentUser();
+  const canRead = hasPermission(user.permissions, 'dossiers.read');
+  const { items, error, pendiente } = useDossiers('', canRead);
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [unit, setUnit] = useState('');
   const units = [...new Set(items.map((item) => item.schoolCode))].sort();
@@ -102,6 +107,11 @@ export function ReportesPage() {
       </header>
       {error && <div className={styles.error}>{error}</div>}
       {pendiente && <EnPreparacion />}
+      {!canRead && (
+        <Alert kind="info">
+          Su rol no consulta expedientes curriculares, por eso los indicadores aparecen en cero.
+        </Alert>
+      )}
       <div className={styles.auditHash}>
         <Info size={17} /> Cifras calculadas con los expedientes que el servidor autoriza para su
         usuario.
