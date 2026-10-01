@@ -4,6 +4,7 @@ import {
   adminSistema,
   dossier,
   especialista,
+  json,
   problem,
   signedInBackend,
   sinPermisos,
@@ -11,6 +12,24 @@ import {
   stubDossiers,
 } from '../../test/backend.ts';
 import { renderApp } from '../../test/renderApp.tsx';
+
+test('el total del Panel incluye todos los expedientes de las páginas del backend', async () => {
+  const primero = dossier();
+  const segundo = dossier({ dossierId: 'segunda-pagina', code: 'ECD-2' });
+  stubApi({
+    'GET /api/v1/dossiers': (_init: RequestInit, url: URL) =>
+      json({
+        data: url.searchParams.has('cursor') ? [segundo] : [primero],
+        meta: { pagination: { limit: 25, next: url.searchParams.has('cursor') ? null : 'c2' } },
+      }),
+  });
+  renderApp(signedInBackend(especialista), '/');
+  await screen.findByText('ECD-2');
+  const total = within(screen.getByRole('list', { name: 'Indicadores' })).getByText(
+    'Total visibles',
+  ).parentElement;
+  expect(total).toHaveTextContent('2');
+});
 
 test('sin permisos muestra el estado válido sin módulos', async () => {
   renderApp(signedInBackend(sinPermisos), '/');

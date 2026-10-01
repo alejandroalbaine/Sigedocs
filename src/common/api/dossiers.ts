@@ -3,7 +3,7 @@
  * dossierContract.ts; si no cumple, se lanza "respuesta no válida".
  */
 import { validatedRequest as request } from './domainClient.ts';
-import { ApiError } from './errors.ts';
+import { ApiError, INVALID_RESPONSE } from './errors.ts';
 import {
   parseAssignment,
   parseAuditEvents,
@@ -22,6 +22,27 @@ import {
 const id = (value: string) => encodeURIComponent(value);
 const post = (body: unknown): RequestInit => ({ method: 'POST', body: JSON.stringify(body) });
 
+async function listAllDossiers(query = '', signal?: AbortSignal) {
+  const items = new Map<string, ReturnType<typeof parseDossier>>();
+  const cursors = new Set<string>();
+  let cursor: string | null = null;
+  do {
+    const suffix: string = cursor ? `&cursor=${encodeURIComponent(cursor)}` : '';
+    const { data, meta } = await request(
+      `/dossiers?limit=25${query}${suffix}`,
+      parseDossiers,
+      signal ? { signal } : {},
+    );
+    for (const item of data) items.set(item.dossierId, item);
+    cursor = meta?.pagination?.nextCursor ?? null;
+    if (cursor) {
+      if (cursors.has(cursor)) throw new ApiError(INVALID_RESPONSE);
+      cursors.add(cursor);
+    }
+  } while (cursor);
+  return { data: [...items.values()] };
+}
+
 /**
  * Una ruta confirmada en el contrato que el backend aún no implementa responde 404. Como el
  * expediente sí existe (llegó en el listado), la interfaz lo presenta como "pendiente".
@@ -32,6 +53,7 @@ export function esRutaPendiente(error: unknown): boolean {
 
 export const dossiersApi = {
   list: (query = '') => request(`/dossiers?limit=25${query}`, parseDossiers),
+  listAll: listAllDossiers,
   get: (dossierId: string) => request(`/dossiers/${id(dossierId)}`, parseDossier),
   create: (input: CreateDossierInput) => request('/dossiers', parseDossier, post(input)),
   versions: (dossierId: string) => request(`/dossiers/${id(dossierId)}/versions`, parseVersions),
