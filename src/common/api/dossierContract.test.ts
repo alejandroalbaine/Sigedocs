@@ -67,3 +67,20 @@ test('de /users también reconoce roles con la forma del contrato ({ code })', (
   ]);
   expect(lista.map((usuario) => usuario.userId)).toEqual(['a']);
 });
+
+test('el historial acepta el registro inicial sin transición (respuesta real del backend)', () => {
+  const [inicial] = parseHistory([
+    {
+      historyId: 'h0',
+      transition: null,
+      fromState: null,
+      toState: { code: 'RECEIVED', name: 'Recepcionado' },
+      versionLabel: 'v1.0',
+      user: { userId: 'u1', name: 'Coordinador de Programa' },
+      observation: null,
+      occurredAt: '2026-10-01T02:48:57.979Z',
+    },
+  ]);
+  expect(inicial?.transition).toBeNull();
+  expect(inicial?.toState.code).toBe('RECEIVED');
+});

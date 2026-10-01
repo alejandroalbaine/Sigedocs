@@ -101,6 +101,13 @@ function EstadoRecurso<T>({
   return recurso.data === null ? null : <>{children(recurso.data)}</>;
 }
 
+/** El backend responde la transición con códigos de estado: se muestran con su nombre. */
+function nombreDeEstado(estado: { code: string; name: string }) {
+  return estado.name !== estado.code
+    ? estado.name
+    : (ESTADOS_UNDERGRAD[estado.code]?.nombre ?? estado.code);
+}
+
 function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => void }) {
   const user = useCurrentUser();
   const [activeTab, setActiveTab] = useState<TabId>('resumen');
@@ -147,7 +154,8 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
 
       {ultimo && (
         <Alert kind="success">
-          Transición registrada: {ultimo.fromState.name} → {ultimo.toState.name}
+          Transición registrada: {nombreDeEstado(ultimo.fromState)} →{' '}
+          {nombreDeEstado(ultimo.toState)}
           {ultimo.newVersionId ? '. Se creó una nueva versión del expediente.' : '.'}
         </Alert>
       )}
@@ -422,8 +430,9 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                     {lista.map((item) => (
                       <li key={item.historyId}>
                         <strong>
-                          {item.transition.name}: {item.fromState?.name ?? '—'} →{' '}
-                          {item.toState.name}
+                          {item.transition
+                            ? `${item.transition.name}: ${item.fromState?.name ?? '—'} → ${item.toState.name}`
+                            : `Versión ${item.versionLabel} en ${item.toState.name}`}
                         </strong>
                         <span>
                           {fecha(item.occurredAt)} · {item.user.name} · {item.versionLabel}
