@@ -4,7 +4,8 @@ name: Imagen Docker
 # el VPS; Dokploy solo hace `docker pull`. Los PR solo construyen (el CI ya prueba el contenedor).
 on:
   push:
-    branches: [main]
+    # develop publica la etiqueta `develop` para probar el despliegue antes de cada versión.
+    branches: [main, develop]
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
   workflow_dispatch:
 
@@ -13,7 +14,7 @@ permissions:
 
 concurrency:
   group: imagen-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.ref == 'refs/heads/develop' }}
 
 jobs:
   publicar:
@@ -49,7 +50,8 @@ jobs:
           images: ${{ env.IMAGEN }}
           flavor: latest=false
           tags: |
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=develop,enable=${{ github.ref == 'refs/heads/develop' }}
             type=sha,prefix=sha-,format=short
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
