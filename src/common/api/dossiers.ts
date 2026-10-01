@@ -90,9 +90,18 @@ export const dossiersApi = {
     return request(`/dossiers/${id(dossierId)}/audit-events${suffix}`, parseAuditEvents);
   },
   /**
-   * Especialistas activos para asignar (B5). El plan propone que el servidor acepte este filtro
-   * con `workflow.assign`; además se filtra por rol en el cliente.
+   * Especialistas asignables a un expediente (backend v0.2.0, `workflow.assign`). Si el servidor
+   * no publica esa ruta, se usa el listado de usuarios filtrado por rol.
    */
-  specialists: () =>
-    request('/users?roleCode=CURRICULUM_SPECIALIST&isActive=true&limit=100', parseSpecialists),
+  specialists: async (dossierId: string) => {
+    try {
+      return await request(`/dossiers/${id(dossierId)}/assignment-candidates`, parseSpecialists);
+    } catch (reason) {
+      if (!esRutaPendiente(reason)) throw reason;
+      return request(
+        '/users?roleCode=CURRICULUM_SPECIALIST&isActive=true&limit=100',
+        parseSpecialists,
+      );
+    }
+  },
 };
