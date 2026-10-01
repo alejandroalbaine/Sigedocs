@@ -1,8 +1,11 @@
 # Endpoints principales por dominio
 
+> **Copia de referencia en el frontend.** Sincronizada el 30/09/2026 con
+> `SIGESDOC_BACKEND/docs/endpoints.md` (develop). La fuente vigente es la del backend.
+
 **Estado:** Contrato MVP vigente (sección siguiente) + contrato por dominio — condensado de `02_ENDPOINTS_PRINCIPALES_POR_DOMINIO.md`, actualizado con el ticket #55 y con los ADR-011 a 015. El estado de requisitos de las tablas no implica implementación. Todas las rutas contractuales siguen [api-conventions.md](api-conventions.md) y comienzan con `/api/v1`. La matriz completa de trazabilidad RF/RNF está en el documento fuente; aquí solo el contrato de endpoints.
 
-> **Transición a inglés ([ADR-011](decisions/ADR-011-english-naming-standard.md)).** Este documento describe el contrato **final**: `meta.pagination`, campo `code` y `type: /problems/<slug>` en Problem Details, códigos de error, de rol y de permiso en inglés. Hasta que se fusione REF-02, la implementación de los endpoints ya existentes (`/sessions`, `/users/current`, `/roles`, `/status`) responde todavía con los nombres anteriores (`codigo`, `/problemas/…`, `meta` en español, `SESION_INVALIDA`, `FACILITADOR`, `expedientes.consultar`…). La correspondencia exacta está en [naming-glossary.md](naming-glossary.md) §4, §6 y §7. Las rutas no cambian.
+> **Identificadores en inglés ([ADR-011](decisions/ADR-011-english-naming-standard.md)).** Desde REF-02 la implementación usa el contrato de este documento: `meta` en inglés, campo `code` y `type: /problems/<slug>` en Problem Details, y códigos de error, de rol y de permiso en inglés. La correspondencia con los nombres anteriores está en [naming-glossary.md](naming-glossary.md) §4, §6 y §7.
 
 Reglas comunes a todo el contrato:
 
@@ -54,6 +57,14 @@ Reglas de toda esta sección:
 
 Reglas: correo duplicado → `409 CONFLICT`; nadie cambia sus propios roles ni permisos (`403`); desactivar un usuario revoca sus sesiones; `schoolCode` es obligatorio si tiene `SCHOOL_DIRECTOR`.
 
+**Estado:** implementado (RF-01, CORE-01, CORE-02), salvo `/roles/{roleId}/permissions`. Detalles:
+- `POST /users` crea la cuenta activa. `email` debe ser `@uapa.edu.do` y `password` sigue la política del inicio de sesión (8 a 128 caracteres). `roleCodes` exige al menos un rol, y responde `201` con `Location`.
+- `GET /users` ordena por `createdAt:desc` y pagina con `meta.pagination`. `search` busca sin distinguir mayúsculas en nombre y correo.
+- `PUT /users/{userId}/roles` acepta `roleCodes: []`, que retira todos los roles.
+- Validación: una propiedad o parámetro no documentado responde `422`, con `errors[].code` `UNKNOWN_FIELD`. Un código de rol inexistente también responde `422`, con `UNKNOWN_ROLE`.
+- Un `userId` que no existe o no es un UUID responde `404`.
+- Ninguna respuesta incluye la contraseña ni su hash. No hay `DELETE /users/{userId}`: la baja es `PATCH { isActive: false }`.
+
 ### 3. Plantillas y catálogos (solo lectura en el MVP) — TPL-01
 
 | Método | Ruta | Respuesta |
@@ -63,7 +74,7 @@ Reglas: correo duplicado → `409 CONFLICT`; nadie cambia sus propios roles ni p
 | `GET` | `/templates/{templateId}/versions/{templateVersionId}` | `200` definición completa ([template-data-contract.md](template-data-contract.md) §3) |
 | `GET` | `/institutional-catalogs/{catalog}` | `200` `{ value, label }[]` (valores provisionales) |
 
-La escritura de plantillas (crear versiones, secciones, campos y publicar) está en la sección [Plantillas](#plantillas-template-engine) y se implementa en TPL-01 y TPL-02.
+La escritura de plantillas (crear versiones, secciones, campos y publicar) está en la sección [Plantillas](#plantillas-template-engine). **Estado:** las rutas de `/templates` de esta tabla están implementadas (TPL-01, [templates.md](templates.md)); `/institutional-catalogs` sigue pendiente, y las secciones y campos como recursos propios están implementados (TPL-02).
 
 ### 4. Expedientes — DOS-01
 
@@ -89,6 +100,12 @@ La escritura de plantillas (crear versiones, secciones, campos y publicar) está
 
 Sin versión de plantilla vigente → `409 NO_VALID_TEMPLATE_VERSION`. `academicLevel` ∈ `associate` | `bachelor` (en el MVP no se admite `graduate`).
 
+**Estado:** implementado (DOS-01). Detalles:
+- `code` lo genera el servidor (`ECD-<año>-<secuencia>`, secuencia global `dossier_code_seq`); la versión de plantilla es la publicada vigente hoy para `course_program` que cubre el nivel, y el flujo, el del nivel (hoy `UNDERGRAD`). El creador queda en `dossier_participants`.
+- El alcance es el de [ADR-015](decisions/ADR-015-object-level-authorization.md) §1, en `DossierAccessPolicy`. `CURRICULUM_SPECIALIST` no ve expedientes hasta WF-03 (asignaciones). Quien registra tiene que quedar dentro de su propio alcance: una `SCHOOL_DIRECTOR` que envía otra escuela recibe `422` con `errors[].code = OUT_OF_SCOPE` en `schoolCode`.
+- `GET /dossiers`: `search` busca sin distinguir mayúsculas en `code`, `title` y `subjectCode`; `currentState` es el código del estado de la última versión. Orden `createdAt:desc, dossierId:desc`, paginado por cursor.
+- `PATCH`: nivel, escuela y carrera no cambian (deciden el flujo y el alcance) → `422 UNKNOWN_FIELD`. Fuera de un estado editable → `409 IMMUTABLE_VERSION`.
+
 ### 5. Versiones y contenido del programa — DOS-02
 
 | Método | Ruta | Permiso | Body | Respuesta |
@@ -96,6 +113,8 @@ Sin versión de plantilla vigente → `409 NO_VALID_TEMPLATE_VERSION`. `academic
 | `GET` | `/dossiers/{dossierId}/versions` | `dossiers.read` | — | `200` `{ versionId, label, state, createdBy, createdAt, approvedAt }[]` |
 | `GET` | `/dossiers/{dossierId}/versions/{versionId}` | `dossiers.read` | — | `200` lo anterior + `templateVersionId`, `content` |
 | `PATCH` | `/dossiers/{dossierId}/versions/{versionId}` | `dossiers.edit` | `{ content }` (completo, [template-data-contract.md](template-data-contract.md) §7) | `200` versión |
+
+**Estado:** implementado (DOS-02).
 
 Solo se edita la **última** versión y solo en un estado con `isEditable` (`RECEIVED`, `CHANGES_REQUIRED`); si no → `409 IMMUTABLE_VERSION`. Se valida en modo borrador (se aceptan campos incompletos, pero no tipos incorrectos ni claves desconocidas).
 
@@ -111,6 +130,13 @@ Solo se edita la **última** versión y solo en un estado con `isEditable` (`REC
 
 `newVersionId` solo viene cuando la transición crea versión (devoluciones, ADR-013). Errores: no sale del estado actual → `409 INVALID_TRANSITION`; `versionId` no es la última → `409 CONFLICT`; falta la observación obligatoria → `422`; al pasar a revisión con contenido incompleto → `422` con los campos.
 
+**Estado:** implementado (WF-02, migración `013_direct_dossier_transitions`). Detalles:
+- **Transiciones.** Se ejecutan todas las del flujo `UNDERGRAD` salvo `ASSIGN` (T1), que solo se ejecuta al asignar una especialista (§7); por esta ruta responde `409 INVALID_TRANSITION`. Las cinco transiciones marcadas como inferidas en ADR-014 siguen pendientes de validar con Gestión Curricular.
+- **Validaciones, bajo el bloqueo del expediente.** Alcance de [ADR-015](decisions/ADR-015-object-level-authorization.md) (fuera de alcance → `404`), permiso de la transición leído de la base (`403`), estado de origen (`409 INVALID_TRANSITION`) y `versionId` igual a la última versión (`409 CONFLICT`). Otro usuario que cambie el expediente al mismo tiempo → `409` (RNF-21). `observation`: de 1 a 5000 caracteres.
+- **`START_REVIEW` (T2).** Valida el contenido en modo `submission` contra su versión de plantilla ([templates.md](templates.md) §6); si falta algo, `422` con la ruta de cada campo y no cambia nada.
+- **Devoluciones** (`REQUEST_CHANGES`, `REQUEST_CHANGES_AGAIN`, `REQUEST_POST_PILOT_CHANGES`), en una sola transacción y como pide [ADR-013](decisions/ADR-013-dossier-lifecycle-and-versioning.md) (doc. base, fases 10 y 11: el dictamen queda sobre la versión revisada): 1) la observación obligatoria se guarda en `observations` (§8) sobre la versión revisada; 2) se crea `v<major>.<minor+1>` en `CHANGES_REQUIRED` con el mismo contenido y versión de plantilla; 3) la versión revisada pasa a `CHANGES_REQUIRED` y queda congelada. El historial registra la transición sobre la versión revisada (con su observación); la versión nueva aparece como alta. La respuesta trae `versionId` (la revisada) y `newVersionId`.
+- **`ARCHIVE_IMPLEMENT` (T13).** Es el único cambio que se admite sobre una versión ya aprobada: solo el estado, sin tocar contenido ni sello (resuelve la discrepancia 32).
+
 ### 7. Asignación para revisión — WF-03
 
 | Método | Ruta | Permiso | Body | Respuesta |
@@ -125,9 +151,32 @@ Si el expediente está en `RECEIVED`, ejecuta T1 (`ASSIGN`) en la misma transacc
 | Método | Ruta | Permiso | Body | Respuesta |
 |---|---|---|---|---|
 | `POST` | `/dossiers/{dossierId}/observations` | `observations.create` | `{ versionId, sectionKey?, fieldKey?, itemId?, text }` | `201` `Observation` |
-| `GET` | `/dossiers/{dossierId}/observations?versionId` | `dossiers.read` | — | `200` `Observation[]` |
+| `GET` | `/dossiers/{dossierId}/observations` | `dossiers.read` | `?versionId&limit&cursor` | `200` `Observation[]` |
 
 Solo se observa una versión en `IN_REVIEW` o `IN_REEVALUATION`. Las observaciones no se editan ni se borran.
+
+**Estado:** implementado (WF-04, migración `012_observations`). Forma acordada con frontend:
+
+```json
+{
+  "observationId": "…",
+  "dossierId": "…",
+  "version": { "versionId": "…", "label": "v1.0" },
+  "sectionKey": "competencias_fundamentales",
+  "fieldKey": "competencias_fundamentales",
+  "itemId": "…",
+  "text": "La competencia CF1 necesita un resultado medible.",
+  "createdBy": { "userId": "…", "name": "…" },
+  "createdAt": "2026-09-30T12:00:00.000Z"
+}
+```
+
+- **Destino.** `sectionKey`, `fieldKey` e `itemId` son opcionales (se pueden omitir o enviar en `null`); sin ninguno es una observación general. `fieldKey` exige `sectionKey` y `itemId` exige `fieldKey` (si no, `422` con `REQUIRED`). La sección tiene que estar activa en la versión de plantilla de la versión observada y el campo pertenecer a esa sección (si no, `422` con `errors[].code = UNKNOWN_FIELD`). `itemId` tiene que ser un elemento de ese campo `repeatable_group` en el contenido de la versión, en cualquier nivel (si no, `UNKNOWN_ITEM`). Es el identificador que generó el cliente: normalmente un UUID (se compara sin distinguir mayúsculas), pero se acepta cualquier texto de hasta 200 caracteres, igual que en la validación del contenido ([templates.md](templates.md) §6). `text`: de 1 a 5000 caracteres, sin espacios sobrantes.
+- **Versión y estado.** `versionId` tiene que ser la última versión del expediente y estar en `IN_REVIEW` o `IN_REEVALUATION`; en otro caso `409 CONFLICT`. Una versión de otro expediente recibe el mismo `409`. El alta bloquea la versión: si una transición la mueve al mismo tiempo, la observación no se guarda (`409`).
+- **Alcance.** Sin alcance sobre el expediente → `404`, también en el `GET` ([ADR-015](decisions/ADR-015-object-level-authorization.md)). `CURRICULUM_SPECIALIST` observa los expedientes que tenga asignados cuando WF-03 le dé ese alcance.
+- **Respuesta.** El `POST` no devuelve `Location`: una observación no tiene ruta propia. El `GET` va en orden `createdAt:asc, observationId:asc`, paginado por cursor; `versionId` limita a una versión (una versión que no es del expediente devuelve la colección vacía).
+- **T3 (`REQUEST_CHANGES`).** La observación obligatoria de la devolución se guarda en esta tabla, en la misma transacción y **antes** de crear la nueva versión (`createIncrementedVersionService`) y de cambiar el estado, porque después la versión observada ya no es la última. `PostgresObservationRepository` recibe el cliente de esa transacción. `state_history.observation` queda solo como resumen.
+- **Cronología.** La tabla guarda `dossier_id` (FK compuesta con la versión) y el trigger `log_observation_change` usa `log_dossier_record_change('created_by')` de `011_dossier_audit_trail`, así cada alta queda en `audit_log` y `GET /dossiers/{dossierId}/audit-events` la muestra como `observation_added`. Los triggers de la tabla rechazan `UPDATE`, `DELETE` y `TRUNCATE`.
 
 ### 9. Trazabilidad — AUD-01
 
@@ -136,6 +185,14 @@ Solo se observa una versión en `IN_REVIEW` o `IN_REEVALUATION`. Las observacion
 | `GET` | `/dossiers/{dossierId}/audit-events` | `audit.read` o alcance | `?type&from&to&versionId&limit&cursor` | `200` `{ eventId, type, occurredAt, user, versionLabel, summary }[]` |
 
 `type` ∈ `dossier_created`, `version_created`, `content_updated`, `state_changed`, `assigned`, `observation_added`. Solo lectura ([ADR-016](decisions/ADR-016-authentication-and-audit-events.md)).
+
+**Estado:** implementado (AUD-01). Detalles:
+- **Acceso:** la política de la ruta es `requireSession`; el acceso lo da `audit.read` (cualquier expediente) o el alcance de [ADR-015](decisions/ADR-015-object-level-authorization.md) §1. Sin ninguno de los dos, o si el expediente no existe o el id está mal formado → `404`.
+- **Orden:** cronológico ascendente (`occurredAt`), paginado por cursor como `/users` (`meta.pagination`, `limit` 25 por omisión, máximo 100). Los eventos de una misma transacción comparten `occurredAt` y siguen el orden causal: el alta antes que su v1.0, la asignación antes que la transición que provoca y la transición antes que la versión que crea una devolución.
+- **Filtros:** `type` (uno de los seis), `versionId` (UUID; excluye los eventos sin versión: `dossier_created`, `assigned` y los cambios de metadatos) y `from`/`to`, ambos inclusivos, como fecha (`2026-09-30`, día UTC completo) o instante con zona (`2026-09-30T14:00:00-04:00`). `from` posterior a `to`, un tipo desconocido o un parámetro fuera de la lista → `422`.
+- **Respuesta:** `user` es `{ userId, name }` (o `null` si la bitácora no registró el usuario); `versionLabel` es `v<major>.<minor>` o `null`; `summary` es un texto en español calculado por el servidor (qué metadatos o secciones cambiaron, estados y transición, especialista asignada, sección observada). **Nunca** se devuelven `before_data`/`after_data` ni el contenido, el título anterior o el texto de una observación.
+- **Fuentes** (todas de solo anexado): `audit_log` de `dossiers` (alta y `PATCH` de título o clave → `content_updated` sin versión), `audit_log` de `dossier_versions` (alta → `version_created`; cambio de `content` → `content_updated`), `state_history` con transición (`state_changed`), y `audit_log` de `dossier_assignments` y `observations` (`assigned`, `observation_added`) cuando WF-03 y WF-04 creen esas tablas y conecten `log_dossier_record_change` (ver [database/README.md](../database/README.md#auditoría-del-expediente-aud-01)). Hasta entonces esos dos tipos no devuelven eventos.
+- No existe ninguna ruta para modificar o borrar eventos; los triggers rechazan `UPDATE`, `DELETE` y `TRUNCATE` sobre `audit_log` y `state_history` (prueba en `tests/dossiers/audit-events.http.integration.test.ts`).
 
 ---
 
@@ -147,11 +204,11 @@ Solo se observa una versión en `IN_REVIEW` o `IN_REEVALUATION`. Las observacion
 
 | Método | Endpoint | Propósito | Estado |
 |---|---|---|---|
-| `GET` | `/api/v1/users` | Consultar usuarios autorizados | Confirmado |
-| `POST` | `/api/v1/users` | Crear usuario institucional | Confirmado |
-| `GET` | `/api/v1/users/{userId}` | Consultar un usuario | Confirmado |
-| `PATCH` | `/api/v1/users/{userId}` | Modificar/activar/desactivar | Confirmado |
-| `GET`/`PUT` | `/api/v1/users/{userId}/roles` | Consultar / reemplazar los roles de un usuario | Confirmado (CORE-02) |
+| `GET` | `/api/v1/users` | Consultar usuarios autorizados | Implementado |
+| `POST` | `/api/v1/users` | Crear usuario institucional | Implementado |
+| `GET` | `/api/v1/users/{userId}` | Consultar un usuario | Implementado |
+| `PATCH` | `/api/v1/users/{userId}` | Modificar/activar/desactivar | Implementado |
+| `GET`/`PUT` | `/api/v1/users/{userId}/roles` | Consultar / reemplazar los roles de un usuario | Implementado (CORE-02) |
 | `GET` | `/api/v1/roles` | Consultar roles | Confirmado |
 | `POST` | `/api/v1/roles` | Crear rol | Confirmado |
 | `GET` | `/api/v1/roles/{roleId}/permissions` | Consultar permisos de un rol | Confirmado (CORE-02) |
@@ -239,15 +296,15 @@ Jerarquía resuelta por [ADR-012](decisions/ADR-012-template-versioning.md): las
 
 | Método | Endpoint | Propósito | Estado |
 |---|---|---|---|
-| `GET`/`POST` | `/api/v1/templates` | Consultar / crear plantilla lógica | Confirmado |
-| `GET`/`PATCH` | `/api/v1/templates/{templateId}` | Consultar / modificar metadatos | Confirmado |
-| `GET`/`POST` | `/api/v1/templates/{templateId}/versions` | Historial / crear versión en borrador sin sobrescribir | Confirmado |
-| `GET` | `/api/v1/templates/{templateId}/versions/{templateVersionId}` | Versión concreta | Confirmado |
-| `POST` | `/api/v1/templates/{templateId}/versions/{templateVersionId}/publications` | Publicar una versión (acción modelada como recurso) | Confirmado (ADR-012) |
-| `GET`/`POST` | `/api/v1/template-versions/{templateVersionId}/sections` | Secciones de una versión de plantilla | Confirmado (ADR-012) |
-| `PATCH` | `/api/v1/sections/{sectionId}` | Modificar, reordenar, activar/desactivar sección | Confirmado (ADR-012) |
-| `GET`/`POST` | `/api/v1/sections/{sectionId}/fields` | Campos configurables | Confirmado (ADR-012) |
-| `PATCH` | `/api/v1/fields/{fieldId}` | Modificar campo | Confirmado (ADR-012) |
+| `GET`/`POST` | `/api/v1/templates` | Consultar / crear plantilla lógica | Implementado |
+| `GET`/`PATCH` | `/api/v1/templates/{templateId}` | Consultar / modificar metadatos | Implementado |
+| `GET`/`POST` | `/api/v1/templates/{templateId}/versions` | Historial / crear versión en borrador sin sobrescribir | Implementado |
+| `GET` | `/api/v1/templates/{templateId}/versions/{templateVersionId}` | Versión concreta | Implementado |
+| `POST` | `/api/v1/templates/{templateId}/versions/{templateVersionId}/publications` | Publicar una versión (acción modelada como recurso) | Implementado (ADR-012) |
+| `GET`/`POST` | `/api/v1/template-versions/{templateVersionId}/sections` | Secciones de una versión de plantilla | Implementado (ADR-012) |
+| `PATCH` | `/api/v1/sections/{sectionId}` | Modificar, reordenar, activar/desactivar sección | Implementado (ADR-012) |
+| `GET`/`POST` | `/api/v1/sections/{sectionId}/fields` | Campos configurables | Implementado (ADR-012) |
+| `PATCH` | `/api/v1/fields/{fieldId}` | Modificar campo | Implementado (ADR-012) |
 | `GET`/`POST` | `/api/v1/template-versions/{templateVersionId}/validation-rules` | Reglas de validación | Propuesto |
 | `GET`/`POST` | `/api/v1/template-versions/{templateVersionId}/checklists` | Checklists configurables | Propuesto |
 | `GET` | `/api/v1/institutional-catalogs` | Escuelas, carreras, modalidades | Confirmado |
@@ -258,15 +315,15 @@ Escribir secciones o campos solo se permite en versiones en borrador; sobre una 
 
 | Método | Endpoint | Propósito | Estado |
 |---|---|---|---|
-| `GET`/`POST` | `/api/v1/dossiers` | Buscar / crear Expediente Curricular Digital | Confirmado ([ADR-013](decisions/ADR-013-dossier-lifecycle-and-versioning.md): se crea con la v1.0 y el estado inicial) |
-| `GET`/`PATCH` | `/api/v1/dossiers/{dossierId}` | Consultar / modificar metadatos | Confirmado |
+| `GET`/`POST` | `/api/v1/dossiers` | Buscar / crear Expediente Curricular Digital | Implementado (DOS-01, [ADR-013](decisions/ADR-013-dossier-lifecycle-and-versioning.md): se crea con la v1.0 y el estado inicial) |
+| `GET`/`PATCH` | `/api/v1/dossiers/{dossierId}` | Consultar / modificar metadatos | Implementado (DOS-01) |
 | `GET` | `/api/v1/dossiers/{dossierId}/versions` | Historial de versiones | Confirmado |
 | `GET`/`PATCH` | `/api/v1/dossiers/{dossierId}/versions/{versionId}` | Versión concreta / editar su contenido | Confirmado |
 | `GET`/`POST` | `/api/v1/dossiers/{dossierId}/attachments` | Metadatos / adjuntar archivo | Confirmado / **Pendiente** (mecanismo de carga, fuera del MVP) |
 | `GET` | `/api/v1/attachments/{attachmentId}/content` | Descargar contenido binario | Propuesto |
 | `POST` | `/api/v1/version-comparisons` | Comparar dos versiones | Propuesto |
 | `POST` | `/api/v1/cross-validations` | Validar contra documentos maestros | Propuesto |
-| `GET` | `/api/v1/dossiers/{dossierId}/audit-events` | Cronología inmutable | Confirmado |
+| `GET` | `/api/v1/dossiers/{dossierId}/audit-events` | Cronología inmutable | Implementado (AUD-01, [ADR-016](decisions/ADR-016-authentication-and-audit-events.md); `assigned` y `observation_added` llegan con WF-03 y WF-04) |
 | `POST` | `/api/v1/dossiers/{dossierId}/final-documents` | Generar documento institucional definitivo | Propuesto |
 | `GET`/`POST` | `/api/v1/master-documents` | Pensum, mallas, normativas | Confirmado |
 | `POST` | `/api/v1/exports` / `/api/v1/imports` | Exportar / importar datos | **Pendiente** |
@@ -277,13 +334,13 @@ Las versiones nuevas no se crean con un `POST` directo: las crea el servidor al 
 
 | Método | Endpoint | Propósito | Estado |
 |---|---|---|---|
-| `GET`/`POST` | `/api/v1/workflows` | Consultar / crear configuración de flujo | Confirmado (en el MVP solo lectura) |
-| `GET`/`PATCH` | `/api/v1/workflows/{workflowId}` | Consultar / modificar flujo | Confirmado / **Pendiente** |
-| `GET`/`POST` | `/api/v1/workflows/{workflowId}/states` | Estados configurados | Confirmado |
-| `GET`/`POST` | `/api/v1/workflows/{workflowId}/transitions` | Definiciones de transición permitidas | Confirmado |
+| `GET`/`POST` | `/api/v1/workflows` | Consultar / crear configuración de flujo | `GET` implementado (WF-01); en el MVP solo lectura |
+| `GET`/`PATCH` | `/api/v1/workflows/{workflowId}` | Consultar / modificar flujo | `GET` implementado / **Pendiente** |
+| `GET`/`POST` | `/api/v1/workflows/{workflowId}/states` | Estados configurados | `GET` implementado (WF-01) |
+| `GET`/`POST` | `/api/v1/workflows/{workflowId}/transitions` | Definiciones de transición permitidas | `GET` implementado (WF-01) |
 | `GET`/`POST` | `/api/v1/dossiers/{dossierId}/transitions` | Historial / ejecutar movimiento (aprobar, devolver) | Confirmado ([ADR-014](decisions/ADR-014-undergraduate-workflow.md)) |
 | `GET`/`POST` | `/api/v1/dossiers/{dossierId}/assignments` | Historial / crear asignación de responsable | Confirmado |
-| `GET`/`POST` | `/api/v1/dossiers/{dossierId}/observations` | Observaciones por criterio/sección/campo | Confirmado |
+| `GET`/`POST` | `/api/v1/dossiers/{dossierId}/observations` | Observaciones por criterio/sección/campo | Implementado (WF-04) |
 
 ### Decisión clave de workflow
 

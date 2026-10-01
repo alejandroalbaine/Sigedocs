@@ -82,7 +82,8 @@ export interface TransitionResult {
 
 export interface HistoryEntry {
   historyId: string;
-  transition: StateRef;
+  /** `null` en el registro inicial de la versión, que no proviene de una transición. */
+  transition: StateRef | null;
   fromState: StateRef | null;
   toState: StateRef;
   versionLabel: string;
@@ -270,7 +271,10 @@ export const parseHistory = (value: unknown): HistoryEntry[] =>
     const h = record(item, `transitions[${String(i)}]`);
     return {
       historyId: text(h.historyId, 'history.historyId'),
-      transition: parseStateRef(h.transition, 'history.transition'),
+      transition:
+        h.transition === null || h.transition === undefined
+          ? null
+          : parseStateRef(h.transition, 'history.transition'),
       fromState:
         h.fromState === null || h.fromState === undefined
           ? null

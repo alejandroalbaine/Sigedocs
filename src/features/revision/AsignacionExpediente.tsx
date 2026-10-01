@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { dossiersApi } from '../../common/api/dossiers.ts';
-import type { Dossier } from '../../common/api/dossierContract.ts';
+import { dossiersApi, esRutaPendiente } from '../../common/api/dossiers.ts';
+import type { AvailableTransition, Dossier } from '../../common/api/dossierContract.ts';
 import { errorMessage } from '../../common/api/errors.ts';
 import { useRecurso } from '../../common/api/useRecurso.ts';
 import { Alert, Button, Field } from '../../common/components/index.ts';
@@ -8,14 +8,18 @@ import styles from './revision.module.css';
 
 interface AsignacionProps {
   dossier: Dossier;
+  /** Transiciones que el servidor ofrece; puede incluir T1 (ASSIGN). */
+  transiciones: readonly AvailableTransition[] | null;
   onAsignado: () => void;
 }
 
 /**
- * CU-03 / WF-03: la Dirección asigna el expediente a un especialista curricular con
- * `POST /dossiers/{id}/assignments`; si está Recepcionado, el servidor ejecuta T1 (ASSIGN).
+ * CU-03 / WF-03: la Dirección asigna el expediente a un especialista curricular.
+ * Backend aún decide la forma (plan, decisiones pendientes): se usa
+ * `POST /dossiers/{id}/assignments` y, si esa ruta no existe pero el servidor ofrece T1
+ * (ASSIGN), se ejecuta como transición con `specialistId` en el cuerpo.
  */
-export function AsignacionExpediente({ dossier, onAsignado }: AsignacionProps) {
+export function AsignacionExpediente({ dossier, transiciones, onAsignado }: AsignacionProps) {
   const especialistas = useRecurso(() => dossiersApi.specialists(), []);
   const [seleccion, setSeleccion] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -28,9 +32,23 @@ export function AsignacionExpediente({ dossier, onAsignado }: AsignacionProps) {
     }
     setEnviando(true);
     setAviso(null);
+    const nombre =
+      especialistas.data?.find((usuario) => usuario.userId === seleccion)?.name ??
+      'el especialista seleccionado';
+    const t1 = transiciones?.find((item) => item.code === 'ASSIGN');
     try {
-      const { data } = await dossiersApi.assign(dossier.dossierId, seleccion);
-      setAviso({ kind: 'success', texto: `Expediente asignado a ${data.specialist.name}.` });
+      try {
+        const { data } = await dossiersApi.assign(dossier.dossierId, seleccion);
+        setAviso({ kind: 'success', texto: `Expediente asignado a ${data.specialist.name}.` });
+      } catch (reason) {
+        if (!t1 || !esRutaPendiente(reason)) throw reason;
+        await dossiersApi.transition(dossier.dossierId, {
+          transitionId: t1.transitionId,
+          versionId: dossier.currentVersion.versionId,
+          specialistId: seleccion,
+        });
+        setAviso({ kind: 'success', texto: `Expediente asignado a ${nombre}.` });
+      }
       onAsignado();
     } catch (reason) {
       setAviso({ kind: 'error', texto: errorMessage(reason, 'No fue posible asignar.') });
@@ -42,8 +60,8 @@ export function AsignacionExpediente({ dossier, onAsignado }: AsignacionProps) {
   if (especialistas.pendiente) {
     return (
       <p className={styles.counter}>
-        La asignación se habilitará cuando el servidor publique la consulta de usuarios y la ruta de
-        asignaciones.
+        La asignación de especialistas está en preparación y aparecerá aquí en cuanto esté
+        disponible.
       </p>
     );
   }

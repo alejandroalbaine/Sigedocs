@@ -12,22 +12,30 @@ funciona en cuanto el backend publica su ruta; mientras una ruta confirmada no e
 lo indica como "pendiente" y nunca muestra datos simulados. Lo que falta del lado del servidor está
 en [docs/pendientes-backend.md](docs/pendientes-backend.md).
 
-| Módulo                    | Rutas del contrato                                              | Backend `develop` (27/09) |
-| ------------------------- | --------------------------------------------------------------- | ------------------------- |
-| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`  | Implementado              |
-| Panel, gestión y búsqueda | `GET /dossiers`                                                 | Pendiente (DOS-01)        |
-| Registro de expediente    | `POST /dossiers`                                                | Pendiente (DOS-01)        |
-| Detalle y revisión        | `GET /dossiers/{id}`, `/versions`, `/available-transitions`     | Pendiente (DOS-02, WF-01) |
-| Decisiones y flujo        | `POST /dossiers/{id}/transitions`                               | Pendiente (WF-02)         |
-| Asignación                | `GET /users`, `POST /dossiers/{id}/assignments`                 | Pendiente (WF-03)         |
-| Observaciones             | `GET/POST /dossiers/{id}/observations`                          | Pendiente (WF-04)         |
-| Historial y trazabilidad  | `GET /dossiers/{id}/transitions`, `/audit-events`               | Pendiente (AUD-01)        |
-| Reportes y Biblioteca UI  | Se calculan con `GET /dossiers`; exportación CSV/JSON local     | Pendiente (DOS-01)        |
-| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `PUT /users/{id}/roles` | Pendiente (CORE-01/02)    |
+| Módulo                    | Rutas del contrato                                              | Backend develop (30/09)             |
+| ------------------------- | --------------------------------------------------------------- | ----------------------------------- |
+| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`  | Implementado                        |
+| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `GET/PUT .../roles`     | Implementado                        |
+| Panel, gestión y búsqueda | `GET /dossiers`                                                 | Implementado                        |
+| Registro de expediente    | `POST /dossiers`                                                | Implementado                        |
+| Detalle y flujo T2 a T8   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions` | Implementado                        |
+| Asignación (T1)           | `POST /dossiers/{id}/assignments`                               | Pendiente (WF-03)                   |
+| Observaciones             | `GET/POST /dossiers/{id}/observations`                          | Implementado                        |
+| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                               | Implementado                        |
+| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local          | Implementado                        |
+| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`    | Implementado                        |
+| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`   | Plantillas sí; catálogos pendientes |
 
-Los expedientes que aparecen en capturas o videos anteriores provenían de un modo de prueba: el
-backend todavía no expone `/dossiers`. Ninguna pantalla presenta como guardada una operación que
-no se envió.
+Verificado contra el backend real el 30/09: el flujo de revisión funciona de punta a punta desde
+"Asignado". Falta la asignación (WF-03): hasta que exista, ningún expediente sale de
+"Recepcionado" y la especialista no ve expedientes.
+
+El formulario del programa (CU-01) está terminado en la rama `feature/formulario-programa`. El
+backend ya guarda el contenido (`PATCH .../versions/{id}`); falta adaptar la lectura de la
+plantilla a la forma real de la respuesta y que backend publique los catálogos.
+
+La Biblioteca UI (`/ui-kit`) es una herramienta interna del equipo: solo existe con `npm run dev`
+y no aparece en el menú ni en el build de producción.
 
 ## Tecnologías
 
@@ -66,21 +74,40 @@ el backend.
 
 ### Opción con Docker
 
-Si ya tiene Docker Desktop, no necesita instalar Node.js en su computadora:
+El frontend puede ejecutarse en producción mediante Docker y Nginx.
+
+Para construir la imagen y levantar el contenedor:
 
 ```bash
 docker compose up --build
 ```
 
-Abra <http://localhost:5173>. Para detenerlo:
+Abra <http://localhost:5173>.
+
+El puerto `5173` del equipo se redirige al puerto `80` del contenedor, donde Nginx sirve el build de producción generado por Vite.
+
+Para detener el contenedor:
 
 ```bash
 docker compose down
 ```
 
-Docker levanta únicamente el frontend. El backend continúa ejecutándose desde su propio
-repositorio en el puerto `3000`.
+La variable `VITE_API_BASE_URL` se configura durante el proceso de build. Por defecto utiliza:
 
+```text
+http://localhost:3000
+```
+
+El valor queda fijo dentro de la imagen. Para apuntar a otro backend hay que reconstruirla:
+
+```bash
+VITE_API_BASE_URL=https://api.ejemplo.edu.do docker compose up --build
+```
+
+El backend debe incluir el origen de la interfaz (`http://localhost:5173` en local) en `ALLOWED_ORIGINS`.
+Docker ahora sirve el build de producción; para desarrollar con recarga en caliente use `npm run dev`.
+
+Docker levanta únicamente el frontend. El backend continúa ejecutándose desde su propio repositorio.
 En VS Code, `F5` levanta Vite y abre Chrome con el depurador conectado.
 
 ## Comandos
@@ -146,6 +173,7 @@ La última comparación formal con los archivos entregados está en
 - La sesión es una cookie `HttpOnly` del backend; el frontend nunca lee ni guarda tokens.
 - Toda solicitud usa `credentials: 'include'` y el origen exacto de `VITE_API_BASE_URL`.
 - El build inyecta una CSP como `<meta>` (`script-src 'self'`, `connect-src` limitado a la API).
-  `frame-ancestors`, HSTS y el resto de cabeceras las debe enviar el hosting.
+  `nginx.conf` envía `frame-ancestors`, `X-Frame-Options`, `X-Content-Type-Options` y
+  `Referrer-Policy`; HSTS lo debe enviar el hosting con HTTPS.
 - Ocultar una opción por permisos es experiencia de usuario: el backend autoriza cada operación.
 - Las variables `VITE_*` llegan al navegador; nunca contienen secretos.

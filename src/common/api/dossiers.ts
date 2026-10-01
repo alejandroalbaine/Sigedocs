@@ -42,7 +42,7 @@ export const dossiersApi = {
     request(`/dossiers/${id(dossierId)}/available-transitions`, parseAvailableTransitions),
   transition: (
     dossierId: string,
-    body: { transitionId: string; versionId: string; observation?: string },
+    body: { transitionId: string; versionId: string; observation?: string; specialistId?: string },
   ) => request(`/dossiers/${id(dossierId)}/transitions`, parseTransitionResult, post(body)),
   history: (dossierId: string) => request(`/dossiers/${id(dossierId)}/transitions`, parseHistory),
   assign: (dossierId: string, specialistId: string) =>
@@ -70,6 +70,7 @@ export const dossiersApi = {
     const suffix = params.size ? `?${params.toString()}` : '';
     return request(`/dossiers/${id(dossierId)}/audit-events${suffix}`, parseAuditEvents);
   },
+<<<<<<< HEAD
   specialists: () => request('/users', parseSpecialists),
   version: (dossierId: string, versionId: string) =>
     request(`/dossiers/${id(dossierId)}/versions/${id(versionId)}`, parseVersionDetail),
@@ -88,4 +89,12 @@ export const templatesApi = {
       parseTemplateDefinition,
     ),
   catalog: (catalog: string) => request(`/institutional-catalogs/${id(catalog)}`, parseCatalog),
+=======
+  /**
+   * Especialistas activos para asignar (B5). El plan propone que el servidor acepte este filtro
+   * con `workflow.assign`; además se filtra por rol en el cliente.
+   */
+  specialists: () =>
+    request('/users?roleCode=CURRICULUM_SPECIALIST&isActive=true&limit=100', parseSpecialists),
+>>>>>>> develop
 };
