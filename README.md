@@ -12,23 +12,23 @@ funciona en cuanto el backend publica su ruta; mientras una ruta confirmada no e
 lo indica como "pendiente" y nunca muestra datos simulados. Lo que falta del lado del servidor está
 en [docs/pendientes-backend.md](docs/pendientes-backend.md).
 
-| Módulo                    | Rutas del contrato                                              | Backend develop (30/09)             |
-| ------------------------- | --------------------------------------------------------------- | ----------------------------------- |
-| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`  | Implementado                        |
-| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `GET/PUT .../roles`     | Implementado                        |
-| Panel, gestión y búsqueda | `GET /dossiers`                                                 | Implementado                        |
-| Registro de expediente    | `POST /dossiers`                                                | Implementado                        |
-| Detalle y flujo T2 a T8   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions` | Implementado                        |
-| Asignación (T1)           | `POST /dossiers/{id}/assignments`                               | Pendiente (WF-03)                   |
-| Observaciones             | `GET/POST /dossiers/{id}/observations`                          | Implementado                        |
-| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                               | Implementado                        |
-| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local          | Implementado                        |
-| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`    | Implementado                        |
-| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`   | Plantillas sí; catálogos pendientes |
+| Módulo                    | Rutas del contrato                                                 | Backend v0.2.0 (01/10)              |
+| ------------------------- | ------------------------------------------------------------------ | ----------------------------------- |
+| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`     | Implementado                        |
+| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `GET/PUT .../roles`        | Implementado                        |
+| Panel, gestión y búsqueda | `GET /dossiers`                                                    | Implementado                        |
+| Registro de expediente    | `POST /dossiers`                                                   | Implementado                        |
+| Detalle y flujo T2 a T8   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions`    | Implementado                        |
+| Asignación (T1)           | `GET .../assignment-candidates`, `POST /dossiers/{id}/assignments` | Implementado                        |
+| Observaciones             | `GET/POST /dossiers/{id}/observations`                             | Implementado                        |
+| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                                  | Implementado                        |
+| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local             | Implementado                        |
+| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`       | Implementado                        |
+| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`      | Plantillas sí; catálogos pendientes |
 
-Verificado contra el backend real el 30/09: el flujo de revisión funciona de punta a punta desde
-"Asignado". Falta la asignación (WF-03): hasta que exista, ningún expediente sale de
-"Recepcionado" y la especialista no ve expedientes.
+Verificado desde la interfaz contra el backend v0.2.0 (01/10), con cada rol: la Dirección asigna,
+la especialista revisa y devuelve, la coordinación reenvía, la especialista reevalúa y la Dirección
+aprueba para pilotaje; el historial y la auditoría registran cada paso.
 
 El formulario del programa (CU-01) está terminado en la rama `feature/formulario-programa`. El
 backend ya guarda el contenido (`PATCH .../versions/{id}`); falta adaptar la lectura de la
