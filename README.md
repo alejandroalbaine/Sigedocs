@@ -90,6 +90,15 @@ La variable `VITE_API_BASE_URL` se configura durante el proceso de build. Por de
 http://localhost:3000
 ```
 
+El valor queda fijo dentro de la imagen. Para apuntar a otro backend hay que reconstruirla:
+
+```bash
+VITE_API_BASE_URL=https://api.ejemplo.edu.do docker compose up --build
+```
+
+El backend debe incluir el origen de la interfaz (`http://localhost:5173` en local) en `ALLOWED_ORIGINS`.
+Docker ahora sirve el build de producción; para desarrollar con recarga en caliente use `npm run dev`.
+
 Docker levanta únicamente el frontend. El backend continúa ejecutándose desde su propio repositorio.
 En VS Code, `F5` levanta Vite y abre Chrome con el depurador conectado.
 
@@ -156,6 +165,7 @@ La última comparación formal con los archivos entregados está en
 - La sesión es una cookie `HttpOnly` del backend; el frontend nunca lee ni guarda tokens.
 - Toda solicitud usa `credentials: 'include'` y el origen exacto de `VITE_API_BASE_URL`.
 - El build inyecta una CSP como `<meta>` (`script-src 'self'`, `connect-src` limitado a la API).
-  `frame-ancestors`, HSTS y el resto de cabeceras las debe enviar el hosting.
+  `nginx.conf` envía `frame-ancestors`, `X-Frame-Options`, `X-Content-Type-Options` y
+  `Referrer-Policy`; HSTS lo debe enviar el hosting con HTTPS.
 - Ocultar una opción por permisos es experiencia de usuario: el backend autoriza cada operación.
 - Las variables `VITE_*` llegan al navegador; nunca contienen secretos.
