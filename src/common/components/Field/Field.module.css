@@ -1,28 +1,28 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1);
   min-width: 0;
 }
 
 .label {
   color: var(--ink);
-  font-size: var(--text-md);
-  font-weight: 700;
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .control {
   width: 100%;
-  min-height: 44px;
-  padding: 10px var(--space-3);
-  border: 1.5px solid var(--line-strong);
+  min-height: var(--control-h);
+  padding: 6px var(--space-3);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   color: var(--ink);
   background: var(--surface-raised);
 }
 
 textarea.control {
-  min-height: 120px;
+  min-height: 96px;
   resize: vertical;
 }
 

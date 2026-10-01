@@ -19,7 +19,9 @@ import { hasPermission } from '../../common/auth/permissions.ts';
 import { EmptyState } from '../../common/components/index.ts';
 import { downloadCsv } from '../../common/utils/download.ts';
 import { formatLongDate } from '../../common/utils/format.ts';
+import { EnPreparacion } from '../documental/EnPreparacion.tsx';
 import { useDossiers } from '../documental/useDossiers.ts';
+import { visibleNavigation } from '../layout/navigation.ts';
 import {
   contarPorGrupo,
   GRUPOS_ESTADO,
@@ -48,7 +50,9 @@ export function DashboardPage() {
   const { roleNames } = useSession();
   const roles = roleLabels(user, roleNames) || 'Usuario institucional';
   const canCreate = hasPermission(user.permissions, 'dossiers.create');
-  const { items: dossiers, error } = useDossiers();
+  const canRead = hasPermission(user.permissions, 'dossiers.read');
+  const { items: dossiers, error, pendiente } = useDossiers('', canRead);
+  const accesos = visibleNavigation(user.permissions).filter((item) => item.to && item.to !== '/');
   const [search, setSearch] = useState('');
   const filtered = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('es');
@@ -125,22 +129,15 @@ export function DashboardPage() {
           </p>
         </div>
         <div className={styles.welcomeActions}>
-          <button type="button" className={styles.secondaryButton} onClick={exportReport}>
-            <Download size={16} /> Exportar Reporte
-          </button>
-          {canCreate ? (
+          {dossiers.length > 0 && (
+            <button type="button" className={styles.secondaryButton} onClick={exportReport}>
+              <Download size={16} /> Exportar Reporte
+            </button>
+          )}
+          {canCreate && (
             <Link to="/expedientes/nuevo" className={styles.primaryButton}>
               <FilePlus2 size={16} /> Registrar Documento
             </Link>
-          ) : (
-            <button
-              type="button"
-              className={styles.primaryButton}
-              disabled
-              title="Su rol no tiene el permiso dossiers.create"
-            >
-              <FilePlus2 size={16} /> Registrar Documento
-            </button>
           )}
         </div>
       </header>
@@ -149,14 +146,25 @@ export function DashboardPage() {
         <EmptyState title="No tiene módulos asignados">
           Su sesión está activa, pero su cuenta no tiene permisos sobre ningún módulo.
         </EmptyState>
+      ) : !canRead ? (
+        <section className={styles.accesos} aria-label="Accesos de su rol">
+          <h2>Accesos disponibles para su rol</h2>
+          <ul>
+            {accesos.map((item) => (
+              <li key={item.label}>
+                <Link to={item.to ?? '/'}>
+                  <item.icon size={20} /> {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : (
         <>
           {error && <div className={styles.error}>{error}</div>}
-          {dossiers.length === 0 && !error && (
-            <p className={styles.dataNotice}>
-              No hay datos simulados: los indicadores permanecen en cero hasta recibir expedientes
-              del backend.
-            </p>
+          {pendiente && <EnPreparacion />}
+          {dossiers.length === 0 && !error && !pendiente && (
+            <p className={styles.dataNotice}>Aún no hay expedientes registrados en su alcance.</p>
           )}
 
           <ul className={styles.metrics} aria-label="Indicadores">
@@ -203,7 +211,7 @@ export function DashboardPage() {
               <header>
                 <div>
                   <h2>Expedientes registrados por mes</h2>
-                  <p>Histórico calculado con los expedientes visibles en el backend.</p>
+                  <p>Histórico calculado con los expedientes visibles para su usuario.</p>
                 </div>
                 <div className={styles.legend}>
                   <span>
@@ -333,10 +341,7 @@ export function DashboardPage() {
                 <span>
                   Mostrando {Math.min(5, filtered.length)} de {filtered.length} registros
                 </span>
-                <span>
-                  <button disabled>Anterior</button> &nbsp; <b>1</b> &nbsp; … &nbsp;{' '}
-                  <button disabled>Siguiente</button>
-                </span>
+                <Link to="/expedientes">Ver todos →</Link>
               </footer>
             </article>
 
@@ -364,10 +369,6 @@ export function DashboardPage() {
               <Link className={styles.allAlerts} to="/expedientes">
                 Ver expedientes →
               </Link>
-              <p className={styles.alertNote}>
-                Las notificaciones automáticas (RF-14) se incorporarán cuando el backend registre
-                los eventos del flujo.
-              </p>
             </aside>
           </section>
         </>

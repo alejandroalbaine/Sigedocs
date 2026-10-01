@@ -128,10 +128,9 @@ export function CampoPlantilla({
       if (opciones === null) {
         control = (
           <p className={styles.pendiente} id={id}>
-            Catálogo «{campo.optionsSource?.catalog}»{' '}
             {catalogos[campo.optionsSource?.catalog ?? ''] === 'cargando'
-              ? 'cargando…'
-              : 'pendiente en el servidor.'}
+              ? 'Cargando opciones…'
+              : 'Las opciones de este campo estarán disponibles próximamente.'}
           </p>
         );
       } else if (campo.type === 'select') {

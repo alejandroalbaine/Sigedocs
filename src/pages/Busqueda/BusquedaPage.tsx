@@ -1,6 +1,7 @@
 import { useMemo, useState, type SyntheticEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { Download, FileSearch, List, Search, SlidersHorizontal, X } from 'lucide-react';
+import { FileSearch, List, Search, SlidersHorizontal, X } from 'lucide-react';
+import { EnPreparacion } from '../documental/EnPreparacion.tsx';
 import { useDossiers } from '../documental/useDossiers.ts';
 import { claseEstado } from '../documental/estadoBadge.ts';
 import { tonoDeEstado } from '../../common/workflow/estados.ts';
@@ -14,7 +15,7 @@ export function BusquedaPage() {
     () => (currentQuery ? `&search=${encodeURIComponent(currentQuery)}` : ''),
     [currentQuery],
   );
-  const { items, loading, error } = useDossiers(query);
+  const { items, loading, error, pendiente } = useDossiers(query);
 
   function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,7 +61,7 @@ export function BusquedaPage() {
           </span>
           <h2>Filtros Avanzados</h2>
           {currentQuery && <span className={styles.badgeWarning}>1 activo</span>}
-          <span className={styles.subtle}>• Texto, nivel académico y estado</span>
+          <span className={styles.subtle}>• Código, título o asignatura</span>
         </summary>
         <form className={styles.filters} onSubmit={submit}>
           <div className={styles.field}>
@@ -76,28 +77,6 @@ export function BusquedaPage() {
             />
           </div>
           <div className={styles.field}>
-            <label htmlFor="level">Nivel académico</label>
-            <select
-              id="level"
-              className={styles.select}
-              disabled
-              title="Filtro pendiente en backend"
-            >
-              <option>Todos</option>
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="state">Estado</label>
-            <select
-              id="state"
-              className={styles.select}
-              disabled
-              title="Filtro pendiente en backend"
-            >
-              <option>Todos</option>
-            </select>
-          </div>
-          <div className={styles.field}>
             <label>&nbsp;</label>
             <button className={styles.button}>Aplicar consulta</button>
           </div>
@@ -105,6 +84,7 @@ export function BusquedaPage() {
       </details>
 
       {error && <div className={styles.error}>{error}</div>}
+      {pendiente && <EnPreparacion />}
       <section className={styles.summaryBar}>
         <div className={styles.summaryText}>
           <span className={styles.summaryIcon}>
@@ -132,14 +112,11 @@ export function BusquedaPage() {
           <span className={styles.buttonSecondary}>
             <List size={16} /> Lista Detallada
           </span>
-          <button className={styles.button} disabled title="Pendiente de ruta en backend">
-            <Download size={16} /> Exportar Hallazgos (CSV / PDF)
-          </button>
         </div>
       </section>
 
       <section className={styles.cards} aria-label="Resultados de búsqueda">
-        {!loading && items.length === 0 && (
+        {!loading && !pendiente && items.length === 0 && (
           <p className={styles.empty}>No se encontraron expedientes.</p>
         )}
         {items.map((item) => (
@@ -163,13 +140,6 @@ export function BusquedaPage() {
                 {item.schoolCode} · {item.degreeProgramCode} · {item.subjectCode}
               </p>
               <div className={styles.resultActions}>
-                <button
-                  className={`${styles.button} ${styles.buttonSecondary}`}
-                  disabled
-                  title="El backend aún no expone folios"
-                >
-                  Ver folio
-                </button>
                 <Link className={styles.button} to={`/revision?dossierId=${item.dossierId}`}>
                   Abrir expediente
                 </Link>

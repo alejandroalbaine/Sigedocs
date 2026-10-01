@@ -122,16 +122,19 @@
   --shadow-dialog: 0 22px 70px rgb(0 0 0 / 25%);
   --institutional-overlay: rgb(0 21 54 / 55%);
 
-  /* Tipografía (documento base): títulos 28 bold, subtítulos 18 semibold, texto 14, etiquetas 12 */
+  /*
+   * Tipografía. El documento base fija títulos 28 / subtítulos 18 para monitor; en laptop
+   * (el equipo habitual de la UAPA) se usa 24 / 16 para que el contenido quepa sin zoom.
+   */
   --font-sans: 'Inter Variable', inter, roboto, arial, sans-serif;
   --font-mono: 'Liberation Mono', ui-monospace, monospace;
   --text-xs: 12px;
   --text-sm: 12px;
   --text-md: 14px;
   --text-base: 14px;
-  --text-lg: 18px;
+  --text-lg: 16px;
   --text-xl: 18px;
-  --text-2xl: 28px;
+  --text-2xl: 24px;
 
   /* Radios */
   --radius-xs: 8px;
@@ -149,7 +152,23 @@
   --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
+  --space-10: 40px;
   --space-12: 48px;
+
+  /*
+   * Densidad: pensada para laptops (1366–1536 px útiles con el escalado de Windows al
+   * 125 %). Controles, barras y márgenes de página salen de aquí, no de valores sueltos.
+   */
+  --control-h: 38px;
+  --control-h-sm: 32px;
+  --control-h-lg: 44px;
+  --topbar-h: 56px;
+  --sidebar-w: 240px;
+  --page-pad-x: var(--space-6);
+  --page-pad-y: var(--space-5);
+  --page-gap: var(--space-4);
+  --page-max: 1440px;
+  --card-pad: var(--space-5);
 
   /* Movimiento */
   --transition: 0.16s ease;

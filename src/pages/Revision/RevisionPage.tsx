@@ -82,18 +82,19 @@ function Pendiente({ children }: { children: ReactNode }) {
 /** Estados de carga comunes a las pestañas que consultan el servidor. */
 function EstadoRecurso<T>({
   recurso,
-  ruta,
+  modulo,
   children,
 }: {
   recurso: Recurso<T>;
-  ruta: string;
+  /** Qué se consulta, en lenguaje del usuario (p. ej. «El historial de versiones»). */
+  modulo: string;
   children: (data: T) => ReactNode;
 }) {
   if (recurso.loading) return <p className={styles.loading}>Consultando…</p>;
   if (recurso.pendiente) {
     return (
       <Pendiente>
-        <code>{ruta}</code> está confirmada en el contrato, pero el servidor aún no la implementa.
+        {modulo} está en preparación y aparecerá aquí en cuanto esté disponible.
       </Pendiente>
     );
   }
@@ -256,8 +257,8 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                 editable={dossier.currentState.isEditable && puedeEditar}
               />
               <Pendiente>
-                La carga de archivos adjuntos está diferida: la API del MVP no recibe archivos
-                (Informe Módulo III, §1.5).
+                La carga de archivos adjuntos al expediente estará disponible en una etapa
+                posterior.
               </Pendiente>
             </InfoPanel>
           )}
@@ -266,7 +267,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
             <InfoPanel title="Revisión y checklist">
               <p className={styles.lead}>
                 Cada criterio se contrasta con su documento maestro. Un criterio obligatorio en
-                &quot;No cumple&quot; bloquea la aprobación (REG-06).
+                &quot;No cumple&quot; bloquea la aprobación.
               </p>
               <table className={styles.criteriaTable}>
                 <thead>
@@ -307,7 +308,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                 />
               )}
               <h3 className={styles.subheading}>Observaciones de {dossier.currentVersion.label}</h3>
-              <EstadoRecurso recurso={observaciones} ruta={`GET /dossiers/{id}/observations`}>
+              <EstadoRecurso recurso={observaciones} modulo="La consulta de observaciones">
                 {(lista) =>
                   lista.length === 0 ? (
                     <p className={styles.lead}>Sin observaciones registradas en esta versión.</p>
@@ -336,7 +337,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
 
           {activeTab === 'versiones' && (
             <InfoPanel title="Versiones">
-              <EstadoRecurso recurso={versiones} ruta="GET /dossiers/{id}/versions">
+              <EstadoRecurso recurso={versiones} modulo="El historial de versiones">
                 {(lista) => (
                   <ol className={styles.timeline}>
                     {lista.map((version) => (
@@ -358,8 +359,8 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                 )}
               </EstadoRecurso>
               <p className={styles.lead}>
-                La versión documental y el estado curricular son dimensiones distintas (REG-04). La
-                comparación entre versiones está diferida al Curso Final de Grado (CU-09).
+                La versión documental y el estado curricular son dimensiones distintas. La
+                comparación entre versiones estará disponible en una etapa posterior.
               </p>
             </InfoPanel>
           )}
@@ -392,10 +393,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                 )}
               <section className={styles.flowBlock}>
                 <h3 className={styles.subheading}>Acciones disponibles para su usuario</h3>
-                <EstadoRecurso
-                  recurso={transiciones}
-                  ruta="GET /dossiers/{id}/available-transitions"
-                >
+                <EstadoRecurso recurso={transiciones} modulo="Las acciones del flujo">
                   {(lista) => (
                     <AccionesFlujo
                       dossier={dossier}
@@ -410,7 +408,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
 
           {activeTab === 'historial' && (
             <InfoPanel title="Historial y auditoría">
-              <EstadoRecurso recurso={historial} ruta="GET /dossiers/{id}/transitions">
+              <EstadoRecurso recurso={historial} modulo="El historial de estados">
                 {(lista) => (
                   <ol className={styles.timeline}>
                     <li>

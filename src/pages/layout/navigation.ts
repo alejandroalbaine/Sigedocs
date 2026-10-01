@@ -1,7 +1,6 @@
 import { hasPermission, type Permission } from '../../common/auth/permissions.ts';
 import {
   BarChart3,
-  BookOpenCheck,
   ClipboardCheck,
   FileClock,
   FilePlus2,
@@ -9,6 +8,7 @@ import {
   LayoutDashboard,
   MessageSquareText,
   SearchCheck,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -70,10 +70,10 @@ export const NAVIGATION: readonly NavItem[] = [
     permission: 'audit.read',
   },
   {
-    label: 'Biblioteca UI Kit',
-    icon: BookOpenCheck,
-    to: '/ui-kit',
-    permission: 'templates.manage',
+    label: 'Usuarios y roles',
+    icon: UsersRound,
+    to: '/usuarios',
+    permission: 'users.manage',
   },
 ];
 

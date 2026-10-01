@@ -100,7 +100,14 @@ function validarCampos(
   for (const campo of campos) {
     const valor = datos[campo.key];
     const destino = ruta(base, campo.key);
-    if (campo.isRequired && vacio(campo, valor)) {
+    // Un grupo con mínimo de elementos ya lo reporta su regla de cardinalidad: un solo aviso.
+    const cubiertoPorCardinalidad =
+      campo.type === 'repeatable_group' &&
+      (campo.rules ?? []).some(
+        (regla) =>
+          regla.isActive && regla.type === 'cardinality' && numero(regla.params, 'minItems'),
+      );
+    if (campo.isRequired && vacio(campo, valor) && !cubiertoPorCardinalidad) {
       hallazgos.push({ ruta: destino, mensaje: `Complete "${campo.label}".`, severidad: 'error' });
     }
     for (const regla of (campo.rules ?? []).filter((item) => item.isActive)) {

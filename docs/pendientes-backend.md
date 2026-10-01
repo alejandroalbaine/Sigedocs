@@ -23,14 +23,15 @@ Después de REF-02 no hace falta ningún cambio en el frontend.
 
 El orden desbloquea el flujo de punta a punta lo antes posible.
 
-| Orden | Ticket   | Rutas                                                                                     | Pantalla que se activa                       |
-| ----- | -------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
-| 1     | DOS-01   | `GET/POST /dossiers`, `GET /dossiers/{id}`                                                | Panel, Gestión, Búsqueda, Registro, Reportes |
-| 2     | WF-03    | `GET /users`, `POST /dossiers/{id}/assignments`                                           | Revisión → Workflow (asignar)                |
-| 3     | WF-01/02 | `GET /dossiers/{id}/available-transitions`, `POST .../transitions`, `GET .../transitions` | Dictamen, acciones del flujo, historial      |
-| 4     | WF-04    | `GET/POST /dossiers/{id}/observations`                                                    | Observaciones                                |
-| 5     | DOS-02   | `GET /dossiers/{id}/versions`                                                             | Revisión → Versiones                         |
-| 6     | AUD-01   | `GET /dossiers/{id}/audit-events`                                                         | Historial y trazabilidad                     |
+| Orden | Ticket     | Rutas                                                                                     | Pantalla que se activa                       |
+| ----- | ---------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
+| 1     | DOS-01     | `GET/POST /dossiers`, `GET /dossiers/{id}`                                                | Panel, Gestión, Búsqueda, Registro, Reportes |
+| 2     | WF-03      | `GET /users`, `POST /dossiers/{id}/assignments`                                           | Revisión → Workflow (asignar)                |
+| 3     | WF-01/02   | `GET /dossiers/{id}/available-transitions`, `POST .../transitions`, `GET .../transitions` | Dictamen, acciones del flujo, historial      |
+| 4     | WF-04      | `GET/POST /dossiers/{id}/observations`                                                    | Observaciones                                |
+| 5     | DOS-02     | `GET /dossiers/{id}/versions`                                                             | Revisión → Versiones                         |
+| 6     | AUD-01     | `GET /dossiers/{id}/audit-events`                                                         | Historial y trazabilidad                     |
+| 7     | CORE-01/02 | `GET/POST /users`, `GET/PATCH /users/{id}`, `PUT /users/{id}/roles`                       | Usuarios y roles (CU-12)                     |
 
 ## 3. Formas que el contrato no fija (confirmar o documentar)
 
@@ -44,7 +45,11 @@ createdBy: { userId, name }, createdAt }`.
 4. **`GET /users`** (para elegir especialista): se espera `{ userId, name, roles }[]`; si llegan
    roles, el frontend filtra `CURRICULUM_SPECIALIST`. Un filtro del lado del servidor
    (`?role=CURRICULUM_SPECIALIST`) sería mejor.
-5. **Resultados del checklist** (RF-05): el contrato MVP no tiene ruta propia. El frontend los
+5. **Usuarios y roles (CU-12)**: la pantalla envía `roleCode` y `roleCodes` con el código del
+   contrato en inglés (`SCHOOL_DIRECTOR`), aunque `/roles` todavía responda con el alias
+   (`DIR_ESCUELA`). Pide `users.manage` y acepta también `usuarios.administrar` hasta REF-02.
+   Bloquea en la interfaz que un usuario cambie sus propios roles o desactive su cuenta.
+6. **Resultados del checklist** (RF-05): el contrato MVP no tiene ruta propia. El frontend los
    envía dentro de `observation` al devolver o aprobar, para que queden en el historial.
 
 ## 4. Decisiones pendientes entre análisis y backend

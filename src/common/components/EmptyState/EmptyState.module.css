@@ -1,5 +1,5 @@
 .empty {
-  padding: var(--space-8) var(--space-6);
+  padding: var(--space-6) var(--space-5);
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius-md);
   color: var(--muted);
@@ -17,5 +17,5 @@
   max-width: 560px;
   margin: 0 auto;
   font-size: var(--text-md);
-  line-height: 1.6;
+  line-height: 1.5;
 }

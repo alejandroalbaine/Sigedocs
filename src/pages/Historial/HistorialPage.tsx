@@ -20,6 +20,7 @@ import {
 import { DetalleEvento } from '../../features/trazabilidad/DetalleEvento.tsx';
 import { FiltrosTrazabilidad as Filtros } from '../../features/trazabilidad/FiltrosTrazabilidad.tsx';
 import { TablaEventos } from '../../features/trazabilidad/TablaEventos.tsx';
+import { EnPreparacion } from '../documental/EnPreparacion.tsx';
 import { useDossiers } from '../documental/useDossiers.ts';
 import styles from '../layout/page.module.css';
 
@@ -27,7 +28,7 @@ const TAMANOS = [10, 20, 50] as const;
 
 /** AUD-01: la trazabilidad se consulta por expediente con `GET /dossiers/{id}/audit-events`. */
 function Historial() {
-  const { items, loading, error } = useDossiers();
+  const { items, loading, error, pendiente } = useDossiers();
   const [elegido, setElegido] = useState('');
   const [filtros, setFiltros] = useState<FiltrosTrazabilidad>(FILTROS_VACIOS);
   const [orden, setOrden] = useState<SortState>({ key: 'fecha', direction: 'desc' });
@@ -43,6 +44,7 @@ function Historial() {
 
   if (loading) return <p>Consultando expedientes…</p>;
   if (error) return <Alert kind="error">{error}</Alert>;
+  if (pendiente) return <EnPreparacion />;
   if (!dossier) {
     return <Alert kind="info">No hay expedientes visibles para consultar su trazabilidad.</Alert>;
   }
@@ -69,13 +71,10 @@ function Historial() {
       </Card>
       <Card
         title={`Eventos de ${dossier.code}`}
-        description="Quién hizo cada acción, cuándo, sobre qué versión y con qué efecto (REG-08)."
+        description="Quién hizo cada acción, cuándo, sobre qué versión y con qué efecto."
       >
         {eventos.pendiente ? (
-          <Alert kind="info">
-            La ruta de trazabilidad está confirmada en el contrato, pero el servidor aún no la
-            implementa. No se muestran eventos simulados.
-          </Alert>
+          <EnPreparacion modulo="El historial de auditoría" />
         ) : eventos.error ? (
           <Alert kind="error">{eventos.error}</Alert>
         ) : (

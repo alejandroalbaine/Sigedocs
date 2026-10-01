@@ -38,7 +38,9 @@ test('dibuja las 9 secciones de la plantilla y avisa catálogos pendientes', asy
   expect(await screen.findByText('Datos académicos *')).toBeVisible();
   expect(screen.getAllByRole('group').length).toBeGreaterThan(0);
   expect(screen.getByText(/^Bibliografía/, { selector: 'summary span' })).toBeVisible();
-  expect((await screen.findAllByText(/pendiente en el servidor/)).length).toBeGreaterThan(0);
+  expect((await screen.findAllByText(/estarán disponibles próximamente/)).length).toBeGreaterThan(
+    0,
+  );
 });
 
 test('revisar reglas marca obligatorios y cardinalidad junto al campo', async () => {
@@ -79,5 +81,5 @@ test('sin permiso o estado editable se muestra en solo lectura', async () => {
 test('si la ruta de versiones no existe, lo dice sin inventar un formulario', async () => {
   stubApi({});
   render(<FormularioPrograma dossier={expediente} editable />);
-  expect(await screen.findByText(/el servidor aún no implementa/)).toBeVisible();
+  expect(await screen.findByText(/está en preparación/)).toBeVisible();
 });

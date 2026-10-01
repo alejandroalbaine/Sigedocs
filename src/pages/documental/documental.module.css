@@ -1,41 +1,31 @@
 /* stylelint-disable selector-class-pattern, no-descending-specificity */
 .page {
   display: grid;
-  gap: 20px;
-  padding: 0 24px 40px;
+  gap: var(--page-gap);
   color: var(--institutional-ink);
   font-family: var(--font-sans);
 }
 
-.page > header:not(.hero, .search-header, .report-header) {
-  padding-top: 4px;
-}
-
 .page > header:not(.hero, .search-header, .report-header) h1 {
-  margin: 4px 0;
+  margin: var(--space-1) 0;
   color: var(--institutional-navy);
   font-size: var(--text-2xl);
-  line-height: 34px;
+  line-height: 1.25;
 }
 
 .hero {
-  min-height: 120px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
-  padding: 24px;
-  border-radius: var(--radius-sm);
-  background: var(--institutional-white);
-  box-shadow: var(--institutional-shadow);
+  gap: var(--space-4);
 }
 
 .hero h1 {
-  margin: 4px 0;
+  margin: var(--space-1) 0;
   color: var(--institutional-navy);
-  font-size: clamp(26px, 3vw, 32px);
-  line-height: 40px;
-  letter-spacing: -0.8px;
+  font-size: var(--text-2xl);
+  line-height: 1.25;
+  letter-spacing: -0.3px;
 }
 
 .hero p {
@@ -60,18 +50,19 @@
 }
 
 .total {
-  min-width: 196px;
+  min-width: 176px;
   display: grid;
-  grid-template-columns: 40px 1fr;
-  padding: 12px 16px;
+  grid-template-columns: 32px 1fr;
+  padding: 10px 14px;
+  border: 1px solid var(--institutional-line);
   border-radius: var(--radius-sm);
-  background: var(--institutional-canvas);
+  background: var(--institutional-white);
 }
 
 .total::before {
   content: '▤';
-  width: 36px;
-  height: 40px;
+  width: 32px;
+  height: 36px;
   grid-row: span 3;
   display: grid;
   place-items: center;
@@ -84,7 +75,7 @@
 .total span,
 .total strong,
 .total small {
-  margin-left: 12px;
+  margin-left: 10px;
 }
 
 .total span {
@@ -97,19 +88,19 @@
 .total strong {
   color: var(--institutional-navy);
   font-size: var(--text-lg);
-  line-height: 28px;
+  line-height: 22px;
 }
 
 .total small {
   color: var(--institutional-text);
-  font-size: var(--text-md);
+  font-size: var(--text-xs);
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 16px;
+  gap: var(--space-2);
+  padding: var(--space-3);
   border: 1px solid var(--institutional-line);
   border-radius: var(--radius-sm);
   background: var(--institutional-white);
@@ -119,9 +110,9 @@
 .localFilters {
   display: grid;
   grid-template-columns: repeat(2, minmax(220px, 1fr)) auto;
-  gap: 14px;
+  gap: var(--space-3);
   align-items: end;
-  padding: 16px;
+  padding: var(--space-3);
   border: 1px solid var(--institutional-line);
   border-radius: var(--radius-sm);
   background: var(--institutional-white);
@@ -135,18 +126,20 @@
 .searchGroup::before {
   content: '⌕';
   position: absolute;
-  top: 9px;
+  top: 50%;
   left: 12px;
   color: var(--institutional-muted);
   font-size: var(--text-lg);
+  line-height: 1;
+  transform: translateY(-55%);
 }
 
 .input,
 .select,
 .textarea {
   width: 100%;
-  min-height: 40px;
-  padding: 0 13px;
+  min-height: var(--control-h);
+  padding: 0 var(--space-3);
   border: 1px solid var(--institutional-line);
   border-radius: var(--radius-sm);
   color: var(--institutional-ink);
@@ -155,22 +148,22 @@
 }
 
 .search {
-  padding-left: 44px;
+  padding-left: 36px;
 }
 
 .textarea {
   min-height: 88px;
-  padding-block: 12px;
+  padding-block: var(--space-2);
   resize: vertical;
 }
 
 .button {
-  min-height: 44px;
+  min-height: var(--control-h);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0 16px;
+  gap: var(--space-2);
+  padding: 0 14px;
   border: 1px solid var(--institutional-navy);
   border-radius: var(--radius-sm);
   color: var(--institutional-white);
@@ -178,7 +171,7 @@
   font-size: var(--text-xs);
   font-weight: 600;
   line-height: 16px;
-  letter-spacing: 0.48px;
+  letter-spacing: 0.2px;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -222,13 +215,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--line-soft);
 }
 
 .selectionBar {
-  min-height: 51px;
+  min-height: 44px;
+  padding-block: var(--space-2);
   background: var(--institutional-canvas);
   font-size: var(--text-xs);
 }
@@ -264,12 +258,12 @@
 
 .table {
   width: 100%;
-  min-width: 940px;
+  min-width: 880px;
   border-collapse: collapse;
 }
 
 .table th {
-  padding: 15px 12px;
+  padding: 10px var(--space-3);
   color: var(--institutional-text);
   background: var(--institutional-canvas);
   font-size: var(--text-xs);
@@ -280,7 +274,7 @@
 }
 
 .table td {
-  padding: 13px 12px;
+  padding: 10px var(--space-3);
   border-top: 1px solid var(--line-soft);
   color: var(--institutional-text);
   font-size: var(--text-xs);
@@ -326,8 +320,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
   color: var(--institutional-navy);
   background: var(--institutional-canvas);
   font-size: var(--text-xs);
@@ -356,12 +350,12 @@
 }
 
 .pager {
-  min-height: 52px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 20px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
   border-top: 1px solid var(--line-soft);
   color: var(--institutional-text);
   font-size: var(--text-xs);
@@ -387,15 +381,16 @@
 }
 
 .empty {
-  padding: 48px 24px;
+  padding: var(--space-8) var(--space-6);
   color: var(--institutional-muted);
   text-align: center;
 }
 
 .error,
 .notice {
-  padding: 14px 18px;
+  padding: 10px var(--space-3);
   border-left: 4px solid var(--institutional-danger);
+  border-radius: var(--radius-sm);
   color: var(--danger-strong);
   background: var(--institutional-danger-soft);
 }
@@ -422,8 +417,8 @@
 .filters {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  padding: 20px;
+  gap: var(--space-3);
+  padding: var(--space-4);
 }
 
 .field {
@@ -443,17 +438,16 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 20px;
-  padding-top: 20px;
+  gap: var(--space-4);
 }
 
 .searchHeader h1,
 .reportHeader h1 {
   max-width: 520px;
-  margin: 4px 0;
+  margin: var(--space-1) 0;
   color: var(--institutional-navy);
   font-size: var(--text-2xl);
-  line-height: 34px;
+  line-height: 1.25;
 }
 
 .searchHeader p,
@@ -470,17 +464,17 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 .filterBar,
 .summaryBar {
-  min-height: 72px;
+  min-height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 16px 20px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--institutional-line);
   border-radius: var(--radius-sm);
   background: var(--institutional-white);
@@ -493,11 +487,11 @@
 }
 
 .filter-bar summary {
-  min-height: 70px;
+  min-height: 52px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   cursor: pointer;
   list-style: none;
 }
@@ -535,8 +529,8 @@
 }
 
 .summaryIcon {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   border-radius: var(--radius-md);
@@ -546,7 +540,7 @@
 
 .cards {
   display: grid;
-  gap: 16px;
+  gap: var(--space-3);
 }
 
 .result {
@@ -563,11 +557,11 @@
 }
 
 .result summary {
-  min-height: 64px;
+  min-height: 52px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: var(--space-3);
+  padding: 10px var(--space-4);
   cursor: pointer;
   list-style: none;
 }
@@ -588,8 +582,8 @@
 
 .resultBody {
   display: grid;
-  gap: 16px;
-  padding: 16px 20px 20px;
+  gap: var(--space-3);
+  padding: var(--space-4);
   border-top: 1px solid var(--line-soft);
 }
 
@@ -601,7 +595,8 @@
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   margin: 0;
-  padding: 16px 20px 28px;
+  padding: var(--space-3) var(--space-4) var(--space-5);
+  border: 1px solid var(--institutional-line);
   border-radius: var(--radius-sm);
   background: var(--institutional-white);
   list-style: none;
@@ -609,7 +604,7 @@
 
 .step {
   position: relative;
-  min-height: 58px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -620,7 +615,7 @@
 
 .step > button {
   width: 100%;
-  min-height: 52px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -637,9 +632,9 @@
   content: '';
   position: absolute;
   right: -50%;
-  bottom: -12px;
+  bottom: -10px;
   left: 50%;
-  height: 4px;
+  height: 3px;
   background: var(--institutional-selection);
 }
 
@@ -648,8 +643,8 @@
 }
 
 .stepNumber {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   flex: none;
   display: grid;
   place-items: center;
@@ -686,8 +681,8 @@
 
 .form {
   display: grid;
-  gap: 18px;
-  padding: 24px;
+  gap: var(--space-4);
+  padding: var(--card-pad);
   border: 1px solid var(--institutional-line);
   border-radius: var(--radius-sm);
   background: var(--institutional-white);
@@ -705,8 +700,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   border: 1px dashed var(--institutional-line);
   border-radius: var(--radius-sm);
   color: var(--institutional-muted);
@@ -816,7 +811,7 @@
 .grid4 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--space-3) var(--space-4);
 }
 
 .grid3 {
@@ -842,7 +837,7 @@
 
 .actions {
   justify-content: space-between;
-  padding-top: 18px;
+  padding-top: var(--space-4);
   border-top: 1px solid var(--line-soft);
 }
 
@@ -893,7 +888,7 @@
 }
 
 .legalAccordion summary {
-  min-height: 56px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -926,10 +921,9 @@
 }
 
 .guaranteeCards article {
-  min-height: 112px;
   display: flex;
-  gap: 12px;
-  padding: 18px;
+  gap: var(--space-3);
+  padding: var(--space-4);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);
   background: var(--institutional-white);
@@ -960,19 +954,18 @@
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .metric {
-  min-height: 130px;
-  padding: 20px;
+  padding: var(--space-4);
+  border: 1px solid var(--institutional-line);
+  border-radius: var(--radius-sm);
   background: var(--institutional-white);
-  box-shadow: var(--institutional-shadow);
 }
 
 .metric span {
   display: block;
-  min-height: 32px;
   color: var(--institutional-text);
   font-size: var(--text-xs);
   font-weight: 700;
@@ -982,10 +975,10 @@
 
 .metric strong {
   display: block;
-  margin-top: 10px;
+  margin-top: var(--space-2);
   color: var(--institutional-navy);
   font-size: var(--text-2xl);
-  line-height: 40px;
+  line-height: 1.2;
 }
 
 .metricLine {
@@ -1020,11 +1013,11 @@
 }
 
 .accordion summary {
-  min-height: 72px;
+  min-height: 56px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 24px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
   color: var(--institutional-navy);
   font-size: var(--text-lg);
   font-weight: 700;
@@ -1058,7 +1051,7 @@
 }
 
 .accordion > div {
-  padding: 0 24px 24px;
+  padding: 0 var(--space-5) var(--space-5);
 }
 
 .accordionIcon {
@@ -1085,7 +1078,7 @@
 }
 
 .kitState {
-  min-height: 180px;
+  min-height: 140px;
   display: grid;
   align-content: start;
   gap: 10px;
@@ -1123,7 +1116,7 @@
 
 .kitBody {
   display: grid;
-  gap: 20px;
+  gap: var(--space-4);
 }
 
 .kitSubtitle {
@@ -1267,7 +1260,7 @@
 }
 
 .modal > header {
-  min-height: 58px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1330,7 +1323,7 @@
 }
 
 .reportModule > summary {
-  min-height: 68px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1362,8 +1355,8 @@
 .reportVisuals {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
-  gap: 22px;
-  padding: 20px;
+  gap: var(--space-5);
+  padding: var(--space-4);
 }
 
 .reportVisuals section {
@@ -1542,10 +1535,6 @@
 }
 
 @media (width <= 620px) {
-  .page {
-    padding-inline: 12px;
-  }
-
   .result summary {
     flex-wrap: wrap;
     gap: 8px;

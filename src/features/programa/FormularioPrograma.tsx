@@ -100,9 +100,8 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
   if (version.pendiente || plantilla.pendiente) {
     return (
       <Alert kind="info">
-        El contenido del programa se carga con{' '}
-        {version.pendiente ? 'GET /dossiers/{id}/versions/{versionId}' : 'la plantilla publicada'},
-        que el servidor aún no implementa. El formulario aparecerá aquí en cuanto esté disponible.
+        El formulario del programa de asignatura está en preparación y aparecerá aquí en cuanto esté
+        disponible.
       </Alert>
     );
   }
@@ -144,7 +143,7 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
         setErroresServidor(
           reason.fieldErrors.map((error) => ({
             ruta: error.field,
-            mensaje: `El servidor rechazó este campo (${error.code || 'inválido'}).`,
+            mensaje: 'Revise este campo: no cumple las reglas del programa.',
             severidad: 'error',
           })),
         );
@@ -153,7 +152,7 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
         kind: reason instanceof ApiError && reason.status === 404 ? 'info' : 'error',
         texto:
           reason instanceof ApiError && reason.status === 404
-            ? 'No se guardó: el servidor aún no implementa la edición del contenido.'
+            ? 'No se guardó: la edición del contenido aún está en preparación.'
             : errorMessage(reason, 'No fue posible guardar el programa.'),
       });
     } finally {

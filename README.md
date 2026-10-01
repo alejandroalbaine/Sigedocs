@@ -12,17 +12,18 @@ funciona en cuanto el backend publica su ruta; mientras una ruta confirmada no e
 lo indica como "pendiente" y nunca muestra datos simulados. Lo que falta del lado del servidor está
 en [docs/pendientes-backend.md](docs/pendientes-backend.md).
 
-| Módulo                    | Rutas del contrato                                             | Backend `develop` (27/09) |
-| ------------------------- | -------------------------------------------------------------- | ------------------------- |
-| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...` | Implementado              |
-| Panel, gestión y búsqueda | `GET /dossiers`                                                | Pendiente (DOS-01)        |
-| Registro de expediente    | `POST /dossiers`                                               | Pendiente (DOS-01)        |
-| Detalle y revisión        | `GET /dossiers/{id}`, `/versions`, `/available-transitions`    | Pendiente (DOS-02, WF-01) |
-| Decisiones y flujo        | `POST /dossiers/{id}/transitions`                              | Pendiente (WF-02)         |
-| Asignación                | `GET /users`, `POST /dossiers/{id}/assignments`                | Pendiente (WF-03)         |
-| Observaciones             | `GET/POST /dossiers/{id}/observations`                         | Pendiente (WF-04)         |
-| Historial y trazabilidad  | `GET /dossiers/{id}/transitions`, `/audit-events`              | Pendiente (AUD-01)        |
-| Reportes y Biblioteca UI  | Se calculan con `GET /dossiers`; exportación CSV/JSON local    | Pendiente (DOS-01)        |
+| Módulo                    | Rutas del contrato                                              | Backend `develop` (27/09) |
+| ------------------------- | --------------------------------------------------------------- | ------------------------- |
+| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`  | Implementado              |
+| Panel, gestión y búsqueda | `GET /dossiers`                                                 | Pendiente (DOS-01)        |
+| Registro de expediente    | `POST /dossiers`                                                | Pendiente (DOS-01)        |
+| Detalle y revisión        | `GET /dossiers/{id}`, `/versions`, `/available-transitions`     | Pendiente (DOS-02, WF-01) |
+| Decisiones y flujo        | `POST /dossiers/{id}/transitions`                               | Pendiente (WF-02)         |
+| Asignación                | `GET /users`, `POST /dossiers/{id}/assignments`                 | Pendiente (WF-03)         |
+| Observaciones             | `GET/POST /dossiers/{id}/observations`                          | Pendiente (WF-04)         |
+| Historial y trazabilidad  | `GET /dossiers/{id}/transitions`, `/audit-events`               | Pendiente (AUD-01)        |
+| Reportes y Biblioteca UI  | Se calculan con `GET /dossiers`; exportación CSV/JSON local     | Pendiente (DOS-01)        |
+| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `PUT /users/{id}/roles` | Pendiente (CORE-01/02)    |
 
 Los expedientes que aparecen en capturas o videos anteriores provenían de un modo de prueba: el
 backend todavía no expone `/dossiers`. Ninguna pantalla presenta como guardada una operación que

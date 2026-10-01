@@ -335,9 +335,12 @@ export function parseSpecialists(value: unknown): SpecialistOption[] {
     .filter((user) => {
       const roles = user.roles ?? user.roleCodes;
       if (!Array.isArray(roles)) return true;
-      return roles.some(
-        (role) => role === 'CURRICULUM_SPECIALIST' || role === 'ESPECIALISTA_CURRICULAR',
-      );
+      return roles.some((role: unknown) => {
+        // `/users` devuelve `Role[]` ({ code }); se aceptan también códigos sueltos.
+        const code =
+          typeof role === 'object' && role !== null ? (role as { code?: unknown }).code : role;
+        return code === 'CURRICULUM_SPECIALIST' || code === 'ESPECIALISTA_CURRICULAR';
+      });
     })
     .map((user, i) => ({
       userId: text(user.userId ?? user.id, `users[${String(i)}].userId`),
