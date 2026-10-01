@@ -51,3 +51,15 @@ test('muestra los eventos del contrato y envía los filtros al servidor', async 
   const ultima = llamadas.filter((llamada) => llamada.key.includes('audit-events')).at(-1);
   expect(ultima?.url.searchParams.get('type')).toBe('assigned');
 });
+
+test('el administrador del sistema (sin dossiers.read) no ve errores ni el menú de historial', async () => {
+  const llamadas = stubApi({});
+  renderApp(
+    signedInBackend({ ...adminSistema, permissions: ['users.manage', 'audit.read'] }),
+    '/historial',
+  );
+  expect(await screen.findByText(/Su rol no consulta expedientes curriculares/)).toBeVisible();
+  expect(screen.queryByText(/No tiene permiso/)).not.toBeInTheDocument();
+  expect(llamadas.some((llamada) => llamada.key === 'GET /api/v1/dossiers')).toBe(false);
+  expect(screen.queryByRole('link', { name: /Historial y trazabilidad/ })).not.toBeInTheDocument();
+});
