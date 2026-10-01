@@ -3,10 +3,11 @@
  * autoridad final (TPL-03); aquí solo se adelanta el aviso junto al campo.
  */
 import type {
-  TemplateDefinition,
   TemplateField,
   TemplateRule,
+  TemplateVersion,
 } from '../../common/api/templateContract.ts';
+
 import type { Contenido, Item, Valor } from './contenido.ts';
 
 export interface Hallazgo {
@@ -141,25 +142,36 @@ export function sumar(contenido: Contenido, seccion: string, camino: readonly st
   };
   return recorrer(contenido[seccion], camino);
 }
-
-export function validarContenido(plantilla: TemplateDefinition, contenido: Contenido): Hallazgo[] {
+export function validarContenido(plantilla: TemplateVersion, contenido: Contenido): Hallazgo[] {
   const hallazgos: Hallazgo[] = [];
-  for (const seccion of plantilla.version.sections.filter((item) => item.isActive)) {
+
+  for (const seccion of plantilla.sections.filter((item) => item.isActive)) {
     validarCampos(seccion.fields, contenido[seccion.key] ?? {}, seccion.key, hallazgos);
   }
-  for (const regla of (plantilla.version.rules ?? []).filter((item) => item.isActive)) {
+
+  for (const regla of (plantilla.rules ?? []).filter((item) => item.isActive)) {
     if (regla.type !== 'sum_equals') continue;
+
     const objetivo = regla.target as { section?: string; fieldPath?: string[] } | undefined;
+
     const esperado = numero(regla.params, 'expectedValue');
-    if (!objetivo?.section || !objetivo.fieldPath || esperado === undefined) continue;
+
+    if (!objetivo?.section || !objetivo.fieldPath || esperado === undefined) {
+      continue;
+    }
+
     const total = sumar(contenido, objetivo.section, objetivo.fieldPath);
+
     if (Math.abs(total - esperado) > 0.001) {
       hallazgos.push({
         ruta: ruta(objetivo.section, objetivo.fieldPath[0] ?? ''),
-        mensaje: `${regla.message || 'La suma no coincide con el valor esperado.'} Suma actual: ${String(total)}.`,
+        mensaje: `${
+          regla.message || 'La suma no coincide con el valor esperado.'
+        } Suma actual: ${String(total)}.`,
         severidad: regla.severity,
       });
     }
   }
+
   return hallazgos;
 }

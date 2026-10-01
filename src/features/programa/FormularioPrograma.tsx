@@ -37,6 +37,12 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
     [dossierId, currentVersion.versionId],
   );
   const templateVersionId = version.data?.templateVersionId ?? template.templateVersionId;
+
+  const metadatosPlantilla = useRecurso(
+    () => templatesApi.get(template.templateId),
+    [template.templateId],
+  );
+
   const plantilla = useRecurso(
     () => templatesApi.version(template.templateId, templateVersionId),
     [template.templateId, templateVersionId],
@@ -45,7 +51,7 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
   const nombresCatalogo = useMemo(
     () =>
       plantilla.data
-        ? [...catalogosDe(plantilla.data.version.sections.flatMap((s) => s.fields))].sort()
+        ? [...catalogosDe(plantilla.data.sections.flatMap((s) => s.fields))].sort()
         : [],
     [plantilla.data],
   );
@@ -96,7 +102,9 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
   );
   const [erroresServidor, setErroresServidor] = useState<Hallazgo[]>([]);
 
-  if (version.loading || plantilla.loading) return <p className={styles.vacio}>Consultando…</p>;
+  if (version.loading || plantilla.loading || metadatosPlantilla.loading) {
+    return <p className={styles.vacio}>Consultando…</p>;
+  }
   if (version.pendiente || plantilla.pendiente) {
     return (
       <Alert kind="info">
@@ -105,9 +113,13 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
       </Alert>
     );
   }
-  if (version.error || plantilla.error) {
-    return <Alert kind="error">{version.error || plantilla.error}</Alert>;
+
+  if (version.error || plantilla.error || metadatosPlantilla.error) {
+    return (
+      <Alert kind="error">{version.error || plantilla.error || metadatosPlantilla.error}</Alert>
+    );
   }
+
   if (!plantilla.data || !contenido) return null;
 
   const hallazgos = [
@@ -115,7 +127,7 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
     ...erroresServidor,
   ];
   const errores = hallazgos.filter((h) => h.severidad === 'error').length;
-  const secciones = plantilla.data.version.sections
+  const secciones = plantilla.data.sections
     .filter((seccion) => seccion.isActive)
     .sort((a, b) => a.position - b.position);
 
@@ -169,7 +181,8 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
       <header className={styles.resumen}>
         <div>
           <strong>
-            {plantilla.data.name} · versión de plantilla {plantilla.data.version.versionNumber}
+            {metadatosPlantilla.data?.name ?? 'Programa de asignatura'} · versión{' '}
+            {plantilla.data.versionNumber}
           </strong>
           <small>
             {editable

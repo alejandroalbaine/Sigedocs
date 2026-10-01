@@ -4,9 +4,9 @@
  * `itemId` generado por el cliente; un valor de catálogo se guarda como `{ value, label }`.
  */
 import type {
-  TemplateDefinition,
   TemplateField,
   TemplateOption,
+  TemplateVersion,
 } from '../../common/api/templateContract.ts';
 
 export type Valor = unknown;
@@ -63,11 +63,11 @@ function completarItems(valor: Valor, campos: readonly TemplateField[]): Item[] 
 }
 
 /** Completa el contenido recibido con los valores por defecto de la plantilla. */
-export function contenidoInicial(plantilla: TemplateDefinition, recibido: Valor): Contenido {
+export function contenidoInicial(plantilla: TemplateVersion, recibido: Valor): Contenido {
   const origen =
     typeof recibido === 'object' && recibido !== null ? (recibido as Contenido) : ({} as Contenido);
   const contenido: Contenido = {};
-  for (const seccion of plantilla.version.sections.filter((item) => item.isActive)) {
+  for (const seccion of plantilla.sections.filter((item) => item.isActive)) {
     const datos = origen[seccion.key] ?? {};
     const destino: Record<string, Valor> = {};
     for (const campo of seccion.fields) {

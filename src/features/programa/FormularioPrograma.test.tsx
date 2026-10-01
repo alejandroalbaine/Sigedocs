@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import programa from '../../test/fixtures/course-program-template.json';
+import programaBackend from '../../test/fixtures/course-program-template.backend.json';
 import { dossier, stubApi } from '../../test/backend.ts';
 import { FormularioPrograma } from './FormularioPrograma.tsx';
 
@@ -8,6 +8,18 @@ const expediente = dossier({
   template: { templateId: 'tpl-1', templateVersionId: 'tv-1' },
 });
 const rutaVersion = `/api/v1/dossiers/${expediente.dossierId}/versions/${expediente.currentVersion.versionId}`;
+
+const metadatosPlantilla = {
+  templateId: 'tpl-1',
+  code: 'COURSE_PROGRAM',
+  name: 'Programa de asignatura',
+  description: null,
+  documentType: 'course_program',
+  academicLevels: ['bachelor'],
+  latestVersionNumber: 1,
+  latestPublishedVersionNumber: 1,
+  createdAt: '2026-09-27T10:00:00.000Z',
+};
 
 function version(content: Record<string, unknown> = {}) {
   return {
@@ -27,28 +39,34 @@ function servidor(content: Record<string, unknown> = {}) {
     [`GET ${rutaVersion}`]: version(content),
     [`PATCH ${rutaVersion}`]: (init: RequestInit) =>
       version((JSON.parse(init.body as string) as { content: Record<string, unknown> }).content),
-    'GET /api/v1/templates/tpl-1/versions/tv-1': programa,
+    'GET /api/v1/templates/tpl-1': metadatosPlantilla,
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
     'GET /api/v1/institutional-catalogs/schools': [{ value: 'ESC-ING', label: 'Ingeniería' }],
   });
 }
 
-test('dibuja las 9 secciones de la plantilla y avisa catálogos pendientes', async () => {
-  servidor();
+test('dibuja el formulario con la respuesta real del backend', async () => {
+  stubApi({
+    [`GET ${rutaVersion}`]: version(),
+    'GET /api/v1/templates/tpl-1': metadatosPlantilla,
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+  });
+
   render(<FormularioPrograma dossier={expediente} editable />);
+
   expect(await screen.findByText('Datos académicos *')).toBeVisible();
-  expect(screen.getAllByRole('group').length).toBeGreaterThan(0);
   expect(screen.getByText(/^Bibliografía/, { selector: 'summary span' })).toBeVisible();
-  expect((await screen.findAllByText(/estarán disponibles próximamente/)).length).toBeGreaterThan(
-    0,
-  );
 });
 
-test('revisar reglas marca obligatorios y cardinalidad junto al campo', async () => {
+test('revisar reglas marca los campos obligatorios de la plantilla real', async () => {
   servidor();
   render(<FormularioPrograma dossier={expediente} editable />);
+
   await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
+
   expect(screen.getByText(/pendiente\(s\)/)).toBeVisible();
-  expect(screen.getAllByText(/Agregue al menos 1 elemento/).length).toBeGreaterThan(0);
+  expect(screen.getByText('Complete "Asignatura".')).toBeVisible();
+  expect(screen.getByText('Complete "Créditos".')).toBeVisible();
 });
 
 test('agrega un elemento repetible y guarda el contenido con itemId', async () => {
@@ -82,4 +100,16 @@ test('si la ruta de versiones no existe, lo dice sin inventar un formulario', as
   stubApi({});
   render(<FormularioPrograma dossier={expediente} editable />);
   expect(await screen.findByText(/está en preparación/)).toBeVisible();
+});
+
+test('dibuja el formulario con la respuesta real del backend', async () => {
+  stubApi({
+    [`GET ${rutaVersion}`]: version(),
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+  });
+
+  render(<FormularioPrograma dossier={expediente} editable />);
+
+  expect(await screen.findByText('Datos académicos *')).toBeVisible();
+  expect(screen.getByText(/^Bibliografía/, { selector: 'summary span' })).toBeVisible();
 });

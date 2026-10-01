@@ -1,6 +1,11 @@
 import programa from '../../test/fixtures/course-program-template.json';
+import programaBackend from '../../test/fixtures/course-program-template.backend.json';
 import { expect, test } from 'vitest';
-import { parseTemplateDefinition, TEMPLATE_FIELD_TYPES } from './templateContract.ts';
+import {
+  parseTemplateDefinition,
+  parseTemplateVersion,
+  TEMPLATE_FIELD_TYPES,
+} from './templateContract.ts';
 
 function field(type: string, position: number, extra: Record<string, unknown> = {}) {
   return {
@@ -90,4 +95,12 @@ test('acepta la plantilla real del Programa de Asignatura con sus reglas', () =>
   const grupo = competencias?.fields[0];
   expect(grupo?.type).toBe('repeatable_group');
   expect(grupo?.rules?.some((rule) => rule.type === 'cardinality')).toBe(true);
+});
+
+test('lee las 9 secciones de la respuesta real del backend', () => {
+  const version = parseTemplateVersion(programaBackend);
+
+  expect(version.sections).toHaveLength(9);
+  expect(version.templateId).toBe(programaBackend.templateId);
+  expect(version.templateVersionId).toBe(programaBackend.templateVersionId);
 });

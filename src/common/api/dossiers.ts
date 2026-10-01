@@ -20,7 +20,7 @@ import {
   parseVersions,
   type CreateDossierInput,
 } from './dossierContract.ts';
-import { parseTemplateDefinition } from './templateContract.ts';
+import { parseTemplateMetadata, parseTemplateVersion } from './templateContract.ts';
 
 const id = (value: string) => encodeURIComponent(value);
 const post = (body: unknown): RequestInit => ({ method: 'POST', body: JSON.stringify(body) });
@@ -87,10 +87,10 @@ export const dossiersApi = {
 
 /** Motor de plantillas (template-data-contract.md §9). */
 export const templatesApi = {
+  get: (templateId: string) => request(`/templates/${id(templateId)}`, parseTemplateMetadata),
+
   version: (templateId: string, templateVersionId: string) =>
-    request(
-      `/templates/${id(templateId)}/versions/${id(templateVersionId)}`,
-      parseTemplateDefinition,
-    ),
+    request(`/templates/${id(templateId)}/versions/${id(templateVersionId)}`, parseTemplateVersion),
+
   catalog: (catalog: string) => request(`/institutional-catalogs/${id(catalog)}`, parseCatalog),
 };

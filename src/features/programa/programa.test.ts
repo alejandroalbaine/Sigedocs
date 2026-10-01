@@ -3,9 +3,9 @@ import { parseTemplateDefinition } from '../../common/api/templateContract.ts';
 import { contenidoInicial, mostrarValor, nuevoItem, type Item } from './contenido.ts';
 import { sumar, validarContenido } from './validacion.ts';
 
-const plantilla = parseTemplateDefinition(programa);
+const plantilla = parseTemplateDefinition(programa).version;
 function seccion(key: string) {
-  const encontrada = plantilla.version.sections.find((s) => s.key === key);
+  const encontrada = plantilla.sections.find((s) => s.key === key);
   if (!encontrada) throw new Error(`Sin sección ${key}`);
   return encontrada;
 }
