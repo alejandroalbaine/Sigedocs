@@ -12,26 +12,27 @@ funciona en cuanto el backend publica su ruta; mientras una ruta confirmada no e
 lo indica como "pendiente" y nunca muestra datos simulados. Lo que falta del lado del servidor está
 en [docs/pendientes-backend.md](docs/pendientes-backend.md).
 
-| Módulo                    | Rutas del contrato                                              | Backend (plan del 29/09) |
-| ------------------------- | --------------------------------------------------------------- | ------------------------ |
-| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`  | Implementado             |
-| Usuarios (CU-12)          | `GET/POST /users`, `GET/PATCH /users/{id}`                      | Implementado             |
-| Roles de un usuario       | `GET/PUT /users/{id}/roles`                                     | Pendiente                |
-| Panel, gestión y búsqueda | `GET /dossiers`                                                 | Primer corte (B3)        |
-| Registro de expediente    | `POST /dossiers`                                                | Primer corte (B3)        |
-| Detalle y flujo T1 a T6   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions` | Primer corte (B4)        |
-| Asignación                | `POST /dossiers/{id}/assignments` o transición `ASSIGN`         | Por decidir (B4/B5)      |
-| Observaciones             | `GET/POST /dossiers/{id}/observations`                          | Primer corte (B6)        |
-| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                               | Primer corte (B7)        |
-| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local          | Primer corte (B3)        |
-| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`    | Siguiente etapa (B8)     |
-| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`   | Siguiente etapa (B12)    |
+| Módulo                    | Rutas del contrato                                              | Backend develop (30/09)             |
+| ------------------------- | --------------------------------------------------------------- | ----------------------------------- |
+| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`  | Implementado                        |
+| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `GET/PUT .../roles`     | Implementado                        |
+| Panel, gestión y búsqueda | `GET /dossiers`                                                 | Implementado                        |
+| Registro de expediente    | `POST /dossiers`                                                | Implementado                        |
+| Detalle y flujo T2 a T8   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions` | Implementado                        |
+| Asignación (T1)           | `POST /dossiers/{id}/assignments`                               | Pendiente (WF-03)                   |
+| Observaciones             | `GET/POST /dossiers/{id}/observations`                          | Implementado                        |
+| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                               | Implementado                        |
+| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local          | Implementado                        |
+| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`    | Implementado                        |
+| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`   | Plantillas sí; catálogos pendientes |
 
-"Primer corte" significa que la ruta está planificada para el viernes 2 de octubre; la tabla se
-actualiza cuando backend la fusiona en `develop`. Mientras una ruta no exista, la pantalla muestra
-un aviso neutro de "en preparación", sin errores en rojo ni datos simulados. El formulario del
-programa (CU-01) está terminado en la rama `feature/formulario-programa` y se integra en la
-siguiente etapa, con B8 y B12.
+Verificado contra el backend real el 30/09: el flujo de revisión funciona de punta a punta desde
+"Asignado". Falta la asignación (WF-03): hasta que exista, ningún expediente sale de
+"Recepcionado" y la especialista no ve expedientes.
+
+El formulario del programa (CU-01) está terminado en la rama `feature/formulario-programa`. El
+backend ya guarda el contenido (`PATCH .../versions/{id}`); falta adaptar la lectura de la
+plantilla a la forma real de la respuesta y que backend publique los catálogos.
 
 La Biblioteca UI (`/ui-kit`) es una herramienta interna del equipo: solo existe con `npm run dev`
 y no aparece en el menú ni en el build de producción.
