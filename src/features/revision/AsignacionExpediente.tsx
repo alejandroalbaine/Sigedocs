@@ -20,7 +20,10 @@ interface AsignacionProps {
  * (ASSIGN), se ejecuta como transición con `specialistId` en el cuerpo.
  */
 export function AsignacionExpediente({ dossier, transiciones, onAsignado }: AsignacionProps) {
-  const especialistas = useRecurso(() => dossiersApi.specialists(), []);
+  const especialistas = useRecurso(
+    () => dossiersApi.specialists(dossier.dossierId),
+    [dossier.dossierId],
+  );
   const [seleccion, setSeleccion] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState<{ kind: 'error' | 'success'; texto: string } | null>(null);
