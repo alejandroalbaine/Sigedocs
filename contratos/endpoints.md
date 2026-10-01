@@ -1,5 +1,9 @@
 # Endpoints principales por dominio
 
+> **Copia de referencia en el frontend.** Copiada de `SIGESDOC_BACKEND/docs/endpoints.md` antes de
+> que se fusionara REF-02. La fuente vigente es la del backend; esta copia se sincroniza al cerrar
+> cada corte. Cambios conocidos posteriores: ver `docs/pendientes-backend.md`.
+
 **Estado:** Contrato MVP vigente (sección siguiente) + contrato por dominio — condensado de `02_ENDPOINTS_PRINCIPALES_POR_DOMINIO.md`, actualizado con el ticket #55 y con los ADR-011 a 015. El estado de requisitos de las tablas no implica implementación. Todas las rutas contractuales siguen [api-conventions.md](api-conventions.md) y comienzan con `/api/v1`. La matriz completa de trazabilidad RF/RNF está en el documento fuente; aquí solo el contrato de endpoints.
 
 > **Transición a inglés ([ADR-011](decisions/ADR-011-english-naming-standard.md)).** Este documento describe el contrato **final**: `meta.pagination`, campo `code` y `type: /problems/<slug>` en Problem Details, códigos de error, de rol y de permiso en inglés. Hasta que se fusione REF-02, la implementación de los endpoints ya existentes (`/sessions`, `/users/current`, `/roles`, `/status`) responde todavía con los nombres anteriores (`codigo`, `/problemas/…`, `meta` en español, `SESION_INVALIDA`, `FACILITADOR`, `expedientes.consultar`…). La correspondencia exacta está en [naming-glossary.md](naming-glossary.md) §4, §6 y §7. Las rutas no cambian.

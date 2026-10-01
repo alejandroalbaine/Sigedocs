@@ -12,22 +12,29 @@ funciona en cuanto el backend publica su ruta; mientras una ruta confirmada no e
 lo indica como "pendiente" y nunca muestra datos simulados. Lo que falta del lado del servidor está
 en [docs/pendientes-backend.md](docs/pendientes-backend.md).
 
-| Módulo                    | Rutas del contrato                                              | Backend `develop` (27/09) |
-| ------------------------- | --------------------------------------------------------------- | ------------------------- |
-| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`  | Implementado              |
-| Panel, gestión y búsqueda | `GET /dossiers`                                                 | Pendiente (DOS-01)        |
-| Registro de expediente    | `POST /dossiers`                                                | Pendiente (DOS-01)        |
-| Detalle y revisión        | `GET /dossiers/{id}`, `/versions`, `/available-transitions`     | Pendiente (DOS-02, WF-01) |
-| Decisiones y flujo        | `POST /dossiers/{id}/transitions`                               | Pendiente (WF-02)         |
-| Asignación                | `GET /users`, `POST /dossiers/{id}/assignments`                 | Pendiente (WF-03)         |
-| Observaciones             | `GET/POST /dossiers/{id}/observations`                          | Pendiente (WF-04)         |
-| Historial y trazabilidad  | `GET /dossiers/{id}/transitions`, `/audit-events`               | Pendiente (AUD-01)        |
-| Reportes y Biblioteca UI  | Se calculan con `GET /dossiers`; exportación CSV/JSON local     | Pendiente (DOS-01)        |
-| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `PUT /users/{id}/roles` | Pendiente (CORE-01/02)    |
+| Módulo                    | Rutas del contrato                                              | Backend (plan del 29/09) |
+| ------------------------- | --------------------------------------------------------------- | ------------------------ |
+| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`  | Implementado             |
+| Usuarios (CU-12)          | `GET/POST /users`, `GET/PATCH /users/{id}`                      | Implementado             |
+| Roles de un usuario       | `GET/PUT /users/{id}/roles`                                     | Pendiente                |
+| Panel, gestión y búsqueda | `GET /dossiers`                                                 | Primer corte (B3)        |
+| Registro de expediente    | `POST /dossiers`                                                | Primer corte (B3)        |
+| Detalle y flujo T1 a T6   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions` | Primer corte (B4)        |
+| Asignación                | `POST /dossiers/{id}/assignments` o transición `ASSIGN`         | Por decidir (B4/B5)      |
+| Observaciones             | `GET/POST /dossiers/{id}/observations`                          | Primer corte (B6)        |
+| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                               | Primer corte (B7)        |
+| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local          | Primer corte (B3)        |
+| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`    | Siguiente etapa (B8)     |
+| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`   | Siguiente etapa (B12)    |
 
-Los expedientes que aparecen en capturas o videos anteriores provenían de un modo de prueba: el
-backend todavía no expone `/dossiers`. Ninguna pantalla presenta como guardada una operación que
-no se envió.
+"Primer corte" significa que la ruta está planificada para el viernes 2 de octubre; la tabla se
+actualiza cuando backend la fusiona en `develop`. Mientras una ruta no exista, la pantalla muestra
+un aviso neutro de "en preparación", sin errores en rojo ni datos simulados. El formulario del
+programa (CU-01) está terminado en la rama `feature/formulario-programa` y se integra en la
+siguiente etapa, con B8 y B12.
+
+La Biblioteca UI (`/ui-kit`) es una herramienta interna del equipo: solo existe con `npm run dev`
+y no aparece en el menú ni en el build de producción.
 
 ## Tecnologías
 
