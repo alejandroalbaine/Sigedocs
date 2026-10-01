@@ -25,7 +25,7 @@ type Accion =
 /** CU-12: administración de usuarios institucionales (`/users`, CORE-01/CORE-02). */
 function Usuarios() {
   const actual = useCurrentUser();
-  const { roleNames } = useSession();
+  const { roleNames, rolesStatus } = useSession();
   const opciones = opcionesDeRol(roleNames);
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VACIOS);
   // Paginación por cursor: se guardan los cursores ya visitados para poder volver.
@@ -77,7 +77,7 @@ function Usuarios() {
           </Button>
         }
       >
-        {opciones.length === 0 && (
+        {opciones.length === 0 && rolesStatus !== 'loading' && (
           <Alert kind="warning">
             No se pudo consultar el catálogo de roles; no es posible crear usuarios ni asignar roles
             hasta que responda.
