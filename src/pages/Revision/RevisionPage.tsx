@@ -25,6 +25,7 @@ import {
   ORDEN_UNDERGRAD,
   proximaAccion,
 } from '../../common/workflow/estados.ts';
+import { estructuraApi, ubicacion } from '../../features/observaciones/estructura.ts';
 import { FormularioObservacion } from '../../features/observaciones/FormularioObservacion.tsx';
 import { AccionesFlujo } from '../../features/revision/AccionesFlujo.tsx';
 import { AsignacionExpediente } from '../../features/revision/AsignacionExpediente.tsx';
@@ -133,6 +134,10 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
       ? () => dossiersApi.observations(id, dossier.currentVersion.versionId)
       : null,
     [clave, activeTab],
+  );
+  const estructura = useRecurso(
+    activeTab === 'observaciones' ? () => estructuraApi.deExpediente(dossier) : null,
+    [dossier.template.templateVersionId, activeTab],
   );
   const historial = useRecurso(activeTab === 'historial' ? () => dossiersApi.history(id) : null, [
     clave,
@@ -311,6 +316,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                 <FormularioObservacion
                   key={clave}
                   dossier={dossier}
+                  estructura={estructura.data}
                   onRegistrada={observaciones.reload}
                 />
               )}
@@ -329,9 +335,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                             {item.createdAt ? ` · ${fecha(item.createdAt)}` : ''}
                           </span>
                           {(item.sectionKey ?? item.fieldKey) && (
-                            <small>
-                              Sección {item.sectionKey ?? '—'} · campo {item.fieldKey ?? '—'}
-                            </small>
+                            <small>{ubicacion(item, estructura.data)}</small>
                           )}
                         </li>
                       ))}

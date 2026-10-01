@@ -12,17 +12,22 @@ import {
   type Column,
 } from '../../common/components/index.ts';
 import { admiteDecisionTecnica } from '../../common/workflow/estados.ts';
+import {
+  estructuraApi,
+  ubicacion,
+  type SeccionObservable,
+} from '../../features/observaciones/estructura.ts';
 import { FormularioObservacion } from '../../features/observaciones/FormularioObservacion.tsx';
 import { EnPreparacion } from '../documental/EnPreparacion.tsx';
 import { useDossiers } from '../documental/useDossiers.ts';
 import styles from '../layout/page.module.css';
 
-const COLUMNAS: readonly Column<Observation>[] = [
+const columnas = (estructura: readonly SeccionObservable[] | null): Column<Observation>[] => [
   { key: 'text', header: 'Observación', render: (fila) => fila.text },
   {
     key: 'ubicacion',
     header: 'Sección / campo',
-    render: (fila) => [fila.sectionKey, fila.fieldKey].filter(Boolean).join(' · ') || '—',
+    render: (fila) => ubicacion(fila, estructura) || 'General',
   },
   { key: 'autor', header: 'Registrada por', render: (fila) => fila.createdBy?.name ?? '—' },
   {
@@ -44,6 +49,10 @@ function Observaciones() {
       : null,
     [dossier?.dossierId, dossier?.currentVersion.versionId],
   );
+  const estructura = useRecurso(dossier ? () => estructuraApi.deExpediente(dossier) : null, [
+    dossier?.template.templateId,
+    dossier?.template.templateVersionId,
+  ]);
 
   if (loading) return <p>Consultando expedientes…</p>;
   if (error) return <Alert kind="error">{error}</Alert>;
@@ -80,6 +89,7 @@ function Observaciones() {
         <FormularioObservacion
           key={dossier.dossierId}
           dossier={dossier}
+          estructura={estructura.data}
           onRegistrada={lista.reload}
         />
       </Card>
@@ -91,7 +101,7 @@ function Observaciones() {
         ) : (
           <DataTable
             caption="Observaciones de la versión vigente"
-            columns={COLUMNAS}
+            columns={columnas(estructura.data)}
             rows={lista.data ?? []}
             getRowKey={(fila) => fila.observationId}
             emptyMessage={lista.loading ? 'Consultando…' : 'Sin observaciones en esta versión.'}
