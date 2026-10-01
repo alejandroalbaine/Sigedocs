@@ -14,6 +14,7 @@ import {
 import { dossiersApi } from '../../common/api/dossiers.ts';
 import { errorMessage } from '../../common/api/errors.ts';
 import type { CreateDossierInput, Dossier } from '../documental/types.ts';
+import { datosRegistro, normalizarRegistro, validarRegistro } from './registro.ts';
 import styles from '../documental/documental.module.css';
 
 const initial: CreateDossierInput = {
@@ -35,7 +36,7 @@ function loadDraft() {
   const raw = localStorage.getItem('sigesdoc:dossier-draft');
   if (!raw) return initial;
   try {
-    return { ...initial, ...(JSON.parse(raw) as Partial<typeof initial>) };
+    return datosRegistro(JSON.parse(raw));
   } catch {
     localStorage.removeItem('sigesdoc:dossier-draft');
     return initial;
@@ -109,25 +110,25 @@ export function RegistroPage() {
     setMessage('Radicación restablecida.');
   }
   function next() {
-    if (step === 1 && !form.title.trim()) {
-      setMessage('Complete el título del expediente.');
-      return;
-    }
-    if (
-      step === 2 &&
-      (!form.schoolCode.trim() || !form.degreeProgramCode.trim() || !form.subjectCode.trim())
-    ) {
-      setMessage('Complete los códigos de unidad, programa y asignatura.');
+    const error = validarRegistro(form, step);
+    if (error) {
+      setMessage(error);
       return;
     }
     setMessage('');
     setStep((current) => Math.min(5, current + 1));
   }
   async function submit() {
+    if (saving || created) return;
+    const error = validarRegistro(form, 5);
+    if (error) {
+      setMessage(error);
+      return;
+    }
     setSaving(true);
     setMessage('');
     try {
-      const { data } = await dossiersApi.create(form);
+      const { data } = await dossiersApi.create(normalizarRegistro(form));
       setCreated(data);
       localStorage.removeItem('sigesdoc:dossier-draft');
       setMessage(
@@ -162,6 +163,7 @@ export function RegistroPage() {
             >
               <button
                 type="button"
+                disabled={saving || Boolean(created)}
                 onClick={() => {
                   if (number <= step) setStep(number);
                 }}
@@ -193,6 +195,7 @@ export function RegistroPage() {
               <label htmlFor="title">Título del expediente *</label>
               <input
                 id="title"
+                maxLength={300}
                 className={styles.input}
                 value={form.title}
                 onChange={(event) => {
@@ -224,6 +227,7 @@ export function RegistroPage() {
               <label htmlFor="school">Unidad productora *</label>
               <input
                 id="school"
+                maxLength={50}
                 className={styles.input}
                 value={form.schoolCode}
                 onChange={(event) => {
@@ -236,6 +240,7 @@ export function RegistroPage() {
               <label htmlFor="program">Código de programa *</label>
               <input
                 id="program"
+                maxLength={50}
                 className={styles.input}
                 value={form.degreeProgramCode}
                 onChange={(event) => {
@@ -248,6 +253,7 @@ export function RegistroPage() {
               <label htmlFor="subject">Código de asignatura *</label>
               <input
                 id="subject"
+                maxLength={50}
                 className={styles.input}
                 value={form.subjectCode}
                 onChange={(event) => {
@@ -419,6 +425,7 @@ export function RegistroPage() {
               type="button"
               className={`${styles.button} ${styles.buttonQuiet}`}
               onClick={saveDraft}
+              disabled={saving || Boolean(created)}
             >
               <Save size={15} /> Guardar borrador
             </button>
@@ -426,6 +433,7 @@ export function RegistroPage() {
               type="button"
               className={`${styles.button} ${styles.buttonSecondary}`}
               onClick={reset}
+              disabled={saving}
             >
               Cancelar radicación
             </button>
@@ -438,6 +446,7 @@ export function RegistroPage() {
                 onClick={() => {
                   setStep((current) => current - 1);
                 }}
+                disabled={saving || Boolean(created)}
               >
                 <ArrowLeft size={15} /> Paso anterior
               </button>

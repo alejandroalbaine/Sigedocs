@@ -21,14 +21,28 @@ import { DetalleEvento } from '../../features/trazabilidad/DetalleEvento.tsx';
 import { FiltrosTrazabilidad as Filtros } from '../../features/trazabilidad/FiltrosTrazabilidad.tsx';
 import { TablaEventos } from '../../features/trazabilidad/TablaEventos.tsx';
 import { EnPreparacion } from '../documental/EnPreparacion.tsx';
+import { useCurrentUser } from '../../common/auth/SessionContext.ts';
+import { hasPermission } from '../../common/auth/permissions.ts';
 import { useDossiers } from '../documental/useDossiers.ts';
 import styles from '../layout/page.module.css';
 
 const TAMANOS = [10, 20, 50] as const;
 
 /** AUD-01: la trazabilidad se consulta por expediente con `GET /dossiers/{id}/audit-events`. */
+
+/** ADR-015: el administrador del sistema no consulta expedientes curriculares. */
+function SinExpedientes() {
+  return (
+    <Alert kind="info">
+      Su rol no consulta expedientes curriculares, por eso esta sección no muestra información.
+    </Alert>
+  );
+}
+
 function Historial() {
-  const { items, loading, error, pendiente } = useDossiers();
+  const user = useCurrentUser();
+  const canRead = hasPermission(user.permissions, 'dossiers.read');
+  const { items, loading, error, pendiente } = useDossiers('', canRead);
   const [elegido, setElegido] = useState('');
   const [filtros, setFiltros] = useState<FiltrosTrazabilidad>(FILTROS_VACIOS);
   const [orden, setOrden] = useState<SortState>({ key: 'fecha', direction: 'desc' });
@@ -42,6 +56,7 @@ function Historial() {
     [dossier?.dossierId, consulta],
   );
 
+  if (!canRead) return <SinExpedientes />;
   if (loading) return <p>Consultando expedientes…</p>;
   if (error) return <Alert kind="error">{error}</Alert>;
   if (pendiente) return <EnPreparacion />;

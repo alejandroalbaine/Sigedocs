@@ -13,7 +13,18 @@ beforeEach(() => {
     vi.fn(() =>
       Promise.resolve(
         new Response(
-          JSON.stringify({ data: [], meta: { pagination: { nextCursor: null, limit: 25 } } }),
+          JSON.stringify({
+            data: [],
+            meta: {
+              pagination: {
+                next: null,
+                previous: null,
+                hasMore: false,
+                limit: 25,
+                returnedCount: 0,
+              },
+            },
+          }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       ),

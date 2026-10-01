@@ -19,6 +19,8 @@ export interface NavItem {
   to?: string;
   /** Sin permiso: visible para cualquier usuario autenticado. */
   permission?: Permission;
+  /** Permisos adicionales que también se exigen (la pantalla consulta expedientes). */
+  alsoRequires?: readonly Permission[];
 }
 
 /**
@@ -62,12 +64,14 @@ export const NAVIGATION: readonly NavItem[] = [
     icon: FileClock,
     to: '/historial',
     permission: 'audit.read',
+    alsoRequires: ['dossiers.read'],
   },
   {
     label: 'Reportes y estadísticas',
     icon: BarChart3,
     to: '/reportes',
     permission: 'audit.read',
+    alsoRequires: ['dossiers.read'],
   },
   {
     label: 'Usuarios y roles',
@@ -79,6 +83,8 @@ export const NAVIGATION: readonly NavItem[] = [
 
 export function visibleNavigation(permissions: readonly string[]): NavItem[] {
   return NAVIGATION.filter(
-    (item) => !item.permission || hasPermission(permissions, item.permission),
+    (item) =>
+      (!item.permission || hasPermission(permissions, item.permission)) &&
+      (item.alsoRequires ?? []).every((extra) => hasPermission(permissions, extra)),
   );
 }

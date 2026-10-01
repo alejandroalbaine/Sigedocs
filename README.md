@@ -12,23 +12,23 @@ funciona en cuanto el backend publica su ruta; mientras una ruta confirmada no e
 lo indica como "pendiente" y nunca muestra datos simulados. Lo que falta del lado del servidor está
 en [docs/pendientes-backend.md](docs/pendientes-backend.md).
 
-| Módulo                    | Rutas del contrato                                              | Backend develop (30/09)             |
-| ------------------------- | --------------------------------------------------------------- | ----------------------------------- |
-| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`  | Implementado                        |
-| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `GET/PUT .../roles`     | Implementado                        |
-| Panel, gestión y búsqueda | `GET /dossiers`                                                 | Implementado                        |
-| Registro de expediente    | `POST /dossiers`                                                | Implementado                        |
-| Detalle y flujo T2 a T8   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions` | Implementado                        |
-| Asignación (T1)           | `POST /dossiers/{id}/assignments`                               | Pendiente (WF-03)                   |
-| Observaciones             | `GET/POST /dossiers/{id}/observations`                          | Implementado                        |
-| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                               | Implementado                        |
-| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local          | Implementado                        |
-| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`    | Implementado                        |
-| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`   | Plantillas sí; catálogos pendientes |
+| Módulo                    | Rutas del contrato                                                 | Backend v0.2.0 (01/10)              |
+| ------------------------- | ------------------------------------------------------------------ | ----------------------------------- |
+| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`     | Implementado                        |
+| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `GET/PUT .../roles`        | Implementado                        |
+| Panel, gestión y búsqueda | `GET /dossiers`                                                    | Implementado                        |
+| Registro de expediente    | `POST /dossiers`                                                   | Implementado                        |
+| Detalle y flujo T2 a T8   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions`    | Implementado                        |
+| Asignación (T1)           | `GET .../assignment-candidates`, `POST /dossiers/{id}/assignments` | Implementado                        |
+| Observaciones             | `GET/POST /dossiers/{id}/observations`                             | Implementado                        |
+| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                                  | Implementado                        |
+| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local             | Implementado                        |
+| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`       | Implementado                        |
+| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`      | Plantillas sí; catálogos pendientes |
 
-Verificado contra el backend real el 30/09: el flujo de revisión funciona de punta a punta desde
-"Asignado". Falta la asignación (WF-03): hasta que exista, ningún expediente sale de
-"Recepcionado" y la especialista no ve expedientes.
+Verificado desde la interfaz contra el backend v0.2.0 (01/10), con cada rol: la Dirección asigna,
+la especialista revisa y devuelve, la coordinación reenvía, la especialista reevalúa y la Dirección
+aprueba para pilotaje; el historial y la auditoría registran cada paso.
 
 El formulario del programa (CU-01) está terminado en la rama `feature/formulario-programa`. El
 backend ya guarda el contenido (`PATCH .../versions/{id}`); falta adaptar la lectura de la
@@ -107,6 +107,13 @@ VITE_API_BASE_URL=https://api.ejemplo.edu.do docker compose up --build
 El backend debe incluir el origen de la interfaz (`http://localhost:5173` en local) en `ALLOWED_ORIGINS`.
 Docker ahora sirve el build de producción; para desarrollar con recarga en caliente use `npm run dev`.
 
+Al etiquetar una versión (`vX.Y.Z`) o fusionar en `main`, GitHub Actions publica la imagen en
+`ghcr.io/alejandroalbaine/sigedocs` (`latest`, `X.Y.Z`, `X.Y`); cada push a `develop` publica la
+etiqueta `develop` para probar el despliegue. Se construye con
+`VITE_API_BASE_URL` vacía: la interfaz llama a `/api/v1` en su mismo dominio y el proxy del
+servidor (Dokploy) dirige `/api` al backend. Para otro origen, definir la variable del repositorio
+`VITE_API_BASE_URL`.
+
 Docker levanta únicamente el frontend. El backend continúa ejecutándose desde su propio repositorio.
 En VS Code, `F5` levanta Vite y abre Chrome con el depurador conectado.
 
@@ -118,6 +125,7 @@ npm run setup         # Crea .env desde la plantilla si todavía no existe
 npm run build         # Verificación de tipos y build de producción en dist/
 npm run preview       # Sirve dist/ localmente
 npm test              # Pruebas
+npm run test:integration:b3 # Registro, Gestión y Panel contra una API local real (requiere cuenta de pruebas)
 npm run lint          # ESLint
 npm run lint:css      # Stylelint (rechaza colores fuera de tokens.css)
 npm run format        # Prettier

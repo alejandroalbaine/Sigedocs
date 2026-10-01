@@ -418,3 +418,19 @@ test('T1 · si backend asigna como transición (sin /assignments), se envía ASS
     specialistId: 'esp-1',
   });
 });
+
+test('la lista de especialistas sale de assignment-candidates (backend v0.2.0)', async () => {
+  const base = dossier({ dossierId: 'd-3' });
+  const llamadas = stubApi({
+    'GET /api/v1/dossiers': [base],
+    'GET /api/v1/dossiers/d-3/assignment-candidates': [
+      { userId: 'esp-9', name: 'Especialista Asignable' },
+    ],
+    'GET /api/v1/dossiers/d-3/available-transitions': [],
+  });
+  renderApp(signedInBackend(direccion), '/revision');
+  await abrirPestaña(/6\. Workflow/);
+  const selector = await screen.findByLabelText('Especialista curricular');
+  expect(await within(selector).findByText('Especialista Asignable')).toBeInTheDocument();
+  expect(llamadas.some((llamada) => llamada.key === 'GET /api/v1/users')).toBe(false);
+});

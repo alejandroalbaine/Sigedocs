@@ -13,7 +13,7 @@ function normalizedMeta(value: unknown): PageMeta | undefined {
   const raw = meta.pagination ?? meta.paginacion;
   if (typeof raw !== 'object' || raw === null) return undefined;
   const pagination = raw as Record<string, unknown>;
-  const cursor = pagination.nextCursor ?? pagination.cursorSiguiente ?? null;
+  const cursor = pagination.next ?? pagination.nextCursor ?? pagination.cursorSiguiente ?? null;
   const limit = pagination.limit ?? pagination.limite;
   if ((cursor !== null && typeof cursor !== 'string') || typeof limit !== 'number') {
     return undefined;
