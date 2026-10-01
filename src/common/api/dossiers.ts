@@ -70,8 +70,12 @@ export const dossiersApi = {
     const suffix = params.size ? `?${params.toString()}` : '';
     return request(`/dossiers/${id(dossierId)}/audit-events${suffix}`, parseAuditEvents);
   },
-<<<<<<< HEAD
-  specialists: () => request('/users', parseSpecialists),
+  /**
+   * Especialistas activos para asignar (B5). El plan propone que el servidor acepte este filtro
+   * con `workflow.assign`; además se filtra por rol en el cliente.
+   */
+  specialists: () =>
+    request('/users?roleCode=CURRICULUM_SPECIALIST&isActive=true&limit=100', parseSpecialists),
   version: (dossierId: string, versionId: string) =>
     request(`/dossiers/${id(dossierId)}/versions/${id(versionId)}`, parseVersionDetail),
   saveContent: (dossierId: string, versionId: string, content: Record<string, unknown>) =>
@@ -89,12 +93,4 @@ export const templatesApi = {
       parseTemplateDefinition,
     ),
   catalog: (catalog: string) => request(`/institutional-catalogs/${id(catalog)}`, parseCatalog),
-=======
-  /**
-   * Especialistas activos para asignar (B5). El plan propone que el servidor acepte este filtro
-   * con `workflow.assign`; además se filtra por rol en el cliente.
-   */
-  specialists: () =>
-    request('/users?roleCode=CURRICULUM_SPECIALIST&isActive=true&limit=100', parseSpecialists),
->>>>>>> develop
 };
