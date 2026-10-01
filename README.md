@@ -107,6 +107,12 @@ VITE_API_BASE_URL=https://api.ejemplo.edu.do docker compose up --build
 El backend debe incluir el origen de la interfaz (`http://localhost:5173` en local) en `ALLOWED_ORIGINS`.
 Docker ahora sirve el build de producción; para desarrollar con recarga en caliente use `npm run dev`.
 
+Al etiquetar una versión (`vX.Y.Z`) o fusionar en `main`, GitHub Actions publica la imagen en
+`ghcr.io/alejandroalbaine/sigedocs` (`latest`, `X.Y.Z`, `X.Y`). Se construye con
+`VITE_API_BASE_URL` vacía: la interfaz llama a `/api/v1` en su mismo dominio y el proxy del
+servidor (Dokploy) dirige `/api` al backend. Para otro origen, definir la variable del repositorio
+`VITE_API_BASE_URL`.
+
 Docker levanta únicamente el frontend. El backend continúa ejecutándose desde su propio repositorio.
 En VS Code, `F5` levanta Vite y abre Chrome con el depurador conectado.
 

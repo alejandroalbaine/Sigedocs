@@ -1,0 +1,88 @@
+name: Imagen Docker
+
+# Misma práctica que el backend: la imagen se construye y publica en GitHub Actions, nunca en
+# el VPS; Dokploy solo hace `docker pull`. Los PR solo construyen (el CI ya prueba el contenedor).
+on:
+  push:
+    branches: [main]
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: imagen-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    name: Construir y publicar en ghcr.io
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+
+      # ghcr.io exige el nombre de la imagen en minúsculas.
+      - name: Nombre de la imagen
+        run: echo "IMAGEN=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # GITHUB_TOKEN lo genera GitHub en cada ejecución; no hay credenciales en el repositorio.
+      - name: Autenticar en ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calcular etiquetas
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGEN }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-,format=short
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      # VITE_API_BASE_URL queda fija en el build. Vacía (por defecto) = la interfaz llama a
+      # /api/v1 en su mismo dominio y el proxy de Dokploy dirige /api al backend. Para otro
+      # origen, definir la variable del repositorio VITE_API_BASE_URL (Settings → Variables).
+      - name: Construir y publicar
+        id: publicar
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Resumen
+        env:
+          ETIQUETAS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.publicar.outputs.digest }}
+        run: |
+          {
+            echo "### Imagen publicada"
+            echo ""
+            echo "Digest: \`${DIGEST}\`"
+            echo ""
+            echo "| Etiqueta |"
+            echo "|---|"
+            while IFS= read -r etiqueta; do
+              [ -n "$etiqueta" ] && echo "| \`${etiqueta}\` |"
+            done <<< "$ETIQUETAS"
+          } >> "$GITHUB_STEP_SUMMARY"
