@@ -108,7 +108,8 @@ El backend debe incluir el origen de la interfaz (`http://localhost:5173` en loc
 Docker ahora sirve el build de producción; para desarrollar con recarga en caliente use `npm run dev`.
 
 Al etiquetar una versión (`vX.Y.Z`) o fusionar en `main`, GitHub Actions publica la imagen en
-`ghcr.io/alejandroalbaine/sigedocs` (`latest`, `X.Y.Z`, `X.Y`). Se construye con
+`ghcr.io/alejandroalbaine/sigedocs` (`latest`, `X.Y.Z`, `X.Y`); cada push a `develop` publica la
+etiqueta `develop` para probar el despliegue. Se construye con
 `VITE_API_BASE_URL` vacía: la interfaz llama a `/api/v1` en su mismo dominio y el proxy del
 servidor (Dokploy) dirige `/api` al backend. Para otro origen, definir la variable del repositorio
 `VITE_API_BASE_URL`.
