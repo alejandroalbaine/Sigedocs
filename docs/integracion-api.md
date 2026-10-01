@@ -6,15 +6,19 @@
 
 ## Rutas consumidas
 
-| Operación           | Método y ruta                     | `data` validado por  |
-| ------------------- | --------------------------------- | -------------------- |
-| Estado del servicio | `GET /api/v1/status`              | `parseStatus`        |
-| Iniciar sesión      | `POST /api/v1/sessions`           | `parseLoginResponse` |
-| Identidad actual    | `GET /api/v1/users/current`       | `parseCurrentUser`   |
-| Cerrar sesión       | `DELETE /api/v1/sessions/current` | `204 No Content`     |
-| Nombres de rol      | `GET /api/v1/roles`               | `parseRoles`         |
-| Listar expedientes  | `GET /api/v1/dossiers`            | `Dossier[]`          |
-| Crear expediente    | `POST /api/v1/dossiers`           | `Dossier`            |
+| Operación           | Método y ruta                      | `data` validado por  |
+| ------------------- | ---------------------------------- | -------------------- |
+| Estado del servicio | `GET /api/v1/status`               | `parseStatus`        |
+| Iniciar sesión      | `POST /api/v1/sessions`            | `parseLoginResponse` |
+| Identidad actual    | `GET /api/v1/users/current`        | `parseCurrentUser`   |
+| Cerrar sesión       | `DELETE /api/v1/sessions/current`  | `204 No Content`     |
+| Nombres de rol      | `GET /api/v1/roles`                | `parseRoles`         |
+| Listar expedientes  | `GET /api/v1/dossiers`             | `Dossier[]`          |
+| Crear expediente    | `POST /api/v1/dossiers`            | `Dossier`            |
+| Listar usuarios     | `GET /api/v1/users`                | `parseUsers`         |
+| Crear usuario       | `POST /api/v1/users`               | `parseUser`          |
+| Modificar usuario   | `PATCH /api/v1/users/{userId}`     | `parseUser`          |
+| Reemplazar roles    | `PUT /api/v1/users/{userId}/roles` | `parseUser`          |
 
 Las respuestas exitosas se leen desde `data`; las colecciones normalizan `meta.pagination`. Cada operación declara su
 validador en `src/common/api/client.ts`. Si la respuesta no cumple el contrato, el cliente

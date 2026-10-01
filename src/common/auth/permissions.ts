@@ -36,6 +36,7 @@ export const PERMISSIONS = [
 export type Permission = (typeof PERMISSIONS)[number];
 
 const LEGACY_BY_CURRENT: Partial<Record<Permission, Permission>> = {
+  'users.manage': 'usuarios.administrar',
   'dossiers.read': 'expedientes.consultar',
   'dossiers.create': 'expedientes.crear',
   'dossiers.edit': 'expedientes.editar',

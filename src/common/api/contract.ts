@@ -47,6 +47,17 @@ export interface Role {
   name: string;
 }
 
+/** Usuario administrado: `GET /api/v1/users` y respuestas de `POST`, `PATCH` y `PUT roles`. */
+export interface User {
+  userId: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+  schoolCode: string | null;
+  roles: Role[];
+  createdAt: string;
+}
+
 /** Error de campo dentro de un Problem Details `VALIDATION_FAILED`. */
 export interface FieldError {
   field: string;
@@ -124,6 +135,39 @@ export function parseRoles(data: unknown): Role[] {
       name: text(role.name ?? role.nombre, 'name'),
     };
   });
+}
+
+export function parseRole(value: unknown, what = 'role'): Role {
+  const role = record(value, what);
+  return {
+    roleId: text(role.roleId ?? role.rolId, `${what}.roleId`),
+    code: text(role.code ?? role.codigo, `${what}.code`),
+    name: text(role.name ?? role.nombre, `${what}.name`),
+  };
+}
+
+export function parseUser(value: unknown, what = 'user'): User {
+  const user = record(value, what);
+  const { schoolCode, roles, isActive } = user;
+  if (!Array.isArray(roles)) throw new ContractError(`${what}.roles`);
+  if (typeof isActive !== 'boolean') throw new ContractError(`${what}.isActive`);
+  if (schoolCode !== undefined && schoolCode !== null && typeof schoolCode !== 'string') {
+    throw new ContractError(`${what}.schoolCode`);
+  }
+  return {
+    userId: text(user.userId, `${what}.userId`),
+    name: text(user.name, `${what}.name`),
+    email: text(user.email, `${what}.email`),
+    isActive,
+    schoolCode: schoolCode ?? null,
+    roles: roles.map((role, index) => parseRole(role, `${what}.roles[${index}]`)),
+    createdAt: typeof user.createdAt === 'string' ? user.createdAt : '',
+  };
+}
+
+export function parseUsers(data: unknown): User[] {
+  if (!Array.isArray(data)) throw new ContractError('users');
+  return data.map((item, index) => parseUser(item, `users[${index}]`));
 }
 
 export function parseFieldErrors(value: unknown): FieldError[] {

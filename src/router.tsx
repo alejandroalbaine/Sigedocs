@@ -12,6 +12,7 @@ import { BusquedaPage } from './pages/Busqueda/BusquedaPage.tsx';
 import { GestionPage } from './pages/Gestion/GestionPage.tsx';
 import { RegistroPage } from './pages/Registro/RegistroPage.tsx';
 import { ReportesPage } from './pages/Reportes/ReportesPage.tsx';
+import { UsuariosPage } from './pages/Usuarios/UsuariosPage.tsx';
 import { UiKitPage } from './pages/UiKit/UiKitPage.tsx';
 
 export const routes: RouteObject[] = [
@@ -56,6 +57,14 @@ export const routes: RouteObject[] = [
         element: (
           <RequirePermission permission="audit.read" action="consultar reportes">
             <ReportesPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'usuarios',
+        element: (
+          <RequirePermission permission="users.manage" action="administrar usuarios y roles">
+            <UsuariosPage />
           </RequirePermission>
         ),
       },
