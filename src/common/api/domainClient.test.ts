@@ -39,7 +39,15 @@ test('normaliza la paginación final del contrato', async () => {
         new Response(
           JSON.stringify({
             data: [{ dossierId: 'd1' }],
-            meta: { pagination: { nextCursor: 'cursor-2', limit: 25 } },
+            meta: {
+              pagination: {
+                next: 'cursor-2',
+                previous: null,
+                hasMore: true,
+                returnedCount: 1,
+                limit: 25,
+              },
+            },
           }),
           { headers: { 'Content-Type': 'application/json' } },
         ),

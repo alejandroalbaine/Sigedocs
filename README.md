@@ -118,6 +118,7 @@ npm run setup         # Crea .env desde la plantilla si todavía no existe
 npm run build         # Verificación de tipos y build de producción en dist/
 npm run preview       # Sirve dist/ localmente
 npm test              # Pruebas
+npm run test:integration:b3 # Registro, Gestión y Panel contra una API local real (requiere cuenta de pruebas)
 npm run lint          # ESLint
 npm run lint:css      # Stylelint (rechaza colores fuera de tokens.css)
 npm run format        # Prettier

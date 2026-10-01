@@ -186,7 +186,18 @@ export function stubApi(rutas: Record<string, unknown>) {
           : ruta;
       if (valor instanceof Response) return Promise.resolve(valor);
       return Promise.resolve(
-        json({ data: valor, meta: { pagination: { nextCursor: null, limit: 25 } } }),
+        json({
+          data: valor,
+          meta: {
+            pagination: {
+              next: null,
+              previous: null,
+              hasMore: false,
+              limit: 25,
+              returnedCount: Array.isArray(valor) ? valor.length : 1,
+            },
+          },
+        }),
       );
     }),
   );

@@ -28,8 +28,9 @@ export function useDossiers(query = '', habilitado = true) {
   useEffect(() => {
     if (!habilitado) return;
     let active = true;
+    const controller = new AbortController();
     dossiersApi
-      .list(query)
+      .listAll(query, controller.signal)
       .then(({ data }) => {
         if (active) setResultado({ clave, items: data, error: '', pendiente: false });
       })
@@ -45,6 +46,7 @@ export function useDossiers(query = '', habilitado = true) {
       });
     return () => {
       active = false;
+      controller.abort();
     };
   }, [query, clave, habilitado]);
 
