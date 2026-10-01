@@ -21,7 +21,10 @@ interface AccionesFlujoProps {
  * su propio panel (iniciar revisión, reenviar, reevaluar, pilotaje, finalizar, archivar).
  */
 export function AccionesFlujo({ dossier, transiciones, onRealizada }: AccionesFlujoProps) {
-  const otras = transiciones.filter((item) => !CODIGOS_DECISION.includes(item.code));
+  // T1 (ASSIGN) necesita elegir especialista: la ejecuta el bloque de asignación.
+  const otras = transiciones.filter(
+    (item) => !CODIGOS_DECISION.includes(item.code) && item.code !== 'ASSIGN',
+  );
   const [observaciones, setObservaciones] = useState<Record<string, string>>({});
   const [enviando, setEnviando] = useState('');
   const [error, setError] = useState('');

@@ -387,7 +387,11 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                     <h3 className={styles.subheading}>
                       <UserCheck size={16} /> Asignación para revisión
                     </h3>
-                    <AsignacionExpediente dossier={dossier} onAsignado={onCambio} />
+                    <AsignacionExpediente
+                      dossier={dossier}
+                      transiciones={transiciones.data}
+                      onAsignado={onCambio}
+                    />
                   </section>
                 )}
               <section className={styles.flowBlock}>

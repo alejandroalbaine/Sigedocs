@@ -368,3 +368,53 @@ test('el historial muestra cada transición con su estado de origen y destino', 
   expect(await screen.findByText(/Iniciar revisión: Asignado → En revisión/)).toBeInTheDocument();
   expect(screen.getByText('Expediente registrado')).toBeInTheDocument();
 });
+
+test('T1 · si backend asigna como transición (sin /assignments), se envía ASSIGN con la especialista', async () => {
+  const base = dossier({ dossierId: 'd-2' });
+  const llamadas = stubApi({
+    'GET /api/v1/dossiers': [base],
+    'GET /api/v1/users': [
+      { ...ESPECIALISTA, roles: [{ roleId: 'r1', code: 'CURRICULUM_SPECIALIST', name: 'Esp.' }] },
+    ],
+    [`GET /api/v1/dossiers/d-2/available-transitions`]: [
+      {
+        transitionId: 't1',
+        code: 'ASSIGN',
+        name: 'Asignar',
+        toState: { code: 'ASSIGNED', name: 'Asignado' },
+        requiresObservation: false,
+      },
+    ],
+    [`POST /api/v1/dossiers/d-2/transitions`]: {
+      historyId: 'h1',
+      fromState: { code: 'RECEIVED', name: 'Recepcionado' },
+      toState: { code: 'ASSIGNED', name: 'Asignado' },
+      versionId: base.currentVersion.versionId,
+      newVersionId: null,
+      occurredAt: '2026-10-01T09:00:00.000Z',
+    },
+  });
+  renderApp(signedInBackend(direccion), '/revision');
+  await abrirPestaña(/6\. Workflow/);
+
+  // T1 no aparece como botón suelto: necesita elegir especialista.
+  expect(
+    await screen.findByText('No hay otras acciones disponibles para su usuario ahora.'),
+  ).toBeVisible();
+  await userEvent.selectOptions(await screen.findByLabelText('Especialista curricular'), 'esp-1');
+  await userEvent.click(screen.getByRole('button', { name: 'Asignar' }));
+
+  expect(await screen.findByText('Expediente asignado a Especialista Curricular.')).toBeVisible();
+  const consulta = llamadas.find((llamada) => llamada.key === 'GET /api/v1/users');
+  expect(consulta?.url.searchParams.get('roleCode')).toBe('CURRICULUM_SPECIALIST');
+  expect(consulta?.url.searchParams.get('isActive')).toBe('true');
+  expect(
+    llamadas.find(
+      (llamada) => llamada.key.endsWith('/transitions') && llamada.key.startsWith('POST'),
+    )?.body,
+  ).toEqual({
+    transitionId: 't1',
+    versionId: base.currentVersion.versionId,
+    specialistId: 'esp-1',
+  });
+});

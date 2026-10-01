@@ -60,6 +60,12 @@ createdBy: { userId, name }, createdAt }`.
 - **Quién aprueba para pilotaje**: CU-04 dice el Especialista; ADR-014 (T4/T8) dice la Dirección.
   El frontend no decide: muestra "Aprobar para pilotaje" solo a quien el servidor ofrezca la
   transición en `available-transitions`.
+- **Cómo se asigna el especialista (T1)**: el frontend acepta las dos formas en discusión.
+  Primero llama `POST /dossiers/{id}/assignments`; si esa ruta responde 404 y el servidor ofrece
+  la transición `ASSIGN`, la ejecuta con `POST /dossiers/{id}/transitions` y
+  `{ transitionId, versionId, specialistId }`. La lista de especialistas se pide con
+  `GET /users?roleCode=CURRICULUM_SPECIALIST&isActive=true`; para que la Dirección la vea, el
+  servidor debe aceptar ese filtro con `workflow.assign` (hoy `/users` exige `users.manage`).
 
 ## 5. Guía de instalación del backend
 
