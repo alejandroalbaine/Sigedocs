@@ -1,0 +1,777 @@
+{
+  "templateVersionId": "c1000000-0000-4000-8000-000000000001",
+  "templateId": "c0000000-0000-4000-8000-000000000001",
+  "versionNumber": 1,
+  "status": "published",
+  "validFrom": "2026-09-01",
+  "validTo": null,
+  "publishedAt": "2026-10-01T02:48:09.686Z",
+  "retiredAt": null,
+  "createdAt": "2026-10-01T02:48:09.686Z",
+  "sections": [
+    {
+      "sectionId": "7221a3ef-7865-4ec7-acc8-d76eba7d7027",
+      "key": "datos_academicos",
+      "title": "Datos académicos",
+      "description": "Identificación y carga horaria de la asignatura.",
+      "position": 0,
+      "isActive": true,
+      "isRequired": true,
+      "fields": [
+        {
+          "fieldId": "f515a185-ab47-4f0b-a56d-bddf4d6d0427",
+          "key": "asignatura",
+          "label": "Asignatura",
+          "type": "text",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 0,
+          "format": null,
+          "help": null,
+          "config": {}
+        },
+        {
+          "fieldId": "6b5e6a27-e52d-44e5-8e7b-6fa798e89322",
+          "key": "creditos",
+          "label": "Créditos",
+          "type": "number",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 1,
+          "format": null,
+          "help": null,
+          "config": {
+            "decimals": 0
+          }
+        },
+        {
+          "fieldId": "af5891b9-2357-4f21-ab3d-569ee7f57b31",
+          "key": "clave_asignatura",
+          "label": "Clave",
+          "type": "text",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 2,
+          "format": null,
+          "help": null,
+          "config": {}
+        },
+        {
+          "fieldId": "f645a509-e0c9-4748-9486-fb54d81a796d",
+          "key": "prerrequisitos",
+          "label": "Prerrequisitos",
+          "type": "text",
+          "isRequired": false,
+          "isReadOnly": false,
+          "position": 3,
+          "format": null,
+          "help": null,
+          "config": {}
+        },
+        {
+          "fieldId": "17099baf-2bd5-49f8-8849-2bb5204accaf",
+          "key": "escuela",
+          "label": "Escuela",
+          "type": "select",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 4,
+          "format": null,
+          "help": null,
+          "optionsSource": {
+            "type": "institutional_catalog",
+            "catalog": "schools"
+          },
+          "config": {}
+        },
+        {
+          "fieldId": "de6734b4-314a-407a-b32e-c4b37700817a",
+          "key": "carreras",
+          "label": "Carrera(s) en la que se imparte",
+          "type": "multi_select",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 5,
+          "format": null,
+          "help": null,
+          "optionsSource": {
+            "type": "institutional_catalog",
+            "catalog": "degree_programs"
+          },
+          "config": {}
+        },
+        {
+          "fieldId": "66f3b82d-53d3-4d34-aeb7-946c8c97d6f3",
+          "key": "caracter",
+          "label": "Carácter",
+          "type": "select",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 6,
+          "format": null,
+          "help": null,
+          "options": [
+            {
+              "label": "Obligatoria",
+              "value": "OBLIGATORIA"
+            },
+            {
+              "label": "Electiva",
+              "value": "ELECTIVA"
+            }
+          ],
+          "config": {}
+        },
+        {
+          "fieldId": "ce2179b5-a699-48aa-8ad4-e93cb2ca7c8d",
+          "key": "modalidades",
+          "label": "Modalidad educativa",
+          "type": "multi_select",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 7,
+          "format": null,
+          "help": null,
+          "optionsSource": {
+            "type": "institutional_catalog",
+            "catalog": "modalities"
+          },
+          "config": {}
+        },
+        {
+          "fieldId": "4f5af2ef-0a2d-4da8-8453-26ce54353d89",
+          "key": "periodo_academico",
+          "label": "Período académico",
+          "type": "number",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 8,
+          "format": null,
+          "help": null,
+          "config": {
+            "decimals": 0
+          }
+        },
+        {
+          "fieldId": "242a162d-f37c-4785-b0bc-ba5705183e63",
+          "key": "bloque_formacion",
+          "label": "Bloque de formación",
+          "type": "text",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 9,
+          "format": null,
+          "help": null,
+          "config": {}
+        },
+        {
+          "fieldId": "82460a55-3d38-419d-aeb2-6c6d56c18839",
+          "key": "ht",
+          "label": "HT - Horas teóricas",
+          "type": "number",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 10,
+          "format": null,
+          "help": null,
+          "config": {
+            "decimals": 0
+          }
+        },
+        {
+          "fieldId": "13c892d7-3869-4698-a8ce-335bd3a34605",
+          "key": "hp",
+          "label": "HP - Horas prácticas",
+          "type": "number",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 11,
+          "format": null,
+          "help": null,
+          "config": {
+            "decimals": 0
+          }
+        },
+        {
+          "fieldId": "407ce50c-4572-4bac-875a-8e0f58eaf25c",
+          "key": "hi",
+          "label": "HI - Horas de interacción",
+          "type": "number",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 12,
+          "format": null,
+          "help": null,
+          "config": {
+            "decimals": 0
+          }
+        },
+        {
+          "fieldId": "3c1f1197-2fd8-45e6-964f-31c7a416dd03",
+          "key": "hit",
+          "label": "HIT - Horas de interacción tutorial",
+          "type": "number",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 13,
+          "format": null,
+          "help": null,
+          "config": {
+            "decimals": 0
+          }
+        },
+        {
+          "fieldId": "081ecc95-cdc7-4aab-bdac-22a89d958f38",
+          "key": "hei",
+          "label": "HEI - Horas de estudio independiente",
+          "type": "number",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 14,
+          "format": null,
+          "help": null,
+          "config": {
+            "decimals": 0
+          }
+        }
+      ]
+    },
+    {
+      "sectionId": "27622938-2c8c-437e-9729-645539082603",
+      "key": "descripcion_asignatura",
+      "title": "Descripción de la asignatura / módulo",
+      "description": null,
+      "position": 1,
+      "isActive": true,
+      "isRequired": true,
+      "fields": [
+        {
+          "fieldId": "28100330-1453-4131-a900-85f093c301f5",
+          "key": "descripcion",
+          "label": "Descripción de la asignatura / módulo",
+          "type": "long_text",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 0,
+          "format": null,
+          "help": null,
+          "config": {}
+        }
+      ]
+    },
+    {
+      "sectionId": "9f239105-6e9f-4b98-b543-8e25ee0a1965",
+      "key": "competencias_fundamentales",
+      "title": "Competencias fundamentales y resultados de aprendizaje",
+      "description": null,
+      "position": 2,
+      "isActive": true,
+      "isRequired": true,
+      "fields": [
+        {
+          "fieldId": "fbfc6823-f8e7-4de1-9aa1-6961f26cce6f",
+          "key": "competencias_fundamentales",
+          "label": "Competencias fundamentales",
+          "type": "repeatable_group",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 0,
+          "format": null,
+          "help": null,
+          "config": {
+            "fields": [
+              {
+                "key": "codigo_competencia",
+                "type": "text",
+                "label": "Código de la competencia",
+                "position": 1,
+                "isRequired": true
+              },
+              {
+                "key": "competencia",
+                "type": "long_text",
+                "label": "Competencia fundamental",
+                "position": 2,
+                "isRequired": true
+              },
+              {
+                "key": "resultados_aprendizaje",
+                "type": "repeatable_group",
+                "label": "Resultados de aprendizaje",
+                "rules": [
+                  {
+                    "type": "cardinality",
+                    "params": {
+                      "minItems": 1
+                    }
+                  }
+                ],
+                "config": {
+                  "fields": [
+                    {
+                      "key": "codigo_resultado",
+                      "type": "text",
+                      "label": "Código del resultado",
+                      "position": 1,
+                      "isRequired": true
+                    },
+                    {
+                      "key": "resultado",
+                      "type": "long_text",
+                      "label": "Resultado de aprendizaje",
+                      "position": 2,
+                      "isRequired": true
+                    }
+                  ],
+                  "addable": true,
+                  "sortable": true,
+                  "removable": true,
+                  "presentation": "list"
+                },
+                "position": 3,
+                "isRequired": true
+              }
+            ],
+            "addable": true,
+            "sortable": true,
+            "removable": true,
+            "presentation": "blocks"
+          }
+        }
+      ]
+    },
+    {
+      "sectionId": "0e7f534a-7ff3-4fd5-b7fd-ec58034bb495",
+      "key": "competencias_especificas",
+      "title": "Competencias específicas y resultados de aprendizaje",
+      "description": null,
+      "position": 3,
+      "isActive": true,
+      "isRequired": true,
+      "fields": [
+        {
+          "fieldId": "a0087198-fb10-4718-8a76-48c4934082b5",
+          "key": "competencias_especificas",
+          "label": "Competencias específicas",
+          "type": "repeatable_group",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 0,
+          "format": null,
+          "help": null,
+          "config": {
+            "fields": [
+              {
+                "key": "codigo_competencia",
+                "type": "text",
+                "label": "Código de la competencia",
+                "position": 1,
+                "isRequired": true
+              },
+              {
+                "key": "competencia",
+                "type": "long_text",
+                "label": "Competencia específica",
+                "position": 2,
+                "isRequired": true
+              },
+              {
+                "key": "resultados_aprendizaje",
+                "type": "repeatable_group",
+                "label": "Resultados de aprendizaje",
+                "rules": [
+                  {
+                    "type": "cardinality",
+                    "params": {
+                      "minItems": 1
+                    }
+                  }
+                ],
+                "config": {
+                  "fields": [
+                    {
+                      "key": "codigo_resultado",
+                      "type": "text",
+                      "label": "Código del resultado",
+                      "position": 1,
+                      "isRequired": true
+                    },
+                    {
+                      "key": "resultado",
+                      "type": "long_text",
+                      "label": "Resultado de aprendizaje",
+                      "position": 2,
+                      "isRequired": true
+                    }
+                  ],
+                  "addable": true,
+                  "sortable": true,
+                  "removable": true,
+                  "presentation": "list"
+                },
+                "position": 3,
+                "isRequired": true
+              }
+            ],
+            "addable": true,
+            "sortable": true,
+            "removable": true,
+            "presentation": "blocks"
+          }
+        }
+      ]
+    },
+    {
+      "sectionId": "c4b12d4a-b561-4894-9005-5d9dd1b77621",
+      "key": "unidades_didacticas",
+      "title": "Unidades didácticas, contenidos, estrategias y evaluación",
+      "description": "Cada unidad integra sus temas, estrategias metodológicas y técnicas de evaluación para evitar duplicar la unidad en estructuras paralelas.",
+      "position": 4,
+      "isActive": true,
+      "isRequired": true,
+      "fields": [
+        {
+          "fieldId": "cbfba536-5e15-495b-a35b-1503de2cbed0",
+          "key": "unidades_didacticas",
+          "label": "Unidades didácticas",
+          "type": "repeatable_group",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 0,
+          "format": null,
+          "help": null,
+          "config": {
+            "fields": [
+              {
+                "key": "numero_unidad",
+                "type": "number",
+                "label": "Número de unidad",
+                "config": {
+                  "decimals": 0
+                },
+                "position": 1,
+                "isRequired": true
+              },
+              {
+                "key": "nombre_unidad",
+                "type": "text",
+                "label": "Nombre de la unidad",
+                "position": 2,
+                "isRequired": true
+              },
+              {
+                "key": "temas",
+                "type": "repeatable_group",
+                "label": "Temas",
+                "rules": [
+                  {
+                    "type": "cardinality",
+                    "params": {
+                      "minItems": 1
+                    }
+                  }
+                ],
+                "config": {
+                  "fields": [
+                    {
+                      "key": "tema",
+                      "type": "text",
+                      "label": "Tema",
+                      "position": 1,
+                      "isRequired": true
+                    }
+                  ],
+                  "addable": true,
+                  "sortable": true,
+                  "removable": true,
+                  "presentation": "list"
+                },
+                "position": 3,
+                "isRequired": true
+              },
+              {
+                "key": "estrategias_metodologicas",
+                "type": "multi_select",
+                "label": "Estrategias metodológicas",
+                "position": 4,
+                "isRequired": true,
+                "optionsSource": {
+                  "type": "institutional_catalog",
+                  "catalog": "methodological_strategies"
+                }
+              },
+              {
+                "key": "descripcion_aplicacion",
+                "type": "long_text",
+                "label": "Descripción de la aplicación de la estrategia",
+                "position": 5,
+                "isRequired": false
+              },
+              {
+                "key": "tecnicas_evaluacion",
+                "type": "multi_select",
+                "label": "Técnicas de evaluación",
+                "position": 6,
+                "isRequired": true,
+                "optionsSource": {
+                  "type": "institutional_catalog",
+                  "catalog": "assessment_techniques"
+                }
+              }
+            ],
+            "addable": true,
+            "sortable": true,
+            "removable": true,
+            "presentation": "blocks"
+          }
+        }
+      ]
+    },
+    {
+      "sectionId": "fa2e20da-ecf5-42c3-a414-dba1cdb20b29",
+      "key": "plan_evaluacion",
+      "title": "Plan de evaluación",
+      "description": null,
+      "position": 5,
+      "isActive": true,
+      "isRequired": true,
+      "fields": [
+        {
+          "fieldId": "08e8d515-c18b-4a46-be23-d35002cf3568",
+          "key": "componentes_evaluacion",
+          "label": "Componentes de evaluación",
+          "type": "repeatable_group",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 0,
+          "format": null,
+          "help": null,
+          "config": {
+            "fields": [
+              {
+                "key": "componente",
+                "type": "text",
+                "label": "Criterio o componente a evaluar",
+                "position": 1,
+                "isRequired": true
+              },
+              {
+                "key": "porcentaje",
+                "type": "number",
+                "label": "Porcentaje",
+                "config": {
+                  "decimals": 0
+                },
+                "format": "percentage",
+                "position": 2,
+                "isRequired": true
+              },
+              {
+                "key": "estrategias_tecnicas",
+                "type": "multi_select",
+                "label": "Estrategias o técnicas predominantes",
+                "position": 3,
+                "isRequired": true,
+                "optionsSource": {
+                  "type": "institutional_catalog",
+                  "catalog": "strategies_and_assessment_techniques"
+                }
+              },
+              {
+                "key": "instrumentos",
+                "type": "multi_select",
+                "label": "Instrumentos",
+                "position": 4,
+                "isRequired": true,
+                "optionsSource": {
+                  "type": "institutional_catalog",
+                  "catalog": "assessment_instruments"
+                }
+              }
+            ],
+            "addable": true,
+            "sortable": true,
+            "removable": true,
+            "presentation": "table"
+          }
+        }
+      ]
+    },
+    {
+      "sectionId": "e536fb53-3fe1-4149-ac89-a07a9a7f7161",
+      "key": "perfil_facilitador",
+      "title": "Perfil del docente que facilitará la asignatura",
+      "description": null,
+      "position": 6,
+      "isActive": true,
+      "isRequired": true,
+      "fields": [
+        {
+          "fieldId": "57178e67-9ba0-4b09-8359-71d8f159cbf3",
+          "key": "requisitos_perfil",
+          "label": "Requisitos del perfil",
+          "type": "repeatable_group",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 0,
+          "format": null,
+          "help": null,
+          "config": {
+            "fields": [
+              {
+                "key": "requisito",
+                "type": "long_text",
+                "label": "Requisito",
+                "position": 1,
+                "isRequired": true
+              }
+            ],
+            "addable": true,
+            "sortable": true,
+            "removable": true,
+            "presentation": "list"
+          }
+        }
+      ]
+    },
+    {
+      "sectionId": "064c0276-22fa-4db3-9a0b-64371cf48334",
+      "key": "elaboracion_revision_validacion",
+      "title": "Elaboración, revisión y validación",
+      "description": null,
+      "position": 7,
+      "isActive": true,
+      "isRequired": true,
+      "fields": [
+        {
+          "fieldId": "e722fc47-9ef9-4e4d-a792-e5537ebbba9e",
+          "key": "elaborado_por",
+          "label": "Programa elaborado por",
+          "type": "repeatable_group",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 0,
+          "format": null,
+          "help": null,
+          "config": {
+            "fields": [
+              {
+                "key": "nombre",
+                "type": "text",
+                "label": "Nombre",
+                "position": 1,
+                "isRequired": true
+              }
+            ],
+            "addable": true,
+            "sortable": false,
+            "removable": true,
+            "presentation": "list"
+          }
+        },
+        {
+          "fieldId": "a0fec88e-c239-4e4e-9597-5524daf3c6bd",
+          "key": "revisado_por",
+          "label": "Revisado por",
+          "type": "text",
+          "isRequired": false,
+          "isReadOnly": true,
+          "position": 1,
+          "format": null,
+          "help": null,
+          "config": {}
+        },
+        {
+          "fieldId": "1c40c422-6f1e-4741-b5c5-f5bfee6d1aa0",
+          "key": "fecha_revision",
+          "label": "Fecha de revisión",
+          "type": "date",
+          "isRequired": false,
+          "isReadOnly": true,
+          "position": 2,
+          "format": null,
+          "help": null,
+          "config": {}
+        },
+        {
+          "fieldId": "96370194-c536-49ac-aff6-9f0f2d9908db",
+          "key": "validado_por",
+          "label": "Validado por",
+          "type": "text",
+          "isRequired": false,
+          "isReadOnly": true,
+          "position": 3,
+          "format": null,
+          "help": null,
+          "config": {}
+        },
+        {
+          "fieldId": "c85b56c3-f33f-4448-931f-86f3f6b924e2",
+          "key": "fecha_validacion",
+          "label": "Fecha de validación",
+          "type": "date",
+          "isRequired": false,
+          "isReadOnly": true,
+          "position": 4,
+          "format": null,
+          "help": null,
+          "config": {}
+        }
+      ]
+    },
+    {
+      "sectionId": "b74eca16-ab8a-402f-b7b1-2c7c5931b861",
+      "key": "bibliografia",
+      "title": "Bibliografía",
+      "description": null,
+      "position": 8,
+      "isActive": true,
+      "isRequired": true,
+      "fields": [
+        {
+          "fieldId": "62a9a12e-d49c-447d-ae57-43ae8737dccf",
+          "key": "referencias_bibliograficas",
+          "label": "Referencias bibliográficas",
+          "type": "repeatable_group",
+          "isRequired": true,
+          "isReadOnly": false,
+          "position": 0,
+          "format": null,
+          "help": null,
+          "config": {
+            "fields": [
+              {
+                "key": "tipo_bibliografia",
+                "type": "select",
+                "label": "Tipo",
+                "options": [
+                  {
+                    "label": "Bibliografía básica",
+                    "value": "BASICA"
+                  },
+                  {
+                    "label": "Bibliografía complementaria",
+                    "value": "COMPLEMENTARIA"
+                  }
+                ],
+                "position": 1,
+                "isRequired": true
+              },
+              {
+                "key": "referencia",
+                "type": "long_text",
+                "label": "Referencia bibliográfica",
+                "position": 2,
+                "isRequired": true
+              }
+            ],
+            "addable": true,
+            "sortable": true,
+            "removable": true,
+            "presentation": "list"
+          }
+        }
+      ]
+    }
+  ]
+}

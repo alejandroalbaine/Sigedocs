@@ -30,9 +30,10 @@ Verificado desde la interfaz contra el backend v0.2.0 (01/10), con cada rol: la 
 la especialista revisa y devuelve, la coordinación reenvía, la especialista reevalúa y la Dirección
 aprueba para pilotaje; el historial y la auditoría registran cada paso.
 
-El formulario del programa (CU-01) está terminado en la rama `feature/formulario-programa`. El
-backend ya guarda el contenido (`PATCH .../versions/{id}`); falta adaptar la lectura de la
-plantilla a la forma real de la respuesta y que backend publique los catálogos.
+El formulario del programa (CU-01) se genera desde la plantilla publicada y guarda borradores
+contra el backend real (`PATCH .../versions/{id}`). Los campos con catálogo institucional (escuela,
+carreras, modalidad, estrategias) indican que sus opciones estarán disponibles próximamente: el
+backend aún no publica `GET /institutional-catalogs/{catalog}`.
 
 La Biblioteca UI (`/ui-kit`) es una herramienta interna del equipo: solo existe con `npm run dev`
 y no aparece en el menú ni en el build de producción.

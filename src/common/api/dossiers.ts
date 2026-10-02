@@ -6,6 +6,8 @@ import { validatedRequest as request } from './domainClient.ts';
 import { ApiError, INVALID_RESPONSE } from './errors.ts';
 import {
   parseAssignment,
+  parseCatalog,
+  parseVersionDetail,
   parseAuditEvents,
   parseAvailableTransitions,
   parseDossier,
@@ -18,6 +20,7 @@ import {
   parseVersions,
   type CreateDossierInput,
 } from './dossierContract.ts';
+import { parseTemplateMetadata, parseTemplateVersion } from './templateContract.ts';
 
 const id = (value: string) => encodeURIComponent(value);
 const post = (body: unknown): RequestInit => ({ method: 'POST', body: JSON.stringify(body) });
@@ -104,4 +107,21 @@ export const dossiersApi = {
       );
     }
   },
+  version: (dossierId: string, versionId: string) =>
+    request(`/dossiers/${id(dossierId)}/versions/${id(versionId)}`, parseVersionDetail),
+  saveContent: (dossierId: string, versionId: string, content: Record<string, unknown>) =>
+    request(`/dossiers/${id(dossierId)}/versions/${id(versionId)}`, parseVersionDetail, {
+      method: 'PATCH',
+      body: JSON.stringify({ content }),
+    }),
+};
+
+/** Motor de plantillas (template-data-contract.md §9). */
+export const templatesApi = {
+  get: (templateId: string) => request(`/templates/${id(templateId)}`, parseTemplateMetadata),
+
+  version: (templateId: string, templateVersionId: string) =>
+    request(`/templates/${id(templateId)}/versions/${id(templateVersionId)}`, parseTemplateVersion),
+
+  catalog: (catalog: string) => request(`/institutional-catalogs/${id(catalog)}`, parseCatalog),
 };

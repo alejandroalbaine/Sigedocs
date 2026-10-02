@@ -26,8 +26,8 @@
 | Versiones                  | `GET /api/v1/dossiers/{id}/versions`                     | `parseVersions`             |
 
 Las rutas de usuarios están en `src/common/api/users.ts` y `userContract.ts`; las de expedientes,
-en `src/common/api/dossiers.ts` y `dossierContract.ts`. La rama `feature/formulario-programa` agrega
-el detalle y la edición de una versión, la plantilla y los catálogos.
+en `src/common/api/dossiers.ts` y `dossierContract.ts`, que también cubren el detalle y la edición de
+una versión, la plantilla (`templatesApi`) y los catálogos.
 
 Las respuestas exitosas se leen desde `data`; las colecciones normalizan `meta.pagination`. Si la respuesta no cumple el contrato, el cliente
 lanza `ApiError` con "respuesta no válida" y registra en consola qué campo falló.
