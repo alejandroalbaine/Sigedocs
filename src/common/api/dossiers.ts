@@ -101,10 +101,17 @@ export const dossiersApi = {
       return await request(`/dossiers/${id(dossierId)}/assignment-candidates`, parseSpecialists);
     } catch (reason) {
       if (!esRutaPendiente(reason)) throw reason;
-      return request(
-        '/users?roleCode=CURRICULUM_SPECIALIST&isActive=true&limit=100',
-        parseSpecialists,
-      );
+      try {
+        return await request(
+          '/users?roleCode=CURRICULUM_SPECIALIST&isActive=true&limit=100',
+          parseSpecialists,
+        );
+      } catch (alterno) {
+        // Un servidor anterior a v0.2.0 exige users.manage para listar usuarios: la Dirección
+        // no lo tiene. Se informa como función en preparación, no como falta de permiso.
+        if (alterno instanceof ApiError && alterno.status === 403) throw reason;
+        throw alterno;
+      }
     }
   },
   version: (dossierId: string, versionId: string) =>

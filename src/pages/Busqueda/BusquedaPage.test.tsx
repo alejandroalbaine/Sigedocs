@@ -15,7 +15,7 @@ test('exige dossiers.read', async () => {
 });
 
 test('mientras ejecuta la búsqueda lo indica y luego muestra el total', async () => {
-  let responder = (): void => undefined;
+  let responder: (() => void) | null = null;
   stubFetch({
     'GET /api/v1/dossiers': () =>
       new Promise((resolve) => {
@@ -27,7 +27,11 @@ test('mientras ejecuta la búsqueda lo indica y luego muestra el total', async (
   abrirBusqueda();
 
   expect(await screen.findByText('Ejecutando búsqueda…')).toBeInTheDocument();
-  responder();
+  // El aviso puede aparecer antes de que salga la solicitud: se responde cuando ya existe.
+  await waitFor(() => {
+    expect(responder).not.toBeNull();
+  });
+  (responder as unknown as () => void)();
   expect(await screen.findByText(/Se encontraron/)).toHaveTextContent('3');
   expect(screen.queryByText('Ejecutando búsqueda…')).not.toBeInTheDocument();
 });
