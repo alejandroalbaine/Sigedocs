@@ -434,3 +434,16 @@ test('la lista de especialistas sale de assignment-candidates (backend v0.2.0)',
   expect(await within(selector).findByText('Especialista Asignable')).toBeInTheDocument();
   expect(llamadas.some((llamada) => llamada.key === 'GET /api/v1/users')).toBe(false);
 });
+
+test('con un servidor sin assignment-candidates, la Dirección no ve un error de permiso', async () => {
+  const base = dossier({ dossierId: 'd-4' });
+  stubApi({
+    'GET /api/v1/dossiers': [base],
+    'GET /api/v1/users': () => problem(403, 'FORBIDDEN'),
+    'GET /api/v1/dossiers/d-4/available-transitions': [],
+  });
+  renderApp(signedInBackend(direccion), '/revision');
+  await abrirPestaña(/6\. Workflow/);
+  expect(await screen.findByText(/asignación de especialistas está en preparación/)).toBeVisible();
+  expect(screen.queryByText('No tiene permiso para realizar esta acción.')).not.toBeInTheDocument();
+});

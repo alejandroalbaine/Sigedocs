@@ -209,11 +209,14 @@ test('nadie cambia sus propios roles ni desactiva su cuenta', async () => {
 test('mientras carga el catálogo de roles no muestra el aviso de fallo', async () => {
   stubApi({ 'GET /api/v1/users': [coordinador] });
   const backend = signedInBackend(adminSistema);
-  let responder: (r: Response) => void = () => undefined;
+  let responder: ((r: Response) => void) | null = null;
   backend.on('GET /api/v1/roles', () => new Promise<Response>((resolve) => (responder = resolve)));
   renderApp(backend, '/usuarios');
   expect(await screen.findByText('coord.programa@uapa.edu.do')).toBeVisible();
   expect(screen.queryByText(/catálogo de roles/)).not.toBeInTheDocument();
-  responder(problem(503, 'SERVICIO_NO_DISPONIBLE'));
+  await waitFor(() => {
+    expect(responder).not.toBeNull();
+  });
+  (responder as unknown as (r: Response) => void)(problem(503, 'SERVICIO_NO_DISPONIBLE'));
   expect(await screen.findByText(/No se pudo consultar el catálogo de roles/)).toBeVisible();
 });
