@@ -220,4 +220,12 @@ describe('Registro de expedientes', () => {
     expect(screen.queryByRole('button', { name: /continuar/i })).not.toBeInTheDocument();
     expect(llamadas).toHaveLength(0);
   });
+
+  test('la confirmación muestra el nivel con su nombre, no el código', async () => {
+    const user = userEvent.setup();
+    await abrirRegistro();
+    await llegarAConfirmacion(user);
+    expect(screen.getByText('Grado')).toBeInTheDocument();
+    expect(screen.queryByText('bachelor')).not.toBeInTheDocument();
+  });
 });
