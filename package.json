@@ -1,6 +1,6 @@
 {
   "name": "sigesdoc-frontend",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Interfaz de SIGESDOC, el Sistema de Gestión Documental Curricular de la UAPA.",
   "type": "module",
