@@ -78,7 +78,11 @@ export async function validatedRequest<T>(
   try {
     return meta ? { data: parse(data), meta } : { data: parse(data) };
   } catch (error) {
-    if (error instanceof ContractError) throw new ApiError(INVALID_RESPONSE);
+    // templateContract.ts señala su propio incumplimiento con "Plantilla fuera de contrato".
+    const fueraDeContrato =
+      error instanceof ContractError ||
+      (error instanceof Error && error.message.startsWith('Plantilla fuera de contrato'));
+    if (fueraDeContrato) throw new ApiError(INVALID_RESPONSE);
     throw error;
   }
 }

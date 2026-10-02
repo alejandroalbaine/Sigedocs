@@ -27,6 +27,7 @@ import {
 } from '../../common/workflow/estados.ts';
 import { estructuraApi, ubicacion } from '../../features/observaciones/estructura.ts';
 import { FormularioObservacion } from '../../features/observaciones/FormularioObservacion.tsx';
+import { FormularioPrograma } from '../../features/programa/FormularioPrograma.tsx';
 import { AccionesFlujo } from '../../features/revision/AccionesFlujo.tsx';
 import { AsignacionExpediente } from '../../features/revision/AsignacionExpediente.tsx';
 import { ChecklistRevision } from '../../features/revision/ChecklistRevision.tsx';
@@ -119,6 +120,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
   const puedeAprobar = hasPermission(user.permissions, 'workflow.approve_for_pilot');
   const puedeAsignar = hasPermission(user.permissions, 'workflow.assign');
   const puedeObservar = hasPermission(user.permissions, 'observations.create');
+  const puedeEditar = hasPermission(user.permissions, 'dossiers.edit');
   const decisionHabilitada = admiteDecisionTecnica(dossier.currentState.code);
   const { evaluados, total } = resumirChecklist(resultados);
   const responsable = dossier.assignedSpecialist?.name ?? 'Sin asignar';
@@ -261,16 +263,15 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
           )}
 
           {activeTab === 'contenido' && (
-            <InfoPanel title="Contenido y archivos">
-              <div className={styles.versionCard}>
-                <FileText size={28} />
-                <div>
-                  <strong>Programa de asignatura · {dossier.currentVersion.label}</strong>
-                  <p>Plantilla aplicada: programa de asignatura</p>
-                </div>
-              </div>
+            <InfoPanel title="Contenido del programa de asignatura">
+              <FormularioPrograma
+                key={clave}
+                dossier={dossier}
+                editable={dossier.currentState.isEditable && puedeEditar}
+              />
               <Pendiente>
-                El formulario del programa de asignatura estará disponible próximamente.
+                La carga de archivos adjuntos al expediente estará disponible en una etapa
+                posterior.
               </Pendiente>
             </InfoPanel>
           )}
