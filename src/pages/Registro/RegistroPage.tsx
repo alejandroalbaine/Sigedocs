@@ -397,7 +397,7 @@ export function RegistroPage() {
                 </div>
                 <div>
                   <dt>Nivel</dt>
-                  <dd>{form.academicLevel}</dd>
+                  <dd>{form.academicLevel === 'associate' ? 'Técnico superior' : 'Grado'}</dd>
                 </div>
                 <div>
                   <dt>Unidad / programa / asignatura</dt>
