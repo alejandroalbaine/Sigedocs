@@ -5,7 +5,7 @@ import type {
   Dossier,
   TransitionResult,
 } from '../../common/api/dossierContract.ts';
-import { errorMessage } from '../../common/api/errors.ts';
+import { ApiError, errorMessage } from '../../common/api/errors.ts';
 import { Alert, Button } from '../../common/components/index.ts';
 import { CODIGOS_DECISION } from './reglas.ts';
 import styles from './revision.module.css';
@@ -20,6 +20,22 @@ interface AccionesFlujoProps {
  * Transiciones que el servidor ofrece a este usuario, salvo las decisiones técnicas que tienen
  * su propio panel (iniciar revisión, reenviar, reevaluar, pilotaje, finalizar, archivar).
  */
+/**
+ * Iniciar la revisión y reenviar validan el programa completo contra la plantilla: un 422 con
+ * campos señalados significa que faltan datos del programa, no un error del formulario de acción.
+ */
+function mensajeTransicion(reason: unknown): string {
+  if (
+    reason instanceof ApiError &&
+    reason.status === 422 &&
+    reason.fieldErrors.length > 0 &&
+    !reason.fieldErrors.some(({ field }) => field === 'observation')
+  ) {
+    return `El programa de asignatura está incompleto (${String(reason.fieldErrors.length)} secciones o campos obligatorios pendientes). Complételo en «2. Contenido y archivos» antes de continuar.`;
+  }
+  return errorMessage(reason, 'No fue posible registrar la transición.');
+}
+
 export function AccionesFlujo({ dossier, transiciones, onRealizada }: AccionesFlujoProps) {
   // T1 (ASSIGN) necesita elegir especialista: la ejecuta el bloque de asignación.
   const otras = transiciones.filter(
@@ -45,7 +61,7 @@ export function AccionesFlujo({ dossier, transiciones, onRealizada }: AccionesFl
       });
       onRealizada(data);
     } catch (reason) {
-      setError(errorMessage(reason, 'No fue posible registrar la transición.'));
+      setError(mensajeTransicion(reason));
     } finally {
       setEnviando('');
     }

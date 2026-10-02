@@ -447,3 +447,32 @@ test('con un servidor sin assignment-candidates, la Dirección no ve un error de
   expect(await screen.findByText(/asignación de especialistas está en preparación/)).toBeVisible();
   expect(screen.queryByText('No tiene permiso para realizar esta acción.')).not.toBeInTheDocument();
 });
+
+test('si el programa está incompleto, iniciar la revisión lo explica en lugar de un error genérico', async () => {
+  const base = dossier({
+    dossierId: 'd-5',
+    currentState: { code: 'ASSIGNED', name: 'Asignado', isEditable: false },
+  });
+  stubApi({
+    'GET /api/v1/dossiers': [base],
+    'GET /api/v1/dossiers/d-5/available-transitions': [
+      {
+        transitionId: 't2',
+        code: 'START_REVIEW',
+        name: 'Iniciar la revisión',
+        toState: { code: 'IN_REVIEW', name: 'En revisión' },
+        requiresObservation: false,
+      },
+    ],
+    'POST /api/v1/dossiers/d-5/transitions': () =>
+      problem(422, 'VALIDATION_FAILED', [
+        { field: 'datos_academicos', code: 'REQUIRED' },
+        { field: 'plan_evaluacion', code: 'REQUIRED' },
+      ]),
+  });
+  renderApp(signedInBackend(especialista), '/revision');
+  await abrirPestaña(/6\. Workflow/);
+  await userEvent.click(await screen.findByRole('button', { name: 'Iniciar la revisión' }));
+  expect(await screen.findByText(/El programa de asignatura está incompleto \(2/)).toBeVisible();
+  expect(screen.queryByText('Revise los campos indicados.')).not.toBeInTheDocument();
+});
