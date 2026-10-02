@@ -6,28 +6,16 @@ import {
   type SortState,
 } from '../../common/components/DataTable/DataTable.tsx';
 import { formatDateTime } from '../../common/utils/format.ts';
-import { ACCIONES, ESTADOS, describir, type EventoTrazabilidad } from './catalogos.ts';
+import { TIPOS_AUDITORIA, describir, type EventoTrazabilidad } from './catalogos.ts';
 import styles from './trazabilidad.module.css';
 
+/**
+ * `accion` es el `type` del contrato B7, que solo emite seis valores. Si el backend
+ * publica uno nuevo, `describir` lo muestra tal cual en lugar de romper la columna.
+ */
 export function EtiquetaAccion({ accion }: { accion: string }) {
-  const { etiqueta, tono } = describir(ACCIONES, accion);
+  const { etiqueta, tono } = describir(TIPOS_AUDITORIA, accion);
   return <Badge tone={tono}>{etiqueta}</Badge>;
-}
-
-export function TransicionEstado({ evento }: { evento: EventoTrazabilidad }) {
-  const nuevo = describir(ESTADOS, evento.estadoNuevo);
-  const anterior = evento.estadoAnterior ? describir(ESTADOS, evento.estadoAnterior) : null;
-  return (
-    <span className={styles.transition}>
-      {anterior ? (
-        <Badge tone={anterior.tono}>{anterior.etiqueta}</Badge>
-      ) : (
-        <span className={styles.muted}>—</span>
-      )}
-      <span aria-label="pasa a">→</span>
-      <Badge tone={nuevo.tono}>{nuevo.etiqueta}</Badge>
-    </span>
-  );
 }
 
 export interface TablaEventosProps {
@@ -37,6 +25,10 @@ export interface TablaEventosProps {
   onVerDetalle: (evento: EventoTrazabilidad) => void;
 }
 
+/**
+ * El contrato B7 no incluye correo ni rol del actor ni los estados anterior/nuevo, así
+ * que la tabla muestra el `summary` del servidor, que es el detalle real del evento.
+ */
 export function TablaEventos({ eventos, orden, onOrdenar, onVerDetalle }: TablaEventosProps) {
   const columnas: Column<EventoTrazabilidad>[] = [
     {
@@ -69,21 +61,18 @@ export function TablaEventos({ eventos, orden, onOrdenar, onVerDetalle }: TablaE
       header: 'Usuario',
       sortable: true,
       render: (evento) => (
-        <>
-          <span className={styles.cellTitle}>{evento.usuarioNombre}</span>
-          <span className={styles.cellSub}>{evento.usuarioCorreo}</span>
-        </>
+        <span className={styles.cellTitle}>{evento.usuarioNombre}</span>
       ),
     },
-    { key: 'version', header: 'Versión', sortable: true, render: (evento) => evento.version },
+    { key: 'version', header: 'Versión', sortable: true, render: (evento) => evento.version || '—' },
     {
-      key: 'estado',
-      header: 'Estado (anterior → nuevo)',
-      render: (evento) => <TransicionEstado evento={evento} />,
+      key: 'observacion',
+      header: 'Detalle',
+      render: (evento) => <span className={styles.cellSub}>{evento.observacion}</span>,
     },
     {
       key: 'detalle',
-      header: 'Detalle',
+      header: 'Ver',
       render: (evento) => (
         <Button
           variant="text"
@@ -91,7 +80,7 @@ export function TablaEventos({ eventos, orden, onOrdenar, onVerDetalle }: TablaE
             onVerDetalle(evento);
           }}
         >
-          Ver detalle
+          Detalle
         </Button>
       ),
     },

@@ -1,19 +1,18 @@
 import { useState } from 'react';
 import { Button } from '../../common/components/Button/Button.tsx';
 import { Field } from '../../common/components/Field/Field.tsx';
-import {
-  ACCIONES,
-  ESTADOS,
-  FILTROS_VACIOS,
-  type FiltrosTrazabilidad as Filtros,
-} from './catalogos.ts';
+import { FILTROS_VACIOS, TIPOS_AUDITORIA, type FiltrosTrazabilidad as Filtros } from './catalogos.ts';
 import styles from './trazabilidad.module.css';
 
 export interface FiltrosTrazabilidadProps {
   onAplicar: (filtros: Filtros) => void;
 }
 
-/** Acción, estado y fechas se aplican al cambiar; los textos, al pulsar Buscar. */
+/**
+ * El tipo de evento y las fechas viajan al backend (`type`, `from`, `to`); expediente,
+ * usuario y el texto libre se resuelven en la interfaz sobre los eventos ya servidos.
+ * No hay filtro por estado porque el contrato B7 no publica los estados de la transición.
+ */
 export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VACIOS);
 
@@ -40,7 +39,7 @@ export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
             <input
               {...control}
               type="text"
-              placeholder="Código del expediente"
+              placeholder="Código o título del expediente"
               value={filtros.expediente}
               onChange={(event) => {
                 cambiar('expediente', event.target.value, false);
@@ -53,7 +52,7 @@ export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
             <input
               {...control}
               type="text"
-              placeholder="Nombre o correo"
+              placeholder="Nombre de quien registró la acción"
               value={filtros.usuario}
               onChange={(event) => {
                 cambiar('usuario', event.target.value, false);
@@ -61,35 +60,17 @@ export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
             />
           )}
         </Field>
-        <Field label="Acción">
+        <Field label="Tipo de evento" help="Filtra por el `type` del contrato de auditoría (B7).">
           {(control) => (
             <select
               {...control}
-              value={filtros.accion}
+              value={filtros.tipoEvento}
               onChange={(event) => {
-                cambiar('accion', event.target.value, true);
+                cambiar('tipoEvento', event.target.value, true);
               }}
             >
-              <option value="">Todas las acciones</option>
-              {Object.entries(ACCIONES).map(([valor, { etiqueta }]) => (
-                <option key={valor} value={valor}>
-                  {etiqueta}
-                </option>
-              ))}
-            </select>
-          )}
-        </Field>
-        <Field label="Estado nuevo">
-          {(control) => (
-            <select
-              {...control}
-              value={filtros.estado}
-              onChange={(event) => {
-                cambiar('estado', event.target.value, true);
-              }}
-            >
-              <option value="">Todos los estados</option>
-              {Object.entries(ESTADOS).map(([valor, { etiqueta }]) => (
+              <option value="">Todos los tipos</option>
+              {Object.entries(TIPOS_AUDITORIA).map(([valor, { etiqueta }]) => (
                 <option key={valor} value={valor}>
                   {etiqueta}
                 </option>
@@ -124,12 +105,12 @@ export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
       </div>
 
       <div className={styles.search}>
-        <Field label="Buscar por expediente, usuario, observación o evidencia">
+        <Field label="Buscar por expediente, usuario o detalle">
           {(control) => (
             <input
               {...control}
               type="search"
-              placeholder="Código, título, observación…"
+              placeholder="Código, título, detalle…"
               value={filtros.texto}
               onChange={(event) => {
                 cambiar('texto', event.target.value, false);
@@ -143,7 +124,7 @@ export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
       </div>
 
       <div className={styles.foot}>
-        <span>Acción, estado y fechas se aplican automáticamente.</span>
+        <span>El tipo de evento y las fechas se aplican automáticamente.</span>
         <Button
           variant="text"
           onClick={() => {

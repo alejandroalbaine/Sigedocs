@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { domainRequest } from '../../common/api/domainClient.ts';
 import { errorMessage } from '../../common/api/errors.ts';
-import type { CreateDossierInput, Dossier } from '../documental/types.ts';
+import type { CreateDossierInput, Dossier } from '../../common/types.ts';
 import styles from '../documental/documental.module.css';
 
 const initial: CreateDossierInput = {

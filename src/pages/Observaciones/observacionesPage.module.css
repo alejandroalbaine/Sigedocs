@@ -1,0 +1,11 @@
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+}
+
+.nota {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}

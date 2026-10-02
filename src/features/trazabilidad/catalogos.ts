@@ -35,6 +35,20 @@ export const ESTADOS = {
   implementado: { etiqueta: 'Implementado', tono: 'neutral' },
 } as const satisfies Record<string, { etiqueta: string; tono: BadgeTone }>;
 
+/**
+ * Etiquetas de los tipos de evento del contrato de auditoría (B7). Coinciden con
+ * `AuditEventType` del backend: seis tipos, sin `dossier_submitted` ni los de pilotaje,
+ * que el flujo todavía no emite.
+ */
+export const TIPOS_AUDITORIA = {
+  dossier_created: { etiqueta: 'Expediente creado', tono: 'neutral' },
+  version_created: { etiqueta: 'Versión creada', tono: 'neutral' },
+  content_updated: { etiqueta: 'Contenido actualizado', tono: 'info' },
+  state_changed: { etiqueta: 'Cambio de estado', tono: 'warning' },
+  assigned: { etiqueta: 'Asignación', tono: 'info' },
+  observation_added: { etiqueta: 'Observación registrada', tono: 'warning' },
+} as const satisfies Record<string, { etiqueta: string; tono: BadgeTone }>;
+
 export type Accion = keyof typeof ACCIONES;
 export type Estado = keyof typeof ESTADOS;
 
@@ -51,9 +65,9 @@ export function describir<K extends string>(
 }
 
 /**
- * Forma provisional de un evento de trazabilidad (la que usaba la interfaz anterior).
- * El contrato real será `GET /api/v1/dossiers/{dossierId}/audit-events`; cuando se
- * publique, este tipo se reemplaza por el de contract.ts.
+ * Evento de trazabilidad ya traducido. `accion` es el `type` del contrato B7; los campos
+ * que el backend no publica (correo y rol del actor, estados de la transición, evidencia)
+ * se quedan vacíos para no inventar datos. `observacion` es el `summary` del servidor.
  */
 export interface EventoTrazabilidad {
   id: string;
@@ -74,8 +88,8 @@ export interface EventoTrazabilidad {
 export interface FiltrosTrazabilidad {
   expediente: string;
   usuario: string;
-  accion: string;
-  estado: string;
+  /** `type` del contrato de auditoría (B7). Vacío = todos. */
+  tipoEvento: string;
   desde: string;
   hasta: string;
   texto: string;
@@ -84,8 +98,7 @@ export interface FiltrosTrazabilidad {
 export const FILTROS_VACIOS: FiltrosTrazabilidad = {
   expediente: '',
   usuario: '',
-  accion: '',
-  estado: '',
+  tipoEvento: '',
   desde: '',
   hasta: '',
   texto: '',

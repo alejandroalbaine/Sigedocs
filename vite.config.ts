@@ -68,6 +68,12 @@ export default defineConfig(({ mode }) => {
       globals: true,
       setupFiles: ['./src/test/setup.ts'],
       css: { modules: { classNameStrategy: 'non-scoped' } },
+      // La suite no debe heredar el .env de quien la ejecuta: servicios simulados sin
+      // latencia artificial y con la fuente de datos de observaciones y auditoria fijada.
+      env: {
+        VITE_USE_MOCK_DATA: 'true',
+        VITE_MOCK_LATENCY_MS: '0',
+      },
     },
   };
 });

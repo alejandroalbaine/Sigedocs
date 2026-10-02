@@ -1,7 +1,7 @@
 import { Dialog } from '../../common/components/Dialog/Dialog.tsx';
 import { formatDateTime } from '../../common/utils/format.ts';
 import type { EventoTrazabilidad } from './catalogos.ts';
-import { EtiquetaAccion, TransicionEstado } from './TablaEventos.tsx';
+import { EtiquetaAccion } from './TablaEventos.tsx';
 import styles from './trazabilidad.module.css';
 
 export interface DetalleEventoProps {
@@ -9,6 +9,7 @@ export interface DetalleEventoProps {
   onCerrar: () => void;
 }
 
+/** Detalle del evento con los campos que el contrato B7 publica realmente. */
 export function DetalleEvento({ evento, onCerrar }: DetalleEventoProps) {
   return (
     <Dialog open={evento !== null} title="Detalle del evento" onClose={onCerrar}>
@@ -23,21 +24,11 @@ export function DetalleEvento({ evento, onCerrar }: DetalleEventoProps) {
             <dt>Fecha y hora</dt>
             <dd>{formatDateTime(evento.fecha)}</dd>
             <dt>Usuario</dt>
-            <dd>
-              {evento.usuarioNombre} · {evento.usuarioCorreo}
-            </dd>
-            <dt>Rol</dt>
-            <dd>{evento.usuarioRol}</dd>
+            <dd>{evento.usuarioNombre}</dd>
             <dt>Versión</dt>
-            <dd>{evento.version}</dd>
-            <dt>Estado</dt>
-            <dd>
-              <TransicionEstado evento={evento} />
-            </dd>
-            <dt>Observación</dt>
-            <dd>{evento.observacion ?? 'Sin observaciones'}</dd>
-            <dt>Evidencia</dt>
-            <dd>{evento.evidencia ?? '—'}</dd>
+            <dd>{evento.version || '—'}</dd>
+            <dt>Detalle</dt>
+            <dd>{evento.observacion}</dd>
             <dt>Registro</dt>
             <dd>#{evento.id}</dd>
           </dl>

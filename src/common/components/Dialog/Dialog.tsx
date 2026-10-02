@@ -16,12 +16,15 @@ export function Dialog({ open, title, onClose, children }: DialogProps) {
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    // jsdom no implementa showModal; en ese caso basta con el atributo open.
+    // jsdom no implementa showModal ni close; ahí basta con alternar el atributo open.
     if (open && !dialog.open) {
       if (typeof dialog.showModal === 'function') dialog.showModal();
       else dialog.setAttribute('open', '');
     }
-    if (!open && dialog.open) dialog.close();
+    if (!open && dialog.open) {
+      if (typeof dialog.close === 'function') dialog.close();
+      else dialog.removeAttribute('open');
+    }
   }, [open]);
 
   return (
