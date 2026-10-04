@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import {
   Download,
@@ -11,7 +11,9 @@ import {
 import { useCurrentUser } from '../../common/auth/SessionContext.ts';
 import { hasPermission } from '../../common/auth/permissions.ts';
 import { downloadCsv } from '../../common/utils/download.ts';
-import { useDossiers } from '../documental/useDossiers.ts';
+import { DossierPager } from '../documental/DossierPager.tsx';
+import { LEVEL_OPTIONS, useSeenStates } from '../documental/filterOptions.ts';
+import { PAGE_SIZE, useDossiers } from '../documental/useDossiers.ts';
 import styles from '../documental/documental.module.css';
 
 function estadoClase(codigo: string) {
@@ -23,33 +25,28 @@ function estadoClase(codigo: string) {
 export function GestionPage() {
   const user = useCurrentUser();
   const canCreate = hasPermission(user.permissions, 'dossiers.create');
-  const { items, loading, error } = useDossiers();
   const [query, setQuery] = useState('');
+  const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [stateFilter, setStateFilter] = useState('');
-  const [unitFilter, setUnitFilter] = useState('');
+  const [levelFilter, setLevelFilter] = useState('');
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
-  const visible = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase('es');
-    return items.filter((item) => {
-      const matchesText =
-        !normalized ||
-        [item.code, item.title, item.schoolCode, item.degreeProgramCode, item.subjectCode]
-          .join(' ')
-          .toLocaleLowerCase('es')
-          .includes(normalized);
-      return (
-        matchesText &&
-        (!stateFilter || item.currentState.code === stateFilter) &&
-        (!unitFilter || item.schoolCode === unitFilter)
-      );
-    });
-  }, [items, query, stateFilter, unitFilter]);
-  const states = [
-    ...new Map(items.map((item) => [item.currentState.code, item.currentState])).values(),
-  ];
-  const units = [...new Set(items.map((item) => item.schoolCode))].sort();
-  const activeFilters = Number(Boolean(stateFilter)) + Number(Boolean(unitFilter));
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(query.trim());
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [query]);
+  const { items, loading, error, page, hasNext, hasPrevious, next, previous } = useDossiers({
+    search,
+    currentState: stateFilter,
+    academicLevel: levelFilter,
+  });
+  const visible = items;
+  const states = useSeenStates(items, stateFilter);
+  const activeFilters = Number(Boolean(stateFilter)) + Number(Boolean(levelFilter));
 
   function toggle(id: string) {
     setSelected((current) => {
@@ -94,7 +91,7 @@ export function GestionPage() {
         <div className={styles.total}>
           <span>Total custodia activa</span>
           <strong>{items.length.toLocaleString('es-DO')}</strong>
-          <small>expedientes</small>
+          <small>expedientes en esta página</small>
         </div>
       </header>
 
@@ -160,17 +157,19 @@ export function GestionPage() {
             </select>
           </label>
           <label className={styles.field}>
-            <span>Unidad productora</span>
+            <span>Nivel académico</span>
             <select
               className={styles.select}
-              value={unitFilter}
+              value={levelFilter}
               onChange={(event) => {
-                setUnitFilter(event.target.value);
+                setLevelFilter(event.target.value);
               }}
             >
-              <option value="">Todas las unidades</option>
-              {units.map((unit) => (
-                <option key={unit}>{unit}</option>
+              <option value="">Todos los niveles</option>
+              {LEVEL_OPTIONS.map((level) => (
+                <option key={level.value} value={level.value}>
+                  {level.label}
+                </option>
               ))}
             </select>
           </label>
@@ -179,7 +178,7 @@ export function GestionPage() {
             className={`${styles.button} ${styles.buttonSecondary}`}
             onClick={() => {
               setStateFilter('');
-              setUnitFilter('');
+              setLevelFilter('');
             }}
           >
             Limpiar filtros
@@ -234,7 +233,7 @@ export function GestionPage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.slice(0, 10).map((item) => (
+                {visible.map((item) => (
                   <tr key={item.dossierId}>
                     <td className={styles.rowToggle}>›</td>
                     <td>
@@ -277,28 +276,15 @@ export function GestionPage() {
             </table>
           </div>
         )}
-        <div className={styles.pager}>
-          <span>
-            Mostrando <strong>1 - {Math.min(10, visible.length)}</strong> de{' '}
-            <strong>{visible.length}</strong> expedientes
-          </span>
-          <span className={styles.pages}>
-            <button className={styles.pageButton} disabled>
-              ‹
-            </button>
-            <button className={`${styles.pageButton} ${styles.pageButtonActive}`}>1</button>
-            <button className={styles.pageButton} disabled>
-              2
-            </button>
-            <button className={styles.pageButton} disabled>
-              3
-            </button>
-            <span>…</span>
-            <button className={styles.pageButton} disabled>
-              ›
-            </button>
-          </span>
-        </div>
+        <DossierPager
+          count={items.length}
+          page={page}
+          pageSize={PAGE_SIZE}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          onNext={next}
+          onPrevious={previous}
+        />
       </section>
 
       <div className={styles.compliance}>

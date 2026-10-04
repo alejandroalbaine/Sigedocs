@@ -1,23 +1,34 @@
-import { useMemo, useState, type SyntheticEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Download, FileSearch, List, Search, SlidersHorizontal, X } from 'lucide-react';
-import { useDossiers } from '../documental/useDossiers.ts';
+import { DossierPager } from '../documental/DossierPager.tsx';
+import { LEVEL_OPTIONS, useSeenStates } from '../documental/filterOptions.ts';
+import { PAGE_SIZE, useDossiers } from '../documental/useDossiers.ts';
 import styles from '../documental/documental.module.css';
 
 export function BusquedaPage() {
   const [params, setParams] = useSearchParams();
   const currentQuery = params.get('q') ?? '';
+  const currentLevel = params.get('level') ?? '';
+  const currentState = params.get('state') ?? '';
   const [term, setTerm] = useState(currentQuery);
-  const query = useMemo(
-    () => (currentQuery ? `&search=${encodeURIComponent(currentQuery)}` : ''),
-    [currentQuery],
-  );
-  const { items, loading, error } = useDossiers(query);
+  const [level, setLevel] = useState(currentLevel);
+  const [state, setState] = useState(currentState);
+  const { items, loading, error, page, hasNext, hasPrevious, next, previous } = useDossiers({
+    search: currentQuery,
+    academicLevel: currentLevel,
+    currentState,
+  });
+  const states = useSeenStates(items, state);
+  const activeFilters = [currentQuery, currentLevel, currentState].filter(Boolean).length;
 
   function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
-    const value = term.trim();
-    setParams(value ? { q: value } : {});
+    const nextParams: Record<string, string> = {};
+    if (term.trim()) nextParams.q = term.trim();
+    if (level) nextParams.level = level;
+    if (state) nextParams.state = state;
+    setParams(nextParams);
   }
 
   return (
@@ -40,6 +51,8 @@ export function BusquedaPage() {
             className={`${styles.button} ${styles.buttonQuiet}`}
             onClick={() => {
               setTerm('');
+              setLevel('');
+              setState('');
               setParams({});
             }}
           >
@@ -57,7 +70,7 @@ export function BusquedaPage() {
             <SlidersHorizontal size={18} />
           </span>
           <h2>Filtros Avanzados</h2>
-          <span className={styles.badgeWarning}>4 activos</span>
+          <span className={styles.badgeWarning}>{activeFilters} activos</span>
           <span className={styles.subtle}>• Metadatos TRD, Nivel de Reserva y Fechas</span>
         </summary>
         <form className={styles.filters} onSubmit={submit}>
@@ -78,10 +91,17 @@ export function BusquedaPage() {
             <select
               id="level"
               className={styles.select}
-              disabled
-              title="Filtro pendiente en backend"
+              value={level}
+              onChange={(event) => {
+                setLevel(event.target.value);
+              }}
             >
-              <option>Todos</option>
+              <option value="">Todos</option>
+              {LEVEL_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
           <div className={styles.field}>
@@ -89,10 +109,17 @@ export function BusquedaPage() {
             <select
               id="state"
               className={styles.select}
-              disabled
-              title="Filtro pendiente en backend"
+              value={state}
+              onChange={(event) => {
+                setState(event.target.value);
+              }}
             >
-              <option>Todos</option>
+              <option value="">Todos</option>
+              {states.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className={styles.field}>
@@ -114,7 +141,7 @@ export function BusquedaPage() {
                 'Ejecutando búsqueda…'
               ) : (
                 <>
-                  Se encontraron <span className={styles.eyebrowOrange}>{items.length}</span>{' '}
+                  Se muestran <span className={styles.eyebrowOrange}>{items.length}</span>{' '}
                   expedientes
                   <br />
                   coincidentes con los criterios
@@ -140,7 +167,7 @@ export function BusquedaPage() {
         {!loading && items.length === 0 && (
           <p className={styles.empty}>No se encontraron expedientes.</p>
         )}
-        {items.slice(0, 3).map((item, index) => (
+        {items.map((item, index) => (
           <details
             className={`${styles.result} ${index === 1 ? styles.resultWarning : ''}`}
             key={item.dossierId}
@@ -179,28 +206,15 @@ export function BusquedaPage() {
         ))}
       </section>
 
-      <div className={styles.pager}>
-        <span>
-          Mostrando <strong>1 - {Math.min(3, items.length)}</strong> de{' '}
-          <strong>{items.length}</strong> expedientes
-        </span>
-        <span className={styles.pages}>
-          <button className={styles.pageButton} disabled>
-            ‹
-          </button>
-          <button className={`${styles.pageButton} ${styles.pageButtonActive}`}>1</button>
-          <button className={styles.pageButton} disabled>
-            2
-          </button>
-          <button className={styles.pageButton} disabled>
-            3
-          </button>
-          <span>…</span>
-          <button className={styles.pageButton} disabled>
-            ›
-          </button>
-        </span>
-      </div>
+      <DossierPager
+        count={items.length}
+        page={page}
+        pageSize={PAGE_SIZE}
+        hasNext={hasNext}
+        hasPrevious={hasPrevious}
+        onNext={next}
+        onPrevious={previous}
+      />
     </div>
   );
 }
