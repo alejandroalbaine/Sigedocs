@@ -97,6 +97,7 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
   const contenido = edicion?.clave === clave ? edicion.contenido : base;
   const [mostrarReglas, setMostrarReglas] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [enviandoRevision, setEnviandoRevision] = useState(false);
   const [aviso, setAviso] = useState<{ kind: 'success' | 'error' | 'info'; texto: string } | null>(
     null,
   );
@@ -169,6 +170,67 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
       });
     } finally {
       setGuardando(false);
+    }
+  }
+
+  async function enviarARevision() {
+    if (!contenido) return;
+
+    setEnviandoRevision(true);
+    setMostrarReglas(true);
+    setErroresServidor([]);
+    setAviso(null);
+
+    try {
+      // Guardar primero los cambios actuales del formulario.
+      await dossiersApi.saveContent(dossierId, currentVersion.versionId, contenido);
+
+      // Consultar las acciones que el backend permite para este expediente.
+      const { data: transiciones } = await dossiersApi.availableTransitions(dossierId);
+
+      const iniciarRevision = transiciones.find((transicion) => transicion.code === 'START_REVIEW');
+
+      if (!iniciarRevision) {
+        setAviso({
+          kind: 'info',
+          texto: 'El envío a revisión no está disponible para este expediente en este momento.',
+        });
+        return;
+      }
+
+      // Ejecutar la transición real proporcionada por el backend.
+      await dossiersApi.transition(dossierId, {
+        transitionId: iniciarRevision.transitionId,
+        versionId: currentVersion.versionId,
+      });
+
+      setEdicion(null);
+      setAviso({
+        kind: 'success',
+        texto: 'Programa enviado a revisión correctamente.',
+      });
+
+      version.reload();
+    } catch (reason) {
+      if (reason instanceof ApiError && reason.fieldErrors.length > 0) {
+        setErroresServidor(
+          reason.fieldErrors.map((error) => ({
+            ruta: error.field,
+            mensaje: 'Revise este campo antes de enviar el programa a revisión.',
+            severidad: 'error',
+          })),
+        );
+      }
+
+      setAviso({
+        kind: 'error',
+        texto:
+          reason instanceof ApiError && reason.status === 422
+            ? 'El programa todavía tiene campos obligatorios pendientes. Revise los campos señalados.'
+            : errorMessage(reason, 'No fue posible enviar el programa a revisión.'),
+      });
+    } finally {
+      setEnviandoRevision(false);
     }
   }
 
@@ -253,7 +315,9 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
           {sinRuta.map((error) => `${error.ruta}: ${error.mensaje}`).join(' · ')}
         </Alert>
       )}
+
       {aviso && <Alert kind={aviso.kind}>{aviso.texto}</Alert>}
+
       {editable && (
         <div className={styles.acciones}>
           <Button
@@ -265,8 +329,23 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
           >
             Revisar reglas
           </Button>
-          <Button size="sm" loading={guardando} onClick={() => void guardar()}>
+
+          <Button
+            size="sm"
+            loading={guardando}
+            disabled={enviandoRevision}
+            onClick={() => void guardar()}
+          >
             Guardar borrador
+          </Button>
+
+          <Button
+            size="sm"
+            loading={enviandoRevision}
+            disabled={guardando || enviandoRevision}
+            onClick={() => void enviarARevision()}
+          >
+            Enviar a revisión
           </Button>
         </div>
       )}
