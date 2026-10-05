@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { dossier, especialista, json, signedInBackend, stubApi } from '../../test/backend.ts';
 import { renderApp } from '../../test/renderApp.tsx';
 
-test('Gestión incluye registros posteriores a la primera página del backend', async () => {
+test('Gestión pagina con el cursor del servidor: la segunda página trae los registros restantes', async () => {
   const user = userEvent.setup();
   const primeros = Array.from({ length: 25 }, (_, i) =>
     dossier({
@@ -26,15 +26,24 @@ test('Gestión incluye registros posteriores a la primera página del backend', 
   });
   renderApp(signedInBackend(especialista), '/expedientes');
   await screen.findByText('Asignatura 0');
-  await user.type(screen.getByRole('searchbox', { name: /^buscar expedientes$/i }), ultimo.title);
+  expect(llamadas).toHaveLength(1);
+  expect(screen.queryByText(ultimo.title)).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Página anterior' })).toBeDisabled();
+
+  await user.click(screen.getByRole('button', { name: 'Página siguiente' }));
   expect(await screen.findByRole('link', { name: ultimo.title })).toHaveAttribute(
     'href',
     '/revision?dossierId=d-26',
   );
-  expect(llamadas).toHaveLength(2);
+  expect(llamadas[1]?.url.searchParams.get('cursor')).toBe('c2');
+  expect(screen.queryByText('Asignatura 0')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Página siguiente' })).toBeDisabled();
   expect(
     within(screen.getByRole('region', { name: 'Expedientes' })).getByText('ECD-26', {
       exact: false,
     }),
   ).toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: 'Página anterior' }));
+  expect(await screen.findByText('Asignatura 0')).toBeInTheDocument();
 });

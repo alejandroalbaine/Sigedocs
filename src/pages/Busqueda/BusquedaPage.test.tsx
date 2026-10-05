@@ -32,7 +32,7 @@ test('mientras ejecuta la búsqueda lo indica y luego muestra el total', async (
     expect(responder).not.toBeNull();
   });
   (responder as unknown as () => void)();
-  expect(await screen.findByText(/Se encontraron/)).toHaveTextContent('3');
+  expect(await screen.findByText(/Se muestran/)).toHaveTextContent('3');
   expect(screen.queryByText('Ejecutando búsqueda…')).not.toBeInTheDocument();
 });
 
@@ -91,7 +91,7 @@ test('sin coincidencias muestra el estado vacío', async () => {
   abrirBusqueda('/busqueda?q=inexistente');
 
   expect(await screen.findByText('No se encontraron expedientes.')).toBeInTheDocument();
-  expect(screen.getByText(/Se encontraron/)).toHaveTextContent('0');
+  expect(screen.getByText(/Se muestran/)).toHaveTextContent('0');
 });
 
 test('si el backend falla muestra el error y ningún resultado', async () => {
@@ -109,5 +109,43 @@ test('no muestra controles sin función ni resultados simulados', async () => {
 
   expect(screen.queryByRole('button', { name: /Exportar Hallazgos/ })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Ver folio' })).not.toBeInTheDocument();
-  for (const boton of screen.queryAllByRole('button')) expect(boton).toBeEnabled();
+  const controles = screen
+    .queryAllByRole('button')
+    .filter((boton) => !boton.closest('nav[aria-label="Paginación"]'));
+  for (const boton of controles) expect(boton).toBeEnabled();
+});
+
+test('los filtros de nivel y estado viajan al servidor y se conservan en la URL', async () => {
+  const backend = stubFetch({ 'GET /api/v1/dossiers': () => json({ data: expedientes }) });
+  const { router } = abrirBusqueda();
+  await screen.findByText('Rediseño de Matemática I');
+
+  await userEvent.selectOptions(screen.getByLabelText('Nivel académico'), 'associate');
+  await userEvent.selectOptions(screen.getByLabelText('Estado'), 'IN_REVIEW');
+  await userEvent.click(screen.getByRole('button', { name: 'Aplicar consulta' }));
+
+  await waitFor(() => {
+    expect(backend.calls.at(-1)).toBe(
+      'GET /api/v1/dossiers?limit=25&currentState=IN_REVIEW&academicLevel=associate',
+    );
+  });
+  expect(router.state.location.search).toContain('level=associate');
+  expect(router.state.location.search).toContain('state=IN_REVIEW');
+});
+
+test('pagina los resultados con el cursor del servidor', async () => {
+  const backend = stubFetch({
+    'GET /api/v1/dossiers': ({ url }) =>
+      json({
+        data: url.searchParams.has('cursor') ? [expedientes[2]] : [expedientes[0]],
+        meta: { pagination: { limit: 25, next: url.searchParams.has('cursor') ? null : 'c2' } },
+      }),
+  });
+  abrirBusqueda();
+  await screen.findByText('Rediseño de Matemática I');
+
+  await userEvent.click(screen.getByRole('button', { name: 'Página siguiente' }));
+  expect(await screen.findByText('Maestría en Educación')).toBeInTheDocument();
+  expect(backend.calls.at(-1)).toBe('GET /api/v1/dossiers?limit=25&cursor=c2');
+  expect(screen.queryByText('Rediseño de Matemática I')).not.toBeInTheDocument();
 });
