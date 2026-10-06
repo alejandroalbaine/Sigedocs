@@ -32,10 +32,7 @@ async function abrirRegistro(conAsignatura = false) {
     );
   }
 
-  const app = renderApp(
-    signedInBackend(coordinador),
-    '/expedientes/nuevo',
-  );
+  const app = renderApp(signedInBackend(coordinador), '/expedientes/nuevo');
 
   await screen.findByRole('heading', {
     name: /paso 1: información general/i,
@@ -44,27 +41,14 @@ async function abrirRegistro(conAsignatura = false) {
   return app;
 }
 
-async function completarClasificacion(
-  user: ReturnType<typeof userEvent.setup>,
-) {
-  await user.type(
-    screen.getByLabelText(/título del expediente/i),
-    datos.title,
-  );
+async function completarClasificacion(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText(/título del expediente/i), datos.title);
 
-  await user.click(
-    screen.getByRole('button', { name: /continuar/i }),
-  );
+  await user.click(screen.getByRole('button', { name: /continuar/i }));
 
-  await user.type(
-    screen.getByLabelText(/unidad productora/i),
-    datos.schoolCode,
-  );
+  await user.type(screen.getByLabelText(/unidad productora/i), datos.schoolCode);
 
-  await user.type(
-    screen.getByLabelText(/código de programa/i),
-    datos.degreeProgramCode,
-  );
+  await user.type(screen.getByLabelText(/código de programa/i), datos.degreeProgramCode);
 }
 async function llegarAConfirmacion(user: ReturnType<typeof userEvent.setup>) {
   await completarClasificacion(user);
@@ -131,9 +115,7 @@ describe('Registro de expedientes', () => {
     await user.click(screen.getByRole('button', { name: /paso 02/i }));
     expect(screen.getByLabelText(/unidad productora/i)).toHaveValue(datos.schoolCode);
     expect(screen.getByLabelText(/código de programa/i)).toHaveValue(datos.degreeProgramCode);
-   expect(
-  screen.getByText('Catálogo de asignaturas en preparación.'),
-).toBeInTheDocument();
+    expect(screen.getByText('Catálogo de asignaturas en preparación.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /paso anterior/i }));
     expect(screen.getByLabelText(/título del expediente/i)).toHaveValue(datos.title);
   });
@@ -148,9 +130,7 @@ describe('Registro de expedientes', () => {
     await abrirRegistro();
     expect(screen.getByLabelText(/título del expediente/i)).toHaveValue(datos.title);
     await user.click(screen.getByRole('button', { name: /continuar/i }));
-    expect(
-  screen.getByText('Catálogo de asignaturas en preparación.'),
-).toBeInTheDocument();
+    expect(screen.getByText('Catálogo de asignaturas en preparación.')).toBeInTheDocument();
   });
 
   test('cancela la radicación y elimina el borrador sin enviar datos', async () => {

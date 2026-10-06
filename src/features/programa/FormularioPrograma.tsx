@@ -217,8 +217,7 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
                   const valor = contenido[seccion.key]?.[campo.key];
 
                   if (campo.key === 'asignatura') {
-                    const valorActual =
-                      typeof valor === 'string' && valor.trim() ? valor : '';
+                    const valorActual = typeof valor === 'string' && valor.trim() ? valor : '';
 
                     return (
                       <div key={campo.key} className={styles.campo}>
@@ -227,21 +226,14 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
                           {campo.isRequired ? ' *' : ''}
                         </span>
 
-                        {valorActual && (
-                          <span className={styles.lectura}>{valorActual}</span>
-                        )}
+                        {valorActual && <span className={styles.lectura}>{valorActual}</span>}
 
-                        <p className={styles.pendiente}>
-                          Catálogo de asignaturas en preparación.
-                        </p>
+                        <p className={styles.pendiente}>Catálogo de asignaturas en preparación.</p>
                       </div>
                     );
                   }
 
-                  if (
-                    campo.key === 'clave_asignatura' ||
-                    campo.key === 'prerrequisitos'
-                  ) {
+                  if (campo.key === 'clave_asignatura' || campo.key === 'prerrequisitos') {
                     const valorActual =
                       typeof valor === 'string' && valor.trim()
                         ? valor
@@ -254,9 +246,7 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
                           {campo.isRequired ? ' *' : ''}
                         </span>
 
-                        <span className={styles.lectura}>
-                          {valorActual}
-                        </span>
+                        <span className={styles.lectura}>{valorActual}</span>
                       </div>
                     );
                   }
