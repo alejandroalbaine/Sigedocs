@@ -1,50 +1,37 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Download, FileArchive, FilePlus2, SlidersHorizontal } from 'lucide-react';
 import { useCurrentUser } from '../../common/auth/SessionContext.ts';
 import { hasPermission } from '../../common/auth/permissions.ts';
+import { PAGE_SIZE } from '../../common/api/dossiers.ts';
 import { downloadCsv } from '../../common/utils/download.ts';
+import { OPCIONES_ESTADO } from '../../common/workflow/estados.ts';
+import { DossierPager } from '../documental/DossierPager.tsx';
 import { EnPreparacion } from '../documental/EnPreparacion.tsx';
-import { useDossiers } from '../documental/useDossiers.ts';
+import { LEVEL_OPTIONS } from '../documental/filterOptions.ts';
+import { useDossiersPaginados } from '../documental/useDossiersPaginados.ts';
 import { claseEstado } from '../documental/estadoBadge.ts';
 import styles from '../documental/documental.module.css';
-
-const PAGE_SIZE = 10;
 
 export function GestionPage() {
   const user = useCurrentUser();
   const canCreate = hasPermission(user.permissions, 'dossiers.create');
-  const { items, loading, error, pendiente } = useDossiers();
   const [query, setQuery] = useState('');
+  const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [stateFilter, setStateFilter] = useState('');
-  const [unitFilter, setUnitFilter] = useState('');
-  const visible = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase('es');
-    return items.filter((item) => {
-      const matchesText =
-        !normalized ||
-        [item.code, item.title, item.schoolCode, item.degreeProgramCode, item.subjectCode]
-          .join(' ')
-          .toLocaleLowerCase('es')
-          .includes(normalized);
-      return (
-        matchesText &&
-        (!stateFilter || item.currentState.code === stateFilter) &&
-        (!unitFilter || item.schoolCode === unitFilter)
-      );
-    });
-  }, [items, query, stateFilter, unitFilter]);
-  const states = [
-    ...new Map(items.map((item) => [item.currentState.code, item.currentState])).values(),
-  ];
-  const units = [...new Set(items.map((item) => item.schoolCode))].sort();
-  const activeFilters = Number(Boolean(stateFilter)) + Number(Boolean(unitFilter));
-  const [page, setPage] = useState(1);
-  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const firstIndex = (currentPage - 1) * PAGE_SIZE;
-  const pageItems = visible.slice(firstIndex, firstIndex + PAGE_SIZE);
+  const [levelFilter, setLevelFilter] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(query.trim());
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [query]);
+  const { items, loading, error, pendiente, page, hasNext, hasPrevious, next, previous } =
+    useDossiersPaginados({ search, currentState: stateFilter, academicLevel: levelFilter });
+  const activeFilters = Number(Boolean(stateFilter)) + Number(Boolean(levelFilter));
 
   function exportDossiers() {
     downloadCsv(
@@ -60,7 +47,7 @@ export function GestionPage() {
         'Estado',
         'Creado',
       ],
-      visible.map((item) => [
+      items.map((item) => [
         item.code,
         item.title,
         item.degreeProgramCode,
@@ -89,9 +76,9 @@ export function GestionPage() {
           </p>
         </div>
         <div className={styles.total}>
-          <span>Total visibles</span>
+          <span>En esta página</span>
           <strong>{items.length.toLocaleString('es-DO')}</strong>
-          <small>expedientes</small>
+          <small>expedientes (máximo {PAGE_SIZE} por página)</small>
         </div>
       </header>
 
@@ -119,7 +106,7 @@ export function GestionPage() {
           <SlidersHorizontal size={16} /> Filtros Avanzados{' '}
           <span className={styles.badge}>{activeFilters} activos</span>
         </button>
-        {visible.length > 0 && (
+        {items.length > 0 && (
           <button className={styles.button} onClick={exportDossiers}>
             <Download size={16} /> Exportar
           </button>
@@ -143,25 +130,27 @@ export function GestionPage() {
               }}
             >
               <option value="">Todos los estados</option>
-              {states.map((state) => (
-                <option key={state.code} value={state.code}>
-                  {state.name}
+              {OPCIONES_ESTADO.map((state) => (
+                <option key={state.codigo} value={state.codigo}>
+                  {state.nombre}
                 </option>
               ))}
             </select>
           </label>
           <label className={styles.field}>
-            <span>Unidad productora</span>
+            <span>Nivel académico</span>
             <select
               className={styles.select}
-              value={unitFilter}
+              value={levelFilter}
               onChange={(event) => {
-                setUnitFilter(event.target.value);
+                setLevelFilter(event.target.value);
               }}
             >
-              <option value="">Todas las unidades</option>
-              {units.map((unit) => (
-                <option key={unit}>{unit}</option>
+              <option value="">Todos los niveles</option>
+              {LEVEL_OPTIONS.map((level) => (
+                <option key={level.value} value={level.value}>
+                  {level.label}
+                </option>
               ))}
             </select>
           </label>
@@ -170,7 +159,7 @@ export function GestionPage() {
             className={`${styles.button} ${styles.buttonSecondary}`}
             onClick={() => {
               setStateFilter('');
-              setUnitFilter('');
+              setLevelFilter('');
             }}
           >
             Limpiar filtros
@@ -183,7 +172,7 @@ export function GestionPage() {
       <section className={styles.panel} aria-label="Expedientes">
         {loading ? (
           <p className={styles.empty}>Consultando expedientes…</p>
-        ) : pendiente ? null : visible.length === 0 ? (
+        ) : pendiente ? null : items.length === 0 ? (
           <p className={styles.empty}>
             No hay expedientes que coincidan con su búsqueda y alcance.
           </p>
@@ -203,7 +192,7 @@ export function GestionPage() {
                 </tr>
               </thead>
               <tbody>
-                {pageItems.map((item) => (
+                {items.map((item) => (
                   <tr key={item.dossierId}>
                     <td className={styles.code}>▱ {item.code}</td>
                     <td>
@@ -232,54 +221,15 @@ export function GestionPage() {
             </table>
           </div>
         )}
-        <div className={styles.pager}>
-          <span>
-            Mostrando{' '}
-            <strong>
-              {visible.length === 0 ? 0 : firstIndex + 1} - {firstIndex + pageItems.length}
-            </strong>{' '}
-            de <strong>{visible.length}</strong> expedientes
-          </span>
-          {pageCount > 1 && (
-            <span className={styles.pages}>
-              <button
-                type="button"
-                className={styles.pageButton}
-                aria-label="Página anterior"
-                disabled={currentPage === 1}
-                onClick={() => {
-                  setPage(currentPage - 1);
-                }}
-              >
-                ‹
-              </button>
-              {Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => (
-                <button
-                  type="button"
-                  key={number}
-                  className={`${styles.pageButton} ${number === currentPage ? styles.pageButtonActive : ''}`}
-                  aria-current={number === currentPage ? 'page' : undefined}
-                  onClick={() => {
-                    setPage(number);
-                  }}
-                >
-                  {number}
-                </button>
-              ))}
-              <button
-                type="button"
-                className={styles.pageButton}
-                aria-label="Página siguiente"
-                disabled={currentPage === pageCount}
-                onClick={() => {
-                  setPage(currentPage + 1);
-                }}
-              >
-                ›
-              </button>
-            </span>
-          )}
-        </div>
+        <DossierPager
+          count={items.length}
+          page={page}
+          pageSize={PAGE_SIZE}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          onNext={next}
+          onPrevious={previous}
+        />
       </section>
     </div>
   );

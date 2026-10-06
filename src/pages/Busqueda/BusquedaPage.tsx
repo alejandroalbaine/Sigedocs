@@ -1,26 +1,38 @@
-import { useMemo, useState, type SyntheticEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { FileSearch, List, Search, SlidersHorizontal, X } from 'lucide-react';
 import { EnPreparacion } from '../documental/EnPreparacion.tsx';
-import { useDossiers } from '../documental/useDossiers.ts';
+import { PAGE_SIZE } from '../../common/api/dossiers.ts';
+import { OPCIONES_ESTADO, tonoDeEstado } from '../../common/workflow/estados.ts';
+import { DossierPager } from '../documental/DossierPager.tsx';
+import { LEVEL_OPTIONS } from '../documental/filterOptions.ts';
+import { useDossiersPaginados } from '../documental/useDossiersPaginados.ts';
 import { claseEstado } from '../documental/estadoBadge.ts';
-import { tonoDeEstado } from '../../common/workflow/estados.ts';
 import styles from '../documental/documental.module.css';
 
 export function BusquedaPage() {
   const [params, setParams] = useSearchParams();
   const currentQuery = params.get('q') ?? '';
   const [term, setTerm] = useState(currentQuery);
-  const query = useMemo(
-    () => (currentQuery ? `&search=${encodeURIComponent(currentQuery)}` : ''),
-    [currentQuery],
-  );
-  const { items, loading, error, pendiente } = useDossiers(query);
+  const currentLevel = params.get('level') ?? '';
+  const currentState = params.get('state') ?? '';
+  const [level, setLevel] = useState(currentLevel);
+  const [state, setState] = useState(currentState);
+  const { items, loading, error, pendiente, page, hasNext, hasPrevious, next, previous } =
+    useDossiersPaginados({
+      search: currentQuery,
+      academicLevel: currentLevel,
+      currentState,
+    });
+  const activeFilters = [currentQuery, currentLevel, currentState].filter(Boolean).length;
 
   function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
-    const value = term.trim();
-    setParams(value ? { q: value } : {});
+    const nextParams: Record<string, string> = {};
+    if (term.trim()) nextParams.q = term.trim();
+    if (level) nextParams.level = level;
+    if (state) nextParams.state = state;
+    setParams(nextParams);
   }
 
   return (
@@ -43,6 +55,8 @@ export function BusquedaPage() {
             className={`${styles.button} ${styles.buttonQuiet}`}
             onClick={() => {
               setTerm('');
+              setLevel('');
+              setState('');
               setParams({});
             }}
           >
@@ -60,8 +74,12 @@ export function BusquedaPage() {
             <SlidersHorizontal size={18} />
           </span>
           <h2>Filtros Avanzados</h2>
-          {currentQuery && <span className={styles.badgeWarning}>1 activo</span>}
-          <span className={styles.subtle}>• Código, título o asignatura</span>
+          {activeFilters > 0 && (
+            <span className={styles.badgeWarning}>
+              {activeFilters} {activeFilters === 1 ? 'activo' : 'activos'}
+            </span>
+          )}
+          <span className={styles.subtle}>• Código, título, asignatura, nivel o estado</span>
         </summary>
         <form className={styles.filters} onSubmit={submit}>
           <div className={styles.field}>
@@ -75,6 +93,42 @@ export function BusquedaPage() {
               }}
               placeholder="Código, título o asignatura"
             />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="level">Nivel académico</label>
+            <select
+              id="level"
+              className={styles.select}
+              value={level}
+              onChange={(event) => {
+                setLevel(event.target.value);
+              }}
+            >
+              <option value="">Todos</option>
+              {LEVEL_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="state">Estado</label>
+            <select
+              id="state"
+              className={styles.select}
+              value={state}
+              onChange={(event) => {
+                setState(event.target.value);
+              }}
+            >
+              <option value="">Todos</option>
+              {OPCIONES_ESTADO.map((option) => (
+                <option key={option.codigo} value={option.codigo}>
+                  {option.nombre}
+                </option>
+              ))}
+            </select>
           </div>
           <div className={styles.field}>
             <label>&nbsp;</label>
@@ -96,7 +150,7 @@ export function BusquedaPage() {
                 'Ejecutando búsqueda…'
               ) : (
                 <>
-                  Se encontraron <span className={styles.eyebrowOrange}>{items.length}</span>{' '}
+                  Se muestran <span className={styles.eyebrowOrange}>{items.length}</span>{' '}
                   expedientes
                   <br />
                   coincidentes con los criterios
@@ -149,11 +203,15 @@ export function BusquedaPage() {
         ))}
       </section>
 
-      <div className={styles.pager}>
-        <span>
-          Mostrando <strong>{items.length}</strong> expedientes (máximo 25 por consulta)
-        </span>
-      </div>
+      <DossierPager
+        count={items.length}
+        page={page}
+        pageSize={PAGE_SIZE}
+        hasNext={hasNext}
+        hasPrevious={hasPrevious}
+        onNext={next}
+        onPrevious={previous}
+      />
     </div>
   );
 }
