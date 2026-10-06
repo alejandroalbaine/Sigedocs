@@ -13,6 +13,8 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { dossiersApi } from '../../common/api/dossiers.ts';
+import type { FieldError } from '../../common/api/contract.ts';
+import { pertenece } from '../../features/programa/erroresPrograma.ts';
 import type { Dossier, TransitionResult } from '../../common/api/dossierContract.ts';
 import { useRecurso, type Recurso } from '../../common/api/useRecurso.ts';
 import { RequirePermission } from '../../common/auth/RequirePermission.tsx';
@@ -113,6 +115,10 @@ function nombreDeEstado(estado: { code: string; name: string }) {
 function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => void }) {
   const user = useCurrentUser();
   const [activeTab, setActiveTab] = useState<TabId>('resumen');
+  const [erroresPrograma, setErroresPrograma] = useState<{
+    clave: string;
+    errores: FieldError[];
+  } | null>(null);
   const [resultados, setResultados] = useState<ResultadoCriterio[]>(resultadosIniciales);
   const [ultimo, setUltimo] = useState<TransitionResult | null>(null);
   const id = dossier.dossierId;
@@ -267,6 +273,19 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
               <FormularioPrograma
                 key={clave}
                 dossier={dossier}
+                erroresRevision={erroresPrograma?.clave === clave ? erroresPrograma.errores : []}
+                onCorregir={(ruta) => {
+                  setErroresPrograma(
+                    (actuales) =>
+                      actuales && {
+                        ...actuales,
+                        errores: actuales.errores.filter((error) => {
+                          const campo = error.field.replace(/^content\./, '');
+                          return !pertenece(campo, ruta) && campo !== ruta.split('.')[0];
+                        }),
+                      },
+                  );
+                }}
                 editable={dossier.currentState.isEditable && puedeEditar}
               />
               <Pendiente>
@@ -415,6 +434,10 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                       dossier={dossier}
                       transiciones={lista}
                       onRealizada={transicionRealizada}
+                      onErroresPrograma={(errores) => {
+                        setErroresPrograma({ clave, errores });
+                        setActiveTab('contenido');
+                      }}
                     />
                   )}
                 </EstadoRecurso>
