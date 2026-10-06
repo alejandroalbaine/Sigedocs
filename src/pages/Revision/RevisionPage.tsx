@@ -274,7 +274,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                 key={clave}
                 dossier={dossier}
                 erroresRevision={erroresPrograma?.clave === clave ? erroresPrograma.errores : []}
-                onCorregir={(ruta) =>
+                onCorregir={(ruta) => {
                   setErroresPrograma(
                     (actuales) =>
                       actuales && {
@@ -284,8 +284,8 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                           return !pertenece(campo, ruta) && campo !== ruta.split('.')[0];
                         }),
                       },
-                  )
-                }
+                  );
+                }}
                 editable={dossier.currentState.isEditable && puedeEditar}
               />
               <Pendiente>

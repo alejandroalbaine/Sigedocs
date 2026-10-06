@@ -97,7 +97,9 @@ test('Programa: errores reales por campo y reglas oficiales sobre contenido pers
   const enlaces = within(
     screen.getByRole('navigation', { name: 'Errores del programa' }),
   ).getAllByRole('link', { name: 'Datos académicos · Créditos' });
-  await userEvent.click(enlaces[enlaces.length - 1]!);
+  const enlace = enlaces.at(-1);
+  if (!enlace) throw new Error('Falta enlace al campo');
+  await userEvent.click(enlace);
   expect(campo).toHaveFocus();
   vista.unmount();
 
@@ -110,13 +112,17 @@ test('Programa: errores reales por campo y reglas oficiales sobre contenido pers
       })),
     },
   });
-  await expect(comprobarEnvio(expediente)).rejects.toMatchObject({
-    status: 422,
-    fieldErrors: expect.arrayContaining([
-      expect.objectContaining({ field: 'plan_evaluacion.componentes_evaluacion' }),
-      expect.objectContaining({ field: 'unidades_didacticas.unidades_didacticas' }),
-    ]),
-  });
+  try {
+    await comprobarEnvio(expediente);
+    throw new Error('El envío debía rechazar el contenido inválido');
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    expect(error.status).toBe(422);
+    expect(error.fieldErrors.map((item) => item.field)).toEqual([
+      'unidades_didacticas.unidades_didacticas',
+      'plan_evaluacion.componentes_evaluacion',
+    ]);
+  }
   const formulario = render(<FormularioPrograma dossier={expediente} editable />);
   await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
   expect(

@@ -82,7 +82,9 @@ test('muestra varios errores del servidor junto al campo con un solo id accesibl
   render(<FormularioPrograma dossier={expediente} editable />);
   await userEvent.click(await screen.findByRole('button', { name: 'Guardar borrador' }));
   const campo = screen.getByRole('textbox', { name: 'Asignatura *' });
-  await within(campo.parentElement!).findByText('El nombre es demasiado corto.');
+  const contenedor = campo.parentElement;
+  if (!contenedor) throw new Error('Falta contenedor del campo');
+  await within(contenedor).findByText('El nombre es demasiado corto.');
   expect(campo).toHaveAccessibleDescription(
     /El nombre es demasiado corto.*El nombre tiene un formato incorrecto/,
   );

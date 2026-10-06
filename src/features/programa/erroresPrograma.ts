@@ -88,5 +88,5 @@ export function irAlError(id: string) {
     if (padre instanceof HTMLDetailsElement) padre.open = true;
   }
   destino.focus();
-  destino.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+  destino.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
