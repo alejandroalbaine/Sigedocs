@@ -1,12 +1,13 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import programaBackend from '../../test/fixtures/course-program-template.backend.json';
-import { dossier, stubApi } from '../../test/backend.ts';
+import { dossier, problem, stubApi } from '../../test/backend.ts';
 import { FormularioPrograma } from './FormularioPrograma.tsx';
 
 const expediente = dossier({
   template: { templateId: 'tpl-1', templateVersionId: 'tv-1' },
 });
+
 const rutaVersion = `/api/v1/dossiers/${expediente.dossierId}/versions/${expediente.currentVersion.versionId}`;
 
 const metadatosPlantilla = {
@@ -38,7 +39,13 @@ function servidor(content: Record<string, unknown> = {}) {
   return stubApi({
     [`GET ${rutaVersion}`]: version(content),
     [`PATCH ${rutaVersion}`]: (init: RequestInit) =>
-      version((JSON.parse(init.body as string) as { content: Record<string, unknown> }).content),
+      version(
+        (
+          JSON.parse(init.body as string) as {
+            content: Record<string, unknown>;
+          }
+        ).content,
+      ),
     'GET /api/v1/templates/tpl-1': metadatosPlantilla,
     'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
     'GET /api/v1/institutional-catalogs/schools': [{ value: 'ESC-ING', label: 'Ingeniería' }],
@@ -60,6 +67,7 @@ test('dibuja el formulario con la respuesta real del backend', async () => {
 
 test('revisar reglas marca los campos obligatorios de la plantilla real', async () => {
   servidor();
+
   render(<FormularioPrograma dossier={expediente} editable />);
 
   await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
@@ -70,46 +78,209 @@ test('revisar reglas marca los campos obligatorios de la plantilla real', async 
 });
 
 test('agrega un elemento repetible y guarda el contenido con itemId', async () => {
-  const llamadas = servidor({ datos_academicos: { asignatura: 'Ingeniería de Software I' } });
+  const llamadas = servidor({
+    datos_academicos: { asignatura: 'Ingeniería de Software I' },
+  });
+
   render(<FormularioPrograma dossier={expediente} editable />);
-  const grupo = await screen.findByRole('region', { name: 'Competencias fundamentales' });
+
+  const grupo = await screen.findByRole('region', {
+    name: 'Competencias fundamentales',
+  });
+
   await userEvent.click(within(grupo).getByRole('button', { name: /Agregar/ }));
+
   expect(within(grupo).getByText('Competencias fundamentales 1')).toBeVisible();
+
   await userEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+
   expect(await screen.findByText('Borrador de v1.0 guardado.')).toBeVisible();
 
   const envio = llamadas.find((llamada) => llamada.key.startsWith('PATCH'));
-  const content = (envio?.body as { content: Record<string, Record<string, unknown>> }).content;
+
+  const content = (
+    envio?.body as {
+      content: Record<string, Record<string, unknown>>;
+    }
+  ).content;
+
   expect(content.datos_academicos?.asignatura).toBe('Ingeniería de Software I');
+
   const items = content.competencias_fundamentales?.competencias_fundamentales as {
     itemId: string;
   }[];
+
   expect(items).toHaveLength(1);
   expect(items[0]?.itemId).toMatch(/.+/);
 });
 
 test('sin permiso o estado editable se muestra en solo lectura', async () => {
-  servidor({ datos_academicos: { asignatura: 'Ingeniería de Software I' } });
+  servidor({
+    datos_academicos: { asignatura: 'Ingeniería de Software I' },
+  });
+
   render(<FormularioPrograma dossier={expediente} editable={false} />);
+
   expect(await screen.findByText('Ingeniería de Software I')).toBeVisible();
+
   expect(screen.queryByRole('button', { name: 'Guardar borrador' })).not.toBeInTheDocument();
+
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
 });
 
 test('si la ruta de versiones no existe, lo dice sin inventar un formulario', async () => {
   stubApi({});
+
   render(<FormularioPrograma dossier={expediente} editable />);
+
   expect(await screen.findByText(/está en preparación/)).toBeVisible();
 });
 
-test('dibuja el formulario con la respuesta real del backend', async () => {
-  stubApi({
-    [`GET ${rutaVersion}`]: version(),
-    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+test('reenvía correctamente un programa en estado Requiere ajustes', async () => {
+  const expedienteConAjustes = dossier({
+    template: { templateId: 'tpl-1', templateVersionId: 'tv-1' },
+    currentState: {
+      code: 'CHANGES_REQUIRED',
+      name: 'Requiere ajustes',
+      isEditable: true,
+    },
   });
+
+  const ruta =
+    `/api/v1/dossiers/${expedienteConAjustes.dossierId}/versions/` +
+    expedienteConAjustes.currentVersion.versionId;
+
+  const llamadas = stubApi({
+    [`GET ${ruta}`]: version(),
+
+    [`PATCH ${ruta}`]: (init: RequestInit) =>
+      version(
+        (
+          JSON.parse(init.body as string) as {
+            content: Record<string, unknown>;
+          }
+        ).content,
+      ),
+
+    'GET /api/v1/templates/tpl-1': metadatosPlantilla,
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+
+    [`GET /api/v1/dossiers/${expedienteConAjustes.dossierId}/available-transitions`]: [
+      {
+        transitionId: 't5',
+        code: 'RESUBMIT',
+        name: 'Reenviar',
+        toState: {
+          code: 'RESUBMITTED',
+          name: 'Reenviado',
+        },
+        requiresObservation: false,
+      },
+    ],
+
+    [`POST /api/v1/dossiers/${expedienteConAjustes.dossierId}/transitions`]: {
+      historyId: 'hist-1',
+      fromState: {
+        code: 'CHANGES_REQUIRED',
+        name: 'Requiere ajustes',
+      },
+      toState: {
+        code: 'RESUBMITTED',
+        name: 'Reenviado',
+      },
+      versionId: expedienteConAjustes.currentVersion.versionId,
+      newVersionId: null,
+      occurredAt: '2026-10-05T20:00:00.000Z',
+    },
+  });
+
+  render(<FormularioPrograma dossier={expedienteConAjustes} editable />);
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Reenviar' }));
+
+  expect(await screen.findByText('Programa reenviado correctamente.')).toBeVisible();
+
+  expect(
+    llamadas.some(
+      (llamada) =>
+        llamada.key === `POST /api/v1/dossiers/${expedienteConAjustes.dossierId}/transitions`,
+    ),
+  ).toBe(true);
+});
+
+test('oculta Reenviar cuando el expediente no está en Requiere ajustes', async () => {
+  servidor();
 
   render(<FormularioPrograma dossier={expediente} editable />);
 
-  expect(await screen.findByText('Datos académicos *')).toBeVisible();
-  expect(screen.getByText(/^Bibliografía/, { selector: 'summary span' })).toBeVisible();
+  await screen.findByRole('button', {
+    name: 'Guardar borrador',
+  });
+
+  expect(screen.queryByRole('button', { name: 'Reenviar' })).not.toBeInTheDocument();
+});
+
+test('muestra campos pendientes cuando el reenvío responde 422', async () => {
+  const expedienteConAjustes = dossier({
+    template: { templateId: 'tpl-1', templateVersionId: 'tv-1' },
+    currentState: {
+      code: 'CHANGES_REQUIRED',
+      name: 'Requiere ajustes',
+      isEditable: true,
+    },
+  });
+
+  const ruta =
+    `/api/v1/dossiers/${expedienteConAjustes.dossierId}/versions/` +
+    expedienteConAjustes.currentVersion.versionId;
+
+  stubApi({
+    [`GET ${ruta}`]: version(),
+
+    [`PATCH ${ruta}`]: (init: RequestInit) =>
+      version(
+        (
+          JSON.parse(init.body as string) as {
+            content: Record<string, unknown>;
+          }
+        ).content,
+      ),
+
+    'GET /api/v1/templates/tpl-1': metadatosPlantilla,
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+
+    [`GET /api/v1/dossiers/${expedienteConAjustes.dossierId}/available-transitions`]: [
+      {
+        transitionId: 't5',
+        code: 'RESUBMIT',
+        name: 'Reenviar',
+        toState: {
+          code: 'RESUBMITTED',
+          name: 'Reenviado',
+        },
+        requiresObservation: false,
+      },
+    ],
+
+    [`POST /api/v1/dossiers/${expedienteConAjustes.dossierId}/transitions`]: problem(
+      422,
+      'VALIDATION_FAILED',
+      [
+        {
+          field: 'datos_academicos.asignatura',
+          code: 'REQUIRED',
+        },
+      ],
+    ),
+  });
+
+  render(<FormularioPrograma dossier={expedienteConAjustes} editable />);
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Reenviar' }));
+
+  expect(
+    await screen.findByText(
+      'El programa todavía tiene campos obligatorios pendientes. Revise los campos señalados.',
+    ),
+  ).toBeVisible();
 });
