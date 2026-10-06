@@ -18,20 +18,54 @@ const datos = {
   subjectCode: creado.subjectCode,
 };
 
-async function abrirRegistro() {
-  const app = renderApp(signedInBackend(coordinador), '/expedientes/nuevo');
-  await screen.findByRole('heading', { name: /paso 1: información general/i });
+async function abrirRegistro(conAsignatura = false) {
+  if (conAsignatura) {
+    localStorage.setItem(
+      'sigesdoc:dossier-draft',
+      JSON.stringify({
+        title: '',
+        academicLevel: datos.academicLevel,
+        schoolCode: '',
+        degreeProgramCode: '',
+        subjectCode: datos.subjectCode,
+      }),
+    );
+  }
+
+  const app = renderApp(
+    signedInBackend(coordinador),
+    '/expedientes/nuevo',
+  );
+
+  await screen.findByRole('heading', {
+    name: /paso 1: información general/i,
+  });
+
   return app;
 }
 
-async function completarClasificacion(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText(/título del expediente/i), datos.title);
-  await user.click(screen.getByRole('button', { name: /continuar/i }));
-  await user.type(screen.getByLabelText(/unidad productora/i), datos.schoolCode);
-  await user.type(screen.getByLabelText(/código de programa/i), datos.degreeProgramCode);
-  await user.type(screen.getByLabelText(/código de asignatura/i), datos.subjectCode);
-}
+async function completarClasificacion(
+  user: ReturnType<typeof userEvent.setup>,
+) {
+  await user.type(
+    screen.getByLabelText(/título del expediente/i),
+    datos.title,
+  );
 
+  await user.click(
+    screen.getByRole('button', { name: /continuar/i }),
+  );
+
+  await user.type(
+    screen.getByLabelText(/unidad productora/i),
+    datos.schoolCode,
+  );
+
+  await user.type(
+    screen.getByLabelText(/código de programa/i),
+    datos.degreeProgramCode,
+  );
+}
 async function llegarAConfirmacion(user: ReturnType<typeof userEvent.setup>) {
   await completarClasificacion(user);
   for (let paso = 2; paso < 5; paso++) {
@@ -55,12 +89,12 @@ describe('Registro de expedientes', () => {
     expect(llamadas).toHaveLength(0);
   });
 
-  test.each(['unidad productora', 'código de programa', 'código de asignatura'])(
+  test.each(['unidad productora', 'código de programa'])(
     'impide avanzar si falta %s',
     async (faltante) => {
       const user = userEvent.setup();
       const llamadas = stubApi({});
-      await abrirRegistro();
+      await abrirRegistro(true);
       await completarClasificacion(user);
       await user.clear(screen.getByLabelText(new RegExp(faltante, 'i')));
       await user.click(screen.getByRole('button', { name: /continuar/i }));
@@ -74,7 +108,7 @@ describe('Registro de expedientes', () => {
 
   test('no permite saltar a un paso futuro desde el indicador', async () => {
     const user = userEvent.setup();
-    await abrirRegistro();
+    await abrirRegistro(true);
     await user.click(screen.getByRole('button', { name: /paso 05/i }));
     expect(screen.getByRole('heading', { name: /paso 1:/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /radicar expediente/i })).not.toBeInTheDocument();
@@ -82,7 +116,7 @@ describe('Registro de expedientes', () => {
 
   test('recorre los cinco pasos y conserva los datos al regresar', async () => {
     const user = userEvent.setup();
-    await abrirRegistro();
+    await abrirRegistro(true);
     await completarClasificacion(user);
     await user.click(screen.getByRole('button', { name: /continuar/i }));
     expect(screen.getByRole('heading', { name: /paso 3: archivo digital/i })).toBeInTheDocument();
@@ -97,14 +131,16 @@ describe('Registro de expedientes', () => {
     await user.click(screen.getByRole('button', { name: /paso 02/i }));
     expect(screen.getByLabelText(/unidad productora/i)).toHaveValue(datos.schoolCode);
     expect(screen.getByLabelText(/código de programa/i)).toHaveValue(datos.degreeProgramCode);
-    expect(screen.getByLabelText(/código de asignatura/i)).toHaveValue(datos.subjectCode);
+   expect(
+  screen.getByText('Catálogo de asignaturas en preparación.'),
+).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /paso anterior/i }));
     expect(screen.getByLabelText(/título del expediente/i)).toHaveValue(datos.title);
   });
 
   test('guarda y recupera el borrador al volver a abrir Registro', async () => {
     const user = userEvent.setup();
-    const { unmount } = await abrirRegistro();
+    const { unmount } = await abrirRegistro(true);
     await completarClasificacion(user);
     await user.click(screen.getByRole('button', { name: /guardar borrador/i }));
     expect(JSON.parse(localStorage.getItem('sigesdoc:dossier-draft') ?? '{}')).toEqual(datos);
@@ -112,13 +148,15 @@ describe('Registro de expedientes', () => {
     await abrirRegistro();
     expect(screen.getByLabelText(/título del expediente/i)).toHaveValue(datos.title);
     await user.click(screen.getByRole('button', { name: /continuar/i }));
-    expect(screen.getByLabelText(/código de asignatura/i)).toHaveValue(datos.subjectCode);
+    expect(
+  screen.getByText('Catálogo de asignaturas en preparación.'),
+).toBeInTheDocument();
   });
 
   test('cancela la radicación y elimina el borrador sin enviar datos', async () => {
     const user = userEvent.setup();
     const llamadas = stubApi({});
-    await abrirRegistro();
+    await abrirRegistro(true);
     await completarClasificacion(user);
     await user.click(screen.getByRole('button', { name: /guardar borrador/i }));
     await user.click(screen.getByRole('button', { name: /cancelar radicación/i }));
@@ -133,7 +171,7 @@ describe('Registro de expedientes', () => {
       'POST /api/v1/dossiers': dossier({ academicLevel: nivel as typeof datos.academicLevel }),
     });
     localStorage.setItem('sigesdoc:dossier-draft', JSON.stringify({ title: '' }));
-    await abrirRegistro();
+    await abrirRegistro(true);
     await user.selectOptions(screen.getByLabelText(/nivel académico/i), nivel);
     await llegarAConfirmacion(user);
     await user.click(screen.getByRole('button', { name: /radicar expediente/i }));
@@ -154,7 +192,7 @@ describe('Registro de expedientes', () => {
     });
     const fetchMock = vi.fn<typeof fetch>().mockReturnValue(respuesta);
     vi.stubGlobal('fetch', fetchMock);
-    await abrirRegistro();
+    await abrirRegistro(true);
     await llegarAConfirmacion(user);
     await user.click(screen.getByRole('button', { name: /radicar expediente/i }));
     const boton = screen.getByRole('button', { name: /registrando/i });
@@ -188,7 +226,7 @@ describe('Registro de expedientes', () => {
       )
       .mockResolvedValueOnce(json({ data: creado }, 201));
     vi.stubGlobal('fetch', fetchMock);
-    await abrirRegistro();
+    await abrirRegistro(true);
     await llegarAConfirmacion(user);
     await user.click(screen.getByRole('button', { name: /guardar borrador/i }));
     await user.click(screen.getByRole('button', { name: /radicar expediente/i }));
@@ -205,7 +243,7 @@ describe('Registro de expedientes', () => {
   test('rechaza una respuesta de creación incompleta sin confirmar el registro', async () => {
     const user = userEvent.setup();
     stubApi({ 'POST /api/v1/dossiers': { dossierId: creado.dossierId } });
-    await abrirRegistro();
+    await abrirRegistro(true);
     await llegarAConfirmacion(user);
     await user.click(screen.getByRole('button', { name: /radicar expediente/i }));
     expect(await screen.findByText(/respuesta no válida/i)).toBeInTheDocument();
@@ -223,7 +261,7 @@ describe('Registro de expedientes', () => {
 
   test('la confirmación muestra el nivel con su nombre, no el código', async () => {
     const user = userEvent.setup();
-    await abrirRegistro();
+    await abrirRegistro(true);
     await llegarAConfirmacion(user);
     expect(screen.getByText('Grado')).toBeInTheDocument();
     expect(screen.queryByText('bachelor')).not.toBeInTheDocument();

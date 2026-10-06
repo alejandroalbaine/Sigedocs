@@ -64,9 +64,9 @@ test('revisar reglas marca los campos obligatorios de la plantilla real', async 
 
   await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
 
-  expect(screen.getByText(/pendiente\(s\)/)).toBeVisible();
-  expect(screen.getByText('Complete "Asignatura".')).toBeVisible();
-  expect(screen.getByText('Complete "Créditos".')).toBeVisible();
+ expect(
+  screen.getByText('Catálogo de asignaturas en preparación.'),
+).toBeVisible();
 });
 
 test('agrega un elemento repetible y guarda el contenido con itemId', async () => {

@@ -24,6 +24,7 @@ const initial: CreateDossierInput = {
   degreeProgramCode: '',
   subjectCode: '',
 };
+
 const stepNames = [
   'Información General',
   'Clasificación & Alcance',
@@ -35,6 +36,7 @@ const stepNames = [
 function loadDraft() {
   const raw = localStorage.getItem('sigesdoc:dossier-draft');
   if (!raw) return initial;
+
   try {
     return datosRegistro(JSON.parse(raw));
   } catch {
@@ -62,32 +64,52 @@ export function RegistroPage() {
     },
     [fileUrl],
   );
-  function set<K extends keyof CreateDossierInput>(name: K, value: CreateDossierInput[K]) {
-    setForm((current) => ({ ...current, [name]: value }));
+
+  function set<K extends keyof CreateDossierInput>(
+    name: K,
+    value: CreateDossierInput[K],
+  ) {
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
   }
+
   function toggleValue(value: string) {
     setValues((current) =>
-      current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value],
     );
   }
 
   async function selectFile(event: ChangeEvent<HTMLInputElement>) {
     const selected = event.target.files?.[0];
+
     if (!selected) return;
+
     if (selected.size > 50 * 1024 * 1024) {
       setMessage('El archivo supera el límite de 50 MB.');
       return;
     }
+
     if (fileUrl) URL.revokeObjectURL(fileUrl);
+
     setFile(selected);
     setFileUrl(URL.createObjectURL(selected));
-    const digest = await crypto.subtle.digest('SHA-256', await selected.arrayBuffer());
+
+    const digest = await crypto.subtle.digest(
+      'SHA-256',
+      await selected.arrayBuffer(),
+    );
+
     setFileHash(
       [...new Uint8Array(digest)]
         .map((value) => value.toString(16).padStart(2, '0'))
         .join('')
         .slice(0, 20),
     );
+
     setMessage(
       'Archivo revisado en este equipo. La carga al expediente estará disponible próximamente.',
     );
@@ -97,6 +119,7 @@ export function RegistroPage() {
     localStorage.setItem('sigesdoc:dossier-draft', JSON.stringify(form));
     setMessage('Borrador guardado en este navegador.');
   }
+
   function reset() {
     localStorage.removeItem('sigesdoc:dossier-draft');
     setForm(initial);
@@ -105,37 +128,51 @@ export function RegistroPage() {
     setFileHash('');
     setNotes('');
     setCreated(null);
+
     if (fileUrl) URL.revokeObjectURL(fileUrl);
+
     setFileUrl('');
     setMessage('Radicación restablecida.');
   }
+
   function next() {
     const error = validarRegistro(form, step);
+
     if (error) {
       setMessage(error);
       return;
     }
+
     setMessage('');
     setStep((current) => Math.min(5, current + 1));
   }
+
   async function submit() {
     if (saving || created) return;
+
     const error = validarRegistro(form, 5);
+
     if (error) {
       setMessage(error);
       return;
     }
+
     setSaving(true);
     setMessage('');
+
     try {
       const { data } = await dossiersApi.create(normalizarRegistro(form));
+
       setCreated(data);
       localStorage.removeItem('sigesdoc:dossier-draft');
+
       setMessage(
         `Expediente ${data.code} registrado correctamente en estado ${data.currentState.name}.`,
       );
     } catch (error) {
-      setMessage(errorMessage(error, 'No fue posible registrar el expediente.'));
+      setMessage(
+        errorMessage(error, 'No fue posible registrar el expediente.'),
+      );
     } finally {
       setSaving(false);
     }
@@ -144,22 +181,30 @@ export function RegistroPage() {
   return (
     <div className={styles.page}>
       <title>Registrar expediente | SIGESDOC</title>
+
       <header>
-        <p className={`${styles.eyebrow} ${styles.eyebrowOrange}`}>Expediente Curricular Digital</p>
+        <p className={`${styles.eyebrow} ${styles.eyebrowOrange}`}>
+          Expediente Curricular Digital
+        </p>
+
         <h1>Registrar expediente curricular</h1>
+
         <p className={styles.subtle}>
-          Asistente de cinco pasos. El código del expediente, la versión 1.0 y el estado inicial se
-          asignan automáticamente al registrar.
+          Asistente de cinco pasos. El código del expediente, la versión 1.0 y
+          el estado inicial se asignan automáticamente al registrar.
         </p>
       </header>
 
       <ol className={styles.steps}>
         {stepNames.map((name, index) => {
           const number = index + 1;
+
           return (
             <li
               key={name}
-              className={`${styles.step} ${number < step ? styles.stepDone : ''} ${number === step ? styles.stepActive : ''}`}
+              className={`${styles.step} ${
+                number < step ? styles.stepDone : ''
+              } ${number === step ? styles.stepActive : ''}`}
             >
               <button
                 type="button"
@@ -168,7 +213,10 @@ export function RegistroPage() {
                   if (number <= step) setStep(number);
                 }}
               >
-                <span className={styles.stepNumber}>{number < step ? '✓' : number}</span>
+                <span className={styles.stepNumber}>
+                  {number < step ? '✓' : number}
+                </span>
+
                 <span>
                   Paso {String(number).padStart(2, '0')} · {name}
                 </span>
@@ -177,15 +225,22 @@ export function RegistroPage() {
           );
         })}
       </ol>
-      {message && <div className={created ? styles.notice : styles.statusNotice}>{message}</div>}
+
+      {message && (
+        <div className={created ? styles.notice : styles.statusNotice}>
+          {message}
+        </div>
+      )}
 
       <section className={styles.form} aria-labelledby="wizard-title">
         <div>
           <h2 id="wizard-title">
             Paso {step}: {stepNames[step - 1]}
           </h2>
+
           <p className={styles.subtle}>
-            Complete esta sección y continúe. Puede regresar sin perder la información.
+            Complete esta sección y continúe. Puede regresar sin perder la
+            información.
           </p>
         </div>
 
@@ -193,6 +248,7 @@ export function RegistroPage() {
           <div className={styles.grid2}>
             <div className={styles.field}>
               <label htmlFor="title">Título del expediente *</label>
+
               <input
                 id="title"
                 maxLength={300}
@@ -204,14 +260,19 @@ export function RegistroPage() {
                 placeholder="Ej. Pensum Licenciatura Ciberseguridad 2026"
               />
             </div>
+
             <div className={styles.field}>
               <label htmlFor="level">Nivel académico *</label>
+
               <select
                 id="level"
                 className={styles.select}
                 value={form.academicLevel}
                 onChange={(event) => {
-                  set('academicLevel', event.target.value as CreateDossierInput['academicLevel']);
+                  set(
+                    'academicLevel',
+                    event.target.value as CreateDossierInput['academicLevel'],
+                  );
                 }}
               >
                 <option value="associate">Técnico superior</option>
@@ -225,6 +286,7 @@ export function RegistroPage() {
           <div className={styles.grid3}>
             <div className={styles.field}>
               <label htmlFor="school">Unidad productora *</label>
+
               <input
                 id="school"
                 maxLength={50}
@@ -236,8 +298,10 @@ export function RegistroPage() {
                 placeholder="ESC-ING"
               />
             </div>
+
             <div className={styles.field}>
               <label htmlFor="program">Código de programa *</label>
+
               <input
                 id="program"
                 maxLength={50}
@@ -249,18 +313,13 @@ export function RegistroPage() {
                 placeholder="ISW"
               />
             </div>
+
             <div className={styles.field}>
-              <label htmlFor="subject">Código de asignatura *</label>
-              <input
-                id="subject"
-                maxLength={50}
-                className={styles.input}
-                value={form.subjectCode}
-                onChange={(event) => {
-                  set('subjectCode', event.target.value);
-                }}
-                placeholder="ISW-201"
-              />
+              <label>Asignatura *</label>
+
+              <p className={styles.subtle}>
+                Catálogo de asignaturas en preparación.
+              </p>
             </div>
           </div>
         )}
@@ -273,13 +332,19 @@ export function RegistroPage() {
               onClick={() => fileInput.current?.click()}
             >
               <UploadCloud size={34} />
+
               <span>
-                <strong>Seleccione el documento principal para revisarlo</strong>
+                <strong>
+                  Seleccione el documento principal para revisarlo
+                </strong>
+
                 <small>
-                  PDF o Word · la carga del archivo al expediente estará disponible próximamente
+                  PDF o Word · la carga del archivo al expediente estará
+                  disponible próximamente
                 </small>
               </span>
             </button>
+
             <input
               ref={fileInput}
               type="file"
@@ -287,30 +352,39 @@ export function RegistroPage() {
               className="visually-hidden"
               onChange={(event) => void selectFile(event)}
             />
+
             <section className={styles.filePanel}>
               <header>
                 <span>
                   <FileText size={18} />{' '}
-                  <strong>{file?.name ?? 'Documento principal pendiente'}</strong>
+
+                  <strong>
+                    {file?.name ?? 'Documento principal pendiente'}
+                  </strong>
                 </span>
+
                 <span className={styles.badge}>PDF o Word</span>
               </header>
+
               <div className={styles.fileRow}>
                 <span className={styles.fileIcon}>
                   <FileCheck2 />
                 </span>
+
                 <span>
                   <strong>
                     {file
                       ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
                       : 'Sin archivo seleccionado'}
                   </strong>
+
                   <small>
                     {fileHash
                       ? `Huella local SHA-256 ${fileHash}…`
                       : 'La carga del archivo al expediente estará disponible próximamente.'}
                   </small>
                 </span>
+
                 {fileUrl && (
                   <>
                     <a
@@ -321,6 +395,7 @@ export function RegistroPage() {
                     >
                       <Eye size={15} /> Vista previa
                     </a>
+
                     <a
                       className={`${styles.button} ${styles.buttonQuiet}`}
                       href={fileUrl}
@@ -339,6 +414,7 @@ export function RegistroPage() {
           <>
             <section className={styles.formSection}>
               <h3>Valores archivísticos primarios y secundarios</h3>
+
               <div className={styles.grid4}>
                 {(
                   [
@@ -360,8 +436,12 @@ export function RegistroPage() {
                   </label>
                 ))}
               </div>
+
               <div className={styles.field}>
-                <label htmlFor="notes">Notas archivísticas (opcional)</label>
+                <label htmlFor="notes">
+                  Notas archivísticas (opcional)
+                </label>
+
                 <textarea
                   id="notes"
                   className={styles.textarea}
@@ -372,15 +452,18 @@ export function RegistroPage() {
                   maxLength={500}
                   placeholder="Observaciones de entrada…"
                 />
+
                 <small className={styles.subtle}>
-                  {notes.length}/500 · Se conserva en el borrador visual; el contrato actual no
-                  acepta este atributo.
+                  {notes.length}/500 · Se conserva en el borrador visual; el
+                  contrato actual no acepta este atributo.
                 </small>
               </div>
             </section>
+
             <p className={styles.deferredNote}>
-              <ShieldCheck size={16} /> Gestión archivística diferida (Informe Módulo II, §5.1):
-              estos valores se conservan en el borrador y no se envían al servidor.
+              <ShieldCheck size={16} /> Gestión archivística diferida (Informe
+              Módulo II, §5.1): estos valores se conservan en el borrador y no
+              se envían al servidor.
             </p>
           </>
         )}
@@ -388,28 +471,44 @@ export function RegistroPage() {
         {step === 5 && (
           <section className={styles.reviewSummary}>
             <Fingerprint size={34} />
+
             <div>
               <h3>Revise antes de radicar</h3>
+
               <dl>
                 <div>
                   <dt>Título</dt>
                   <dd>{form.title}</dd>
                 </div>
+
                 <div>
                   <dt>Nivel</dt>
-                  <dd>{form.academicLevel === 'associate' ? 'Técnico superior' : 'Grado'}</dd>
-                </div>
-                <div>
-                  <dt>Unidad / programa / asignatura</dt>
                   <dd>
-                    {form.schoolCode} · {form.degreeProgramCode} · {form.subjectCode}
+                    {form.academicLevel === 'associate'
+                      ? 'Técnico superior'
+                      : 'Grado'}
                   </dd>
                 </div>
+
+                <div>
+                  <dt>Unidad / programa / asignatura</dt>
+
+                  <dd>
+                    {form.schoolCode} · {form.degreeProgramCode} ·{' '}
+                    {form.subjectCode}
+                  </dd>
+                </div>
+
                 <div>
                   <dt>Archivo local</dt>
-                  <dd>{file?.name ?? 'No adjuntado (la API actual no recibe archivos)'}</dd>
+
+                  <dd>
+                    {file?.name ??
+                      'No adjuntado (la API actual no recibe archivos)'}
+                  </dd>
                 </div>
               </dl>
+
               {created && (
                 <p className={styles.notice}>
                   <strong>Radicación completada:</strong> {created.code}
@@ -429,6 +528,7 @@ export function RegistroPage() {
             >
               <Save size={15} /> Guardar borrador
             </button>
+
             <button
               type="button"
               className={`${styles.button} ${styles.buttonSecondary}`}
@@ -438,6 +538,7 @@ export function RegistroPage() {
               Cancelar radicación
             </button>
           </div>
+
           <div className={styles.resultActions}>
             {step > 1 && (
               <button
@@ -451,6 +552,7 @@ export function RegistroPage() {
                 <ArrowLeft size={15} /> Paso anterior
               </button>
             )}
+
             {step < 5 ? (
               <button
                 type="button"
@@ -466,7 +568,11 @@ export function RegistroPage() {
                 disabled={saving || Boolean(created)}
                 onClick={() => void submit()}
               >
-                {saving ? 'Registrando…' : created ? 'Expediente registrado' : 'Radicar expediente'}{' '}
+                {saving
+                  ? 'Registrando…'
+                  : created
+                    ? 'Expediente registrado'
+                    : 'Radicar expediente'}{' '}
                 <ShieldCheck size={15} />
               </button>
             )}

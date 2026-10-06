@@ -215,6 +215,52 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
                 .map((campo) => {
                   const ruta = `${seccion.key}.${campo.key}`;
                   const valor = contenido[seccion.key]?.[campo.key];
+
+                  if (campo.key === 'asignatura') {
+                    const valorActual =
+                      typeof valor === 'string' && valor.trim() ? valor : '';
+
+                    return (
+                      <div key={campo.key} className={styles.campo}>
+                        <span className={styles.etiqueta}>
+                          {campo.label}
+                          {campo.isRequired ? ' *' : ''}
+                        </span>
+
+                        {valorActual && (
+                          <span className={styles.lectura}>{valorActual}</span>
+                        )}
+
+                        <p className={styles.pendiente}>
+                          Catálogo de asignaturas en preparación.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  if (
+                    campo.key === 'clave_asignatura' ||
+                    campo.key === 'prerrequisitos'
+                  ) {
+                    const valorActual =
+                      typeof valor === 'string' && valor.trim()
+                        ? valor
+                        : 'Se completará automáticamente desde el catálogo.';
+
+                    return (
+                      <div key={campo.key} className={styles.campo}>
+                        <span className={styles.etiqueta}>
+                          {campo.label}
+                          {campo.isRequired ? ' *' : ''}
+                        </span>
+
+                        <span className={styles.lectura}>
+                          {valorActual}
+                        </span>
+                      </div>
+                    );
+                  }
+
                   return campo.type === 'repeatable_group' ? (
                     <GrupoRepetible
                       key={campo.key}
