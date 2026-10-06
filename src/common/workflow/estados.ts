@@ -52,6 +52,11 @@ export const ORDEN_UNDERGRAD = [
   'ARCHIVED_IMPLEMENTED',
 ] as const;
 
+/** Estados en el orden del recorrido, para los selectores de filtro. */
+export const OPCIONES_ESTADO: readonly { codigo: string; nombre: string }[] = ORDEN_UNDERGRAD.map(
+  (codigo) => ({ codigo, nombre: ESTADOS_UNDERGRAD[codigo]?.nombre ?? codigo }),
+);
+
 /** Siguiente paso esperado según las transiciones T1–T13 de ADR-014 §3. */
 const PROXIMA_ACCION: Readonly<Record<string, string>> = {
   RECEIVED: 'Asignar a un especialista curricular (Dirección de Gestión Curricular)',

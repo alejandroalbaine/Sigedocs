@@ -1,4 +1,7 @@
-FROM node:22-alpine AS build
+# La imagen se publica para linux/amd64 y linux/arm64 (el VPS de Dokploy es ARM). El build
+# corre en la arquitectura del runner ($BUILDPLATFORM): solo produce archivos estáticos, así
+# que se compila una vez y únicamente la etapa de nginx se arma por plataforma.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 
 WORKDIR /app
 

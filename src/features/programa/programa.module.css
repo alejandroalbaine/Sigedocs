@@ -124,7 +124,6 @@ textarea.control {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 32px;
 }
 
 .multi {
@@ -142,6 +141,11 @@ textarea.control {
   color: var(--danger);
   font-size: var(--text-xs);
   font-weight: 600;
+}
+
+.mensajes-campo {
+  display: grid;
+  gap: var(--space-1);
 }
 
 .aviso {

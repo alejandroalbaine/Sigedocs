@@ -46,6 +46,40 @@ async function listAllDossiers(query = '', signal?: AbortSignal) {
   return { data: [...items.values()] };
 }
 
+export const PAGE_SIZE = 25;
+
+/** Filtros que el servidor aplica en `GET /dossiers`; los vacíos no se envían. */
+export interface DossierFilters {
+  search?: string;
+  currentState?: string;
+  academicLevel?: string;
+  schoolCode?: string;
+}
+
+export function dossiersPagePath(filters: DossierFilters, cursor: string | null) {
+  const params = [`limit=${String(PAGE_SIZE)}`];
+  for (const key of ['search', 'currentState', 'academicLevel', 'schoolCode'] as const) {
+    const value = filters[key];
+    if (value) params.push(`${key}=${id(value)}`);
+  }
+  if (cursor) params.push(`cursor=${id(cursor)}`);
+  return `/dossiers?${params.join('&')}`;
+}
+
+/** Una página de expedientes (filtros y cursor en el servidor), validada contra el contrato. */
+async function listDossiersPage(
+  filters: DossierFilters = {},
+  cursor: string | null = null,
+  signal?: AbortSignal,
+) {
+  const { data, meta } = await request(
+    dossiersPagePath(filters, cursor),
+    parseDossiers,
+    signal ? { signal } : {},
+  );
+  return { data, nextCursor: meta?.pagination?.nextCursor ?? null };
+}
+
 /**
  * Una ruta confirmada en el contrato que el backend aún no implementa responde 404. Como el
  * expediente sí existe (llegó en el listado), la interfaz lo presenta como "pendiente".
@@ -57,6 +91,7 @@ export function esRutaPendiente(error: unknown): boolean {
 export const dossiersApi = {
   list: (query = '') => request(`/dossiers?limit=25${query}`, parseDossiers),
   listAll: listAllDossiers,
+  page: listDossiersPage,
   get: (dossierId: string) => request(`/dossiers/${id(dossierId)}`, parseDossier),
   create: (input: CreateDossierInput) => request('/dossiers', parseDossier, post(input)),
   versions: (dossierId: string) => request(`/dossiers/${id(dossierId)}/versions`, parseVersions),
