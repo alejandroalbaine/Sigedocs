@@ -1,28 +1,64 @@
-import { useEffect, useState } from 'react';
-import { domainRequest } from '../../common/api/domainClient.ts';
+import { useCallback, useEffect, useState } from 'react';
+import { dossiersApi, esRutaPendiente } from '../../common/api/dossiers.ts';
 import { errorMessage } from '../../common/api/errors.ts';
 import type { Dossier } from './types.ts';
 
-export function useDossiers(query = '') {
-  const [items, setItems] = useState<Dossier[]>([]);
-  const [loading, setLoading] = useState(import.meta.env.MODE !== 'test');
-  const [error, setError] = useState('');
+interface Resultado {
+  clave: string;
+  items: Dossier[];
+  error: string;
+  pendiente: boolean;
+}
+
+/**
+ * Expedientes visibles para el usuario (`GET /dossiers`), validados contra el contrato.
+ * Un 404 significa que el servidor aún no publica el módulo: se informa como `pendiente`, no
+ * como error. Con `habilitado` en `false` no se consulta (el rol no tiene `dossiers.read`).
+ */
+export function useDossiers(query = '', habilitado = true) {
+  const [version, setVersion] = useState(0);
+  const clave = `${query}#${String(version)}`;
+  const [resultado, setResultado] = useState<Resultado>({
+    clave: '',
+    items: [],
+    error: '',
+    pendiente: false,
+  });
+
   useEffect(() => {
-    if (import.meta.env.MODE === 'test') return;
+    if (!habilitado) return;
     let active = true;
-    domainRequest<Dossier[]>(`/dossiers?limit=25${query}`)
+    const controller = new AbortController();
+    dossiersApi
+      .listAll(query, controller.signal)
       .then(({ data }) => {
-        if (active) setItems(data);
+        if (active) setResultado({ clave, items: data, error: '', pendiente: false });
       })
       .catch((reason: unknown) => {
-        if (active) setError(errorMessage(reason, 'No fue posible consultar los expedientes.'));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+        if (!active) return;
+        const pendiente = esRutaPendiente(reason);
+        setResultado((actual) => ({
+          clave,
+          items: pendiente ? [] : actual.items,
+          pendiente,
+          error: pendiente ? '' : errorMessage(reason, 'No fue posible consultar los expedientes.'),
+        }));
       });
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [query]);
-  return { items, loading, error };
+  }, [query, clave, habilitado]);
+
+  const reload = useCallback(() => {
+    setVersion((current) => current + 1);
+  }, []);
+  const vigente = resultado.clave === clave;
+  return {
+    items: habilitado ? resultado.items : [],
+    loading: habilitado && !vigente,
+    error: habilitado ? resultado.error : '',
+    pendiente: habilitado && vigente && resultado.pendiente,
+    reload,
+  };
 }

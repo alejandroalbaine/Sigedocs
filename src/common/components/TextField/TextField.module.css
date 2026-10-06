@@ -1,20 +1,20 @@
 .field {
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .label {
   display: inline-block;
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
   color: var(--ink);
-  font-size: var(--text-md);
-  font-weight: 700;
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .control {
   position: relative;
   display: flex;
   align-items: center;
-  border: 1.5px solid var(--line-strong);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   background: var(--surface-raised);
   transition:
@@ -32,16 +32,16 @@
 }
 
 .icon {
-  flex: 0 0 46px;
-  width: 46px;
+  flex: 0 0 38px;
+  width: 38px;
   color: var(--subtle);
   text-align: center;
-  font-size: 19px;
+  font-size: var(--text-md);
 }
 
 .input {
   width: 100%;
-  min-height: 52px;
+  min-height: var(--control-h);
   padding: 0 var(--space-3);
   border: 0;
   outline: 0;
@@ -60,14 +60,14 @@
 
 .help {
   display: block;
-  margin-top: 7px;
+  margin-top: var(--space-1);
   color: var(--muted);
   font-size: var(--text-xs);
 }
 
 .error {
   display: block;
-  margin-top: 7px;
+  margin-top: var(--space-1);
   color: var(--danger);
   font-size: var(--text-xs);
   font-weight: 700;

@@ -11,6 +11,8 @@ export interface SessionValue {
   error: ApiError | null;
   /** Nombre legible de cada código de rol; vacío si `/roles` no respondió. */
   roleNames: ReadonlyMap<string, string>;
+  /** Estado de `GET /roles`: mientras carga no debe mostrarse como fallo. */
+  rolesStatus: 'loading' | 'ready' | 'error';
   /** Registra la identidad devuelta por el login, sin otra solicitud. */
   signIn: (user: SessionUser) => void;
   /** Vuelve a consultar `users/current`. */

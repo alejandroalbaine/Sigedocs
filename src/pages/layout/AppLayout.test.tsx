@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
+  adminIntegral,
   adminSistema,
   especialista,
   problem,
@@ -22,11 +23,16 @@ test('la navegación muestra solo los módulos permitidos, nunca por nombre de r
   expect(menu().queryByRole('link', { name: /Historial/ })).not.toBeInTheDocument();
 });
 
-test('la auditoría habilita el historial', async () => {
+test('el historial exige auditoría y consulta de expedientes', async () => {
+  renderApp(signedInBackend(adminIntegral), '/');
+  await screen.findByRole('heading', { name: /Bienvenido/ });
+  expect(menu().getByRole('link', { name: /Historial y trazabilidad/ })).toBeInTheDocument();
+});
+
+test('el administrador del sistema no ve historial ni revisión (ADR-015)', async () => {
   renderApp(signedInBackend(adminSistema), '/');
   await screen.findByRole('heading', { name: /Bienvenido/ });
-
-  expect(menu().getByRole('link', { name: /Historial y trazabilidad/ })).toBeInTheDocument();
+  expect(menu().queryByRole('link', { name: /Historial y trazabilidad/ })).not.toBeInTheDocument();
   expect(menu().queryByRole('link', { name: /Detalle y revisión/ })).not.toBeInTheDocument();
 });
 

@@ -10,7 +10,7 @@ import {
   FilePlus2,
   Inbox,
   Info,
-  Landmark,
+  RotateCcw,
   Search,
   ShieldCheck,
 } from 'lucide-react';
@@ -19,24 +19,30 @@ import { hasPermission } from '../../common/auth/permissions.ts';
 import { EmptyState } from '../../common/components/index.ts';
 import { downloadCsv } from '../../common/utils/download.ts';
 import { formatLongDate } from '../../common/utils/format.ts';
+import { EnPreparacion } from '../documental/EnPreparacion.tsx';
 import { useDossiers } from '../documental/useDossiers.ts';
-import type { Dossier } from '../documental/types.ts';
+import { visibleNavigation } from '../layout/navigation.ts';
+import {
+  contarPorGrupo,
+  GRUPOS_ESTADO,
+  grupoDeEstado,
+  segmentosDona,
+  tonoDeEstado,
+} from '../../common/workflow/estados.ts';
 import styles from './DashboardPage.module.css';
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-function statusClass(code: string) {
-  if (code === 'FINAL' || code.includes('APPROVED')) return styles.statusSuccess;
-  if (code.includes('REVIEW')) return styles.statusWarning;
-  return styles.statusNeutral;
-}
+const STATUS_CLASS = {
+  neutral: styles.statusNeutral,
+  info: styles.statusInfo,
+  warning: styles.statusWarning,
+  success: styles.statusSuccess,
+  final: styles.statusFinal,
+};
 
-function stateGroup(item: Dossier): 'received' | 'review' | 'final' | 'other' {
-  const code = item.currentState.code;
-  if (code === 'FINAL' || code.includes('APPROVED')) return 'final';
-  if (code.includes('REVIEW')) return 'review';
-  if (code === 'RECEIVED') return 'received';
-  return 'other';
+function statusClass(code: string) {
+  return STATUS_CLASS[tonoDeEstado(code)];
 }
 
 export function DashboardPage() {
@@ -44,7 +50,9 @@ export function DashboardPage() {
   const { roleNames } = useSession();
   const roles = roleLabels(user, roleNames) || 'Usuario institucional';
   const canCreate = hasPermission(user.permissions, 'dossiers.create');
-  const { items: dossiers, error } = useDossiers();
+  const canRead = hasPermission(user.permissions, 'dossiers.read');
+  const { items: dossiers, error, pendiente } = useDossiers('', canRead);
+  const accesos = visibleNavigation(user.permissions).filter((item) => item.to && item.to !== '/');
   const [search, setSearch] = useState('');
   const filtered = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('es');
@@ -58,13 +66,10 @@ export function DashboardPage() {
       : dossiers;
   }, [dossiers, search]);
 
-  const counts = useMemo(() => {
-    const result = { received: 0, review: 0, final: 0, other: 0 };
-    dossiers.forEach((item) => {
-      result[stateGroup(item)] += 1;
-    });
-    return result;
-  }, [dossiers]);
+  const counts = useMemo(
+    () => contarPorGrupo(dossiers.map((item) => item.currentState.code)),
+    [dossiers],
+  );
 
   const monthly = useMemo(() => {
     const current = new Date();
@@ -79,32 +84,27 @@ export function DashboardPage() {
       return {
         label: MONTHS[month],
         created: items.length,
-        completed: items.filter((item) => stateGroup(item) === 'final').length,
+        completed: items.filter((item) => grupoDeEstado(item.currentState.code) === 'cierre')
+          .length,
       };
     });
   }, [dossiers]);
   const maxMonthly = Math.max(1, ...monthly.flatMap((item) => [item.created, item.completed]));
   const total = dossiers.length;
   const percent = (value: number) => (total === 0 ? 0 : Math.round((value / total) * 100));
-  const receivedStop = percent(counts.received);
-  const reviewStop = receivedStop + percent(counts.review);
-  const finalStop = reviewStop + percent(counts.final);
-  const donutStyle = {
-    '--received-stop': `${receivedStop}%`,
-    '--review-stop': `${reviewStop}%`,
-    '--final-stop': `${finalStop}%`,
-  } as CSSProperties;
+  const donutStyle = { '--donut-fill': segmentosDona(counts) } as CSSProperties;
+  const legend = GRUPOS_ESTADO.filter((group) => group.id !== 'otros' || counts.otros > 0);
 
   function exportReport() {
     downloadCsv(
       `sigesdoc-panel-${new Date().toISOString().slice(0, 10)}.csv`,
-      ['Código', 'Título', 'Serie', 'Unidad', 'Responsable', 'Estado', 'Fecha'],
+      ['Código', 'Título', 'Programa', 'Unidad', 'Responsable', 'Estado', 'Fecha'],
       dossiers.map((item) => [
         item.code,
         item.title,
         item.degreeProgramCode,
         item.schoolCode,
-        item.createdBy.name,
+        item.assignedSpecialist?.name ?? 'Sin asignar',
         item.currentState.name,
         item.createdAt,
       ]),
@@ -129,22 +129,15 @@ export function DashboardPage() {
           </p>
         </div>
         <div className={styles.welcomeActions}>
-          <button type="button" className={styles.secondaryButton} onClick={exportReport}>
-            <Download size={16} /> Exportar Reporte
-          </button>
-          {canCreate ? (
+          {dossiers.length > 0 && (
+            <button type="button" className={styles.secondaryButton} onClick={exportReport}>
+              <Download size={16} /> Exportar Reporte
+            </button>
+          )}
+          {canCreate && (
             <Link to="/expedientes/nuevo" className={styles.primaryButton}>
               <FilePlus2 size={16} /> Registrar Documento
             </Link>
-          ) : (
-            <button
-              type="button"
-              className={styles.primaryButton}
-              disabled
-              title="Su rol no tiene el permiso dossiers.create"
-            >
-              <FilePlus2 size={16} /> Registrar Documento
-            </button>
           )}
         </div>
       </header>
@@ -153,51 +146,62 @@ export function DashboardPage() {
         <EmptyState title="No tiene módulos asignados">
           Su sesión está activa, pero su cuenta no tiene permisos sobre ningún módulo.
         </EmptyState>
+      ) : !canRead ? (
+        <section className={styles.accesos} aria-label="Accesos de su rol">
+          <h2>Accesos disponibles para su rol</h2>
+          <ul>
+            {accesos.map((item) => (
+              <li key={item.label}>
+                <Link to={item.to ?? '/'}>
+                  <item.icon size={20} /> {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : (
         <>
           {error && <div className={styles.error}>{error}</div>}
-          {dossiers.length === 0 && !error && (
-            <p className={styles.dataNotice}>
-              no hay datos simulados: los indicadores permanecen en cero hasta recibir expedientes
-              del backend.
-            </p>
+          {pendiente && <EnPreparacion />}
+          {dossiers.length === 0 && !error && !pendiente && (
+            <p className={styles.dataNotice}>Aún no hay expedientes registrados en su alcance.</p>
           )}
 
           <ul className={styles.metrics} aria-label="Indicadores">
             <li>
-              <span>Acervo documental</span>
-              <b>Total Documentos Custodiados</b>
+              <span>Expedientes</span>
+              <b>Total visibles</b>
               <strong>{total}</strong>
-              <small>Expedientes visibles según alcance</small>
+              <small>Según su rol y alcance</small>
               <i>
                 <Archive size={21} />
               </i>
             </li>
             <li>
-              <span>Mesa de entrada</span>
-              <b>Pendientes de Clasificación</b>
-              <strong>{counts.received}</strong>
-              <small>Requieren asignación de serie y caja</small>
+              <span>Recepción</span>
+              <b>Recepcionados o asignados</b>
+              <strong>{counts.recepcion}</strong>
+              <small>Aún no inician la revisión</small>
               <i>
                 <Inbox size={21} />
               </i>
             </li>
             <li>
-              <span>Comisiones académicas</span>
-              <b>En Revisión Curricular</b>
-              <strong>{counts.review}</strong>
-              <small>Planes y programas en vicerrectoría</small>
+              <span>Revisión técnico-curricular</span>
+              <b>En revisión</b>
+              <strong>{counts.revision}</strong>
+              <small>Revisión, reenvío o reevaluación</small>
               <i>
                 <ClipboardCheck size={21} />
               </i>
             </li>
             <li>
-              <span>Ley 481-08 / TRD</span>
-              <b>Archivo Histórico UAPA</b>
-              <strong>{counts.final}</strong>
-              <small>Expedientes con valor permanente</small>
+              <span>Correcciones</span>
+              <b>Requieren ajustes</b>
+              <strong>{counts.ajustes}</strong>
+              <small>Devueltos con observaciones</small>
               <i>
-                <Landmark size={21} />
+                <RotateCcw size={21} />
               </i>
             </li>
           </ul>
@@ -206,8 +210,8 @@ export function DashboardPage() {
             <article className={styles.chartCard}>
               <header>
                 <div>
-                  <h2>Ingreso y Radicación Mensual de Documentos</h2>
-                  <p>Histórico calculado con los expedientes visibles en el backend.</p>
+                  <h2>Expedientes registrados por mes</h2>
+                  <p>Histórico calculado con los expedientes visibles para su usuario.</p>
                 </div>
                 <div className={styles.legend}>
                   <span>
@@ -218,7 +222,7 @@ export function DashboardPage() {
                   </span>
                 </div>
               </header>
-              <div className={styles.barChart} aria-label="Radicación mensual">
+              <div className={styles.barChart} aria-label="Expedientes registrados por mes">
                 {monthly.map((item) => (
                   <div className={styles.barGroup} key={item.label}>
                     <div className={styles.bars}>
@@ -243,7 +247,7 @@ export function DashboardPage() {
               <header>
                 <div>
                   <h2>Estado de Trámite</h2>
-                  <p>Frecuencia y ciclo vital de retención</p>
+                  <p>Distribución por etapa del flujo curricular</p>
                 </div>
               </header>
               <div className={styles.donutContent}>
@@ -257,22 +261,12 @@ export function DashboardPage() {
                   </span>
                 </div>
                 <ul>
-                  <li>
-                    <b className={styles.navyKey} />
-                    Recepcionado <strong>{percent(counts.received)}%</strong>
-                  </li>
-                  <li>
-                    <b className={styles.orangeKey} />
-                    En revisión <strong>{percent(counts.review)}%</strong>
-                  </li>
-                  <li>
-                    <b className={styles.blueKey} />
-                    Concluido <strong>{percent(counts.final)}%</strong>
-                  </li>
-                  <li>
-                    <b className={styles.redKey} />
-                    Otros estados <strong>{percent(counts.other)}%</strong>
-                  </li>
+                  {legend.map((group) => (
+                    <li key={group.id}>
+                      <b className={styles.legendKey} style={{ background: group.color }} />
+                      {group.etiqueta} <strong>{percent(counts[group.id])}%</strong>
+                    </li>
+                  ))}
                 </ul>
               </div>
               <div className={styles.calibration}>
@@ -307,8 +301,8 @@ export function DashboardPage() {
                     <tr>
                       <th>Código único</th>
                       <th>Título del documento</th>
-                      <th>Serie documental</th>
-                      <th>Unidad de origen</th>
+                      <th>Programa</th>
+                      <th>Unidad académica</th>
                       <th>Responsable</th>
                       <th>Estado</th>
                     </tr>
@@ -323,7 +317,7 @@ export function DashboardPage() {
                         </td>
                         <td>{item.degreeProgramCode}</td>
                         <td>{item.schoolCode}</td>
-                        <td>{item.createdBy.name}</td>
+                        <td>{item.assignedSpecialist?.name ?? 'Sin asignar'}</td>
                         <td>
                           <span
                             className={`${styles.status} ${statusClass(item.currentState.code)}`}
@@ -347,44 +341,34 @@ export function DashboardPage() {
                 <span>
                   Mostrando {Math.min(5, filtered.length)} de {filtered.length} registros
                 </span>
-                <span>
-                  <button disabled>Anterior</button> &nbsp; <b>1</b> &nbsp; … &nbsp;{' '}
-                  <button disabled>Siguiente</button>
-                </span>
+                <Link to="/expedientes">Ver todos →</Link>
               </footer>
             </article>
 
-            <aside className={styles.alerts} aria-label="Alertas TRD">
+            <aside className={styles.alerts} aria-label="Tareas pendientes">
               <header>
                 <div>
                   <h2>
-                    <BellRing size={20} /> Alertas TRD
+                    <BellRing size={20} /> Tareas pendientes
                   </h2>
-                  <p>Vencimientos bajo Tabla de Retención (Ley 481-08)</p>
+                  <p>Calculadas con los expedientes visibles para su usuario</p>
                 </div>
-                <span>Ruta pendiente</span>
               </header>
-              <div className={styles.alertCardDanger}>
-                <b>Vencimiento TRD</b>
-                <p>
-                  Los plazos de transferencia aparecerán cuando backend publique el servicio de
-                  alertas.
-                </p>
-                <button disabled>Proceder a Transferencia →</button>
-              </div>
               <div className={styles.alertCardWarning}>
-                <b>Pendiente Dictamen</b>
-                <p>{counts.review} expedientes visibles están actualmente en revisión.</p>
-                <button disabled>Notificar Comisiones →</button>
+                <b>Requieren ajustes</b>
+                <p>{counts.ajustes} expedientes esperan corrección y reenvío.</p>
               </div>
               <div className={styles.alertCardNeutral}>
-                <b>Auditoría Interna</b>
-                <p>La revisión consolidada estará disponible con el endpoint de auditoría.</p>
-                <button disabled>Abrir Cuadro de Cotejo →</button>
+                <b>En revisión</b>
+                <p>{counts.revision} expedientes están en revisión o reevaluación.</p>
               </div>
-              <button className={styles.allAlerts} disabled>
-                Ver todas las alertas ↗
-              </button>
+              <div className={styles.alertCardNeutral}>
+                <b>Pendientes de asignación</b>
+                <p>{counts.recepcion} expedientes están recepcionados o asignados.</p>
+              </div>
+              <Link className={styles.allAlerts} to="/expedientes">
+                Ver expedientes →
+              </Link>
             </aside>
           </section>
         </>

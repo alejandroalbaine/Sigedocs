@@ -11,9 +11,10 @@ import {
   ShieldCheck,
   UploadCloud,
 } from 'lucide-react';
-import { domainRequest } from '../../common/api/domainClient.ts';
+import { dossiersApi } from '../../common/api/dossiers.ts';
 import { errorMessage } from '../../common/api/errors.ts';
 import type { CreateDossierInput, Dossier } from '../documental/types.ts';
+import { datosRegistro, normalizarRegistro, validarRegistro } from './registro.ts';
 import styles from '../documental/documental.module.css';
 
 const initial: CreateDossierInput = {
@@ -27,15 +28,15 @@ const stepNames = [
   'Información General',
   'Clasificación & Alcance',
   'Archivo Digital',
-  'Retención y Control',
-  'Revisión y Firma',
+  'Retención',
+  'Confirmación',
 ];
 
 function loadDraft() {
   const raw = localStorage.getItem('sigesdoc:dossier-draft');
   if (!raw) return initial;
   try {
-    return { ...initial, ...(JSON.parse(raw) as Partial<typeof initial>) };
+    return datosRegistro(JSON.parse(raw));
   } catch {
     localStorage.removeItem('sigesdoc:dossier-draft');
     return initial;
@@ -88,7 +89,7 @@ export function RegistroPage() {
         .slice(0, 20),
     );
     setMessage(
-      'Archivo validado localmente. La carga definitiva espera la ruta oficial del backend.',
+      'Archivo revisado en este equipo. La carga al expediente estará disponible próximamente.',
     );
   }
 
@@ -109,28 +110,25 @@ export function RegistroPage() {
     setMessage('Radicación restablecida.');
   }
   function next() {
-    if (step === 1 && !form.title.trim()) {
-      setMessage('Complete el título del expediente.');
-      return;
-    }
-    if (
-      step === 2 &&
-      (!form.schoolCode.trim() || !form.degreeProgramCode.trim() || !form.subjectCode.trim())
-    ) {
-      setMessage('Complete los códigos de unidad, programa y asignatura.');
+    const error = validarRegistro(form, step);
+    if (error) {
+      setMessage(error);
       return;
     }
     setMessage('');
     setStep((current) => Math.min(5, current + 1));
   }
   async function submit() {
+    if (saving || created) return;
+    const error = validarRegistro(form, 5);
+    if (error) {
+      setMessage(error);
+      return;
+    }
     setSaving(true);
     setMessage('');
     try {
-      const { data } = await domainRequest<Dossier>('/dossiers', {
-        method: 'POST',
-        body: JSON.stringify(form),
-      });
+      const { data } = await dossiersApi.create(normalizarRegistro(form));
       setCreated(data);
       localStorage.removeItem('sigesdoc:dossier-draft');
       setMessage(
@@ -146,23 +144,12 @@ export function RegistroPage() {
   return (
     <div className={styles.page}>
       <title>Registrar expediente | SIGESDOC</title>
-      <div className={styles.compliance}>
-        <span>
-          <ShieldCheck size={18} /> Módulo Oficial de Radicación Archivística
-        </span>
-        <span>
-          <span className={styles.badgeWarning}>Sesión Cifrada SHA-256</span>{' '}
-          <span className={styles.badge}>AGN v2.4</span>
-        </span>
-      </div>
       <header>
-        <p className={`${styles.eyebrow} ${styles.eyebrowOrange}`}>
-          Gestión curricular institucional · Trámite generado por el servidor
-        </p>
-        <h1>Registro y Radicación de Expediente Documental</h1>
+        <p className={`${styles.eyebrow} ${styles.eyebrowOrange}`}>Expediente Curricular Digital</p>
+        <h1>Registrar expediente curricular</h1>
         <p className={styles.subtle}>
-          Proceso oficial de cinco pasos conforme a la Ley 481-08. Solo se envían a la API los
-          campos aceptados por su contrato.
+          Asistente de cinco pasos. El código del expediente, la versión 1.0 y el estado inicial se
+          asignan automáticamente al registrar.
         </p>
       </header>
 
@@ -176,6 +163,7 @@ export function RegistroPage() {
             >
               <button
                 type="button"
+                disabled={saving || Boolean(created)}
                 onClick={() => {
                   if (number <= step) setStep(number);
                 }}
@@ -207,6 +195,7 @@ export function RegistroPage() {
               <label htmlFor="title">Título del expediente *</label>
               <input
                 id="title"
+                maxLength={300}
                 className={styles.input}
                 value={form.title}
                 onChange={(event) => {
@@ -238,6 +227,7 @@ export function RegistroPage() {
               <label htmlFor="school">Unidad productora *</label>
               <input
                 id="school"
+                maxLength={50}
                 className={styles.input}
                 value={form.schoolCode}
                 onChange={(event) => {
@@ -250,6 +240,7 @@ export function RegistroPage() {
               <label htmlFor="program">Código de programa *</label>
               <input
                 id="program"
+                maxLength={50}
                 className={styles.input}
                 value={form.degreeProgramCode}
                 onChange={(event) => {
@@ -262,6 +253,7 @@ export function RegistroPage() {
               <label htmlFor="subject">Código de asignatura *</label>
               <input
                 id="subject"
+                maxLength={50}
                 className={styles.input}
                 value={form.subjectCode}
                 onChange={(event) => {
@@ -282,8 +274,10 @@ export function RegistroPage() {
             >
               <UploadCloud size={34} />
               <span>
-                <strong>Arrastre el documento principal o haga clic para examinar</strong>
-                <small>PDF/A o DOCX institucional · máximo 50 MB</small>
+                <strong>Seleccione el documento principal para revisarlo</strong>
+                <small>
+                  PDF o Word · la carga del archivo al expediente estará disponible próximamente
+                </small>
               </span>
             </button>
             <input
@@ -299,7 +293,7 @@ export function RegistroPage() {
                   <FileText size={18} />{' '}
                   <strong>{file?.name ?? 'Documento principal pendiente'}</strong>
                 </span>
-                <span className={styles.badge}>PDF/A</span>
+                <span className={styles.badge}>PDF o Word</span>
               </header>
               <div className={styles.fileRow}>
                 <span className={styles.fileIcon}>
@@ -313,8 +307,8 @@ export function RegistroPage() {
                   </strong>
                   <small>
                     {fileHash
-                      ? `SHA-256 ${fileHash}…`
-                      : 'La carga definitiva se habilitará con la ruta de archivos.'}
+                      ? `Huella local SHA-256 ${fileHash}…`
+                      : 'La carga del archivo al expediente estará disponible próximamente.'}
                   </small>
                 </span>
                 {fileUrl && (
@@ -384,19 +378,10 @@ export function RegistroPage() {
                 </small>
               </div>
             </section>
-            <details className={styles.legalAccordion} open>
-              <summary>
-                <span>
-                  <ShieldCheck size={18} />{' '}
-                  <strong>Garantías Forenses y Protocolo Jurídico Ley 481-08</strong>
-                </span>
-                <span className={styles.badge}>3 normativas</span>
-              </summary>
-              <p>
-                La integridad local se verifica mediante hash. OCR, X.509 y sellado de tiempo
-                permanecerán identificados como pendientes hasta disponer de rutas oficiales.
-              </p>
-            </details>
+            <p className={styles.deferredNote}>
+              <ShieldCheck size={16} /> Gestión archivística diferida (Informe Módulo II, §5.1):
+              estos valores se conservan en el borrador y no se envían al servidor.
+            </p>
           </>
         )}
 
@@ -412,7 +397,7 @@ export function RegistroPage() {
                 </div>
                 <div>
                   <dt>Nivel</dt>
-                  <dd>{form.academicLevel}</dd>
+                  <dd>{form.academicLevel === 'associate' ? 'Técnico superior' : 'Grado'}</dd>
                 </div>
                 <div>
                   <dt>Unidad / programa / asignatura</dt>
@@ -440,6 +425,7 @@ export function RegistroPage() {
               type="button"
               className={`${styles.button} ${styles.buttonQuiet}`}
               onClick={saveDraft}
+              disabled={saving || Boolean(created)}
             >
               <Save size={15} /> Guardar borrador
             </button>
@@ -447,6 +433,7 @@ export function RegistroPage() {
               type="button"
               className={`${styles.button} ${styles.buttonSecondary}`}
               onClick={reset}
+              disabled={saving}
             >
               Cancelar radicación
             </button>
@@ -459,6 +446,7 @@ export function RegistroPage() {
                 onClick={() => {
                   setStep((current) => current - 1);
                 }}
+                disabled={saving || Boolean(created)}
               >
                 <ArrowLeft size={15} /> Paso anterior
               </button>

@@ -1,7 +1,7 @@
 import { API_BASE_URL } from '../config.ts';
 import { ApiError, fallbackMessage, INVALID_RESPONSE, messagesByCode, NETWORK } from './errors.ts';
 import { buildUrl } from './client.ts';
-import { problemCode, problemFieldErrors } from './contract.ts';
+import { ContractError, problemCode, problemFieldErrors } from './contract.ts';
 
 export interface PageMeta {
   pagination?: { nextCursor: string | null; limit: number };
@@ -13,7 +13,7 @@ function normalizedMeta(value: unknown): PageMeta | undefined {
   const raw = meta.pagination ?? meta.paginacion;
   if (typeof raw !== 'object' || raw === null) return undefined;
   const pagination = raw as Record<string, unknown>;
-  const cursor = pagination.nextCursor ?? pagination.cursorSiguiente ?? null;
+  const cursor = pagination.next ?? pagination.nextCursor ?? pagination.cursorSiguiente ?? null;
   const limit = pagination.limit ?? pagination.limite;
   if ((cursor !== null && typeof cursor !== 'string') || typeof limit !== 'number') {
     return undefined;
@@ -62,5 +62,27 @@ export async function domainRequest<T>(
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(NETWORK);
+  }
+}
+
+/**
+ * `domainRequest` más el validador del contrato: si `data` no tiene la forma prometida, la
+ * interfaz muestra "respuesta no válida" en lugar de usar datos a medias.
+ */
+export async function validatedRequest<T>(
+  path: string,
+  parse: (data: unknown) => T,
+  init?: RequestInit,
+): Promise<{ data: T; meta?: PageMeta }> {
+  const { data, meta } = await domainRequest<unknown>(path, init);
+  try {
+    return meta ? { data: parse(data), meta } : { data: parse(data) };
+  } catch (error) {
+    // templateContract.ts señala su propio incumplimiento con "Plantilla fuera de contrato".
+    const fueraDeContrato =
+      error instanceof ContractError ||
+      (error instanceof Error && error.message.startsWith('Plantilla fuera de contrato'));
+    if (fueraDeContrato) throw new ApiError(INVALID_RESPONSE);
+    throw error;
   }
 }

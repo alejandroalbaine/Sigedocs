@@ -23,7 +23,7 @@
 }
 
 .size select {
-  min-height: 36px;
+  min-height: var(--control-h-sm);
   padding: 0 var(--space-2);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-xs);

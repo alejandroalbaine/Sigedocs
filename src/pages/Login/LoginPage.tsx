@@ -9,8 +9,6 @@ import styles from './LoginPage.module.css';
 
 const AYUDA = {
   contrasena: 'Para recuperar su cuenta, comuníquese con la Mesa de Ayuda TI de la UAPA.',
-  identidad:
-    'La conexión con la identidad única UAPA está preparada para una próxima fase del proyecto.',
   mesa: 'Mesa de Ayuda TI: utilice los canales institucionales autorizados por la UAPA.',
   manual:
     'El manual de usuario se incorporará cuando se habiliten los siguientes módulos del sistema.',
@@ -159,19 +157,6 @@ export function LoginPage() {
                   setAyuda(AYUDA.contrasena);
                 }}
               />
-
-              <div className={styles.separator}>
-                <span>o</span>
-              </div>
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={() => {
-                  setAyuda(AYUDA.identidad);
-                }}
-              >
-                Continuar con identidad UAPA
-              </Button>
 
               <p className={styles.audit}>
                 <span aria-hidden="true">◉</span> El acceso y las acciones quedan registrados.

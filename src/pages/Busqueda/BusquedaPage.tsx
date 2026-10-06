@@ -1,7 +1,10 @@
 import { useMemo, useState, type SyntheticEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { Download, FileSearch, List, Search, SlidersHorizontal, X } from 'lucide-react';
+import { FileSearch, List, Search, SlidersHorizontal, X } from 'lucide-react';
+import { EnPreparacion } from '../documental/EnPreparacion.tsx';
 import { useDossiers } from '../documental/useDossiers.ts';
+import { claseEstado } from '../documental/estadoBadge.ts';
+import { tonoDeEstado } from '../../common/workflow/estados.ts';
 import styles from '../documental/documental.module.css';
 
 export function BusquedaPage() {
@@ -12,7 +15,7 @@ export function BusquedaPage() {
     () => (currentQuery ? `&search=${encodeURIComponent(currentQuery)}` : ''),
     [currentQuery],
   );
-  const { items, loading, error } = useDossiers(query);
+  const { items, loading, error, pendiente } = useDossiers(query);
 
   function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,10 +31,10 @@ export function BusquedaPage() {
           <p className={`${styles.eyebrow} ${styles.eyebrowOrange}`}>
             SIGESDOC &nbsp; › &nbsp; Módulo de consulta &nbsp; › &nbsp; Búsqueda avanzada
           </p>
-          <h1>Búsqueda Avanzada y Recuperación de Expedientes</h1>
+          <h1>Búsqueda avanzada de expedientes</h1>
           <p>
-            Localización exhaustiva en el fondo documental de la UAPA conforme a la Ley General de
-            Archivos 481-08 y el Cuadro General de Clasificación.
+            Localice expedientes curriculares por código, título o asignatura dentro de su alcance
+            autorizado.
           </p>
         </div>
         <form className={styles.headerActions} onSubmit={submit}>
@@ -46,7 +49,7 @@ export function BusquedaPage() {
             <X size={16} /> Limpiar filtros
           </button>
           <button className={`${styles.button} ${styles.buttonOrange}`}>
-            <Search size={16} /> Ejecutar Búsqueda Booleana <kbd>Ctrl+Enter</kbd>
+            <Search size={16} /> Buscar
           </button>
         </form>
       </header>
@@ -57,8 +60,8 @@ export function BusquedaPage() {
             <SlidersHorizontal size={18} />
           </span>
           <h2>Filtros Avanzados</h2>
-          <span className={styles.badgeWarning}>4 activos</span>
-          <span className={styles.subtle}>• Metadatos TRD, Nivel de Reserva y Fechas</span>
+          {currentQuery && <span className={styles.badgeWarning}>1 activo</span>}
+          <span className={styles.subtle}>• Código, título o asignatura</span>
         </summary>
         <form className={styles.filters} onSubmit={submit}>
           <div className={styles.field}>
@@ -74,28 +77,6 @@ export function BusquedaPage() {
             />
           </div>
           <div className={styles.field}>
-            <label htmlFor="level">Nivel académico</label>
-            <select
-              id="level"
-              className={styles.select}
-              disabled
-              title="Filtro pendiente en backend"
-            >
-              <option>Todos</option>
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="state">Estado</label>
-            <select
-              id="state"
-              className={styles.select}
-              disabled
-              title="Filtro pendiente en backend"
-            >
-              <option>Todos</option>
-            </select>
-          </div>
-          <div className={styles.field}>
             <label>&nbsp;</label>
             <button className={styles.button}>Aplicar consulta</button>
           </div>
@@ -103,6 +84,7 @@ export function BusquedaPage() {
       </details>
 
       {error && <div className={styles.error}>{error}</div>}
+      {pendiente && <EnPreparacion />}
       <section className={styles.summaryBar}>
         <div className={styles.summaryText}>
           <span className={styles.summaryIcon}>
@@ -122,7 +104,7 @@ export function BusquedaPage() {
               )}
             </h2>
             <span className={styles.subtle}>
-              Tiempo de respuesta del motor documental · datos según alcance autorizado
+              Resultados según el alcance autorizado por el servidor
             </span>
           </div>
         </div>
@@ -130,30 +112,25 @@ export function BusquedaPage() {
           <span className={styles.buttonSecondary}>
             <List size={16} /> Lista Detallada
           </span>
-          <button className={styles.button} disabled title="Pendiente de ruta en backend">
-            <Download size={16} /> Exportar Hallazgos (CSV / PDF)
-          </button>
         </div>
       </section>
 
       <section className={styles.cards} aria-label="Resultados de búsqueda">
-        {!loading && items.length === 0 && (
+        {!loading && !pendiente && items.length === 0 && (
           <p className={styles.empty}>No se encontraron expedientes.</p>
         )}
-        {items.slice(0, 3).map((item, index) => (
+        {items.map((item) => (
           <details
-            className={`${styles.result} ${index === 1 ? styles.resultWarning : ''}`}
+            className={`${styles.result} ${
+              tonoDeEstado(item.currentState.code) === 'warning' ? styles.resultWarning : ''
+            }`}
             key={item.dossierId}
           >
             <summary>
               <span className={styles.code}>{item.code}</span>
               <strong>{item.title}</strong>
               <span className={styles.badge}>{item.schoolCode}</span>
-              <span
-                className={index === 1 ? `${styles.badge} ${styles.badgeWarning}` : styles.badge}
-              >
-                {item.currentState.name}
-              </span>
+              <span className={claseEstado(item.currentState.code)}>{item.currentState.name}</span>
               <span className={styles.subtle}>
                 {item.currentVersion.label} &nbsp; • &nbsp; expediente digital
               </span>
@@ -163,13 +140,6 @@ export function BusquedaPage() {
                 {item.schoolCode} · {item.degreeProgramCode} · {item.subjectCode}
               </p>
               <div className={styles.resultActions}>
-                <button
-                  className={`${styles.button} ${styles.buttonSecondary}`}
-                  disabled
-                  title="El backend aún no expone folios"
-                >
-                  Ver folio
-                </button>
                 <Link className={styles.button} to={`/revision?dossierId=${item.dossierId}`}>
                   Abrir expediente
                 </Link>
@@ -181,24 +151,7 @@ export function BusquedaPage() {
 
       <div className={styles.pager}>
         <span>
-          Mostrando <strong>1 - {Math.min(3, items.length)}</strong> de{' '}
-          <strong>{items.length}</strong> expedientes
-        </span>
-        <span className={styles.pages}>
-          <button className={styles.pageButton} disabled>
-            ‹
-          </button>
-          <button className={`${styles.pageButton} ${styles.pageButtonActive}`}>1</button>
-          <button className={styles.pageButton} disabled>
-            2
-          </button>
-          <button className={styles.pageButton} disabled>
-            3
-          </button>
-          <span>…</span>
-          <button className={styles.pageButton} disabled>
-            ›
-          </button>
+          Mostrando <strong>{items.length}</strong> expedientes (máximo 25 por consulta)
         </span>
       </div>
     </div>

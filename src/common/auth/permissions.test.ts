@@ -12,3 +12,9 @@ test('comprueba permisos explícitos sin deducirlos del rol', () => {
   expect(hasPermission(['ADMIN_SISTEMA'], 'expedientes.aprobar')).toBe(false);
   expect(hasPermission(null, 'expedientes.aprobar')).toBe(false);
 });
+
+test('users.manage acepta el código transitorio usuarios.administrar (REF-02)', () => {
+  expect(hasPermission(['usuarios.administrar'], 'users.manage')).toBe(true);
+  expect(hasPermission(['users.manage'], 'users.manage')).toBe(true);
+  expect(hasPermission(['auditoria.consultar'], 'users.manage')).toBe(false);
+});

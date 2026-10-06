@@ -1,0 +1,783 @@
+{
+  "templateId": "plantilla-programa-asignatura",
+  "code": "COURSE_PROGRAM",
+  "name": "Programa de Asignatura",
+  "description": "Plantilla curricular configurable para programas de asignatura.",
+  "documentTypeId": "tipo-programa-asignatura",
+  "academicLevels": ["associate", "bachelor"],
+  "version": {
+    "templateVersionId": "version-programa-asignatura-1",
+    "versionNumber": 1,
+    "status": "published",
+    "sections": [
+      {
+        "sectionId": "sec-01",
+        "key": "datos_academicos",
+        "title": "Datos académicos",
+        "position": 1,
+        "isActive": true,
+        "isRequired": true,
+        "fields": [
+          {
+            "fieldId": "campo-001",
+            "key": "asignatura",
+            "label": "Asignatura",
+            "type": "text",
+            "isRequired": true,
+            "position": 1
+          },
+          {
+            "fieldId": "campo-002",
+            "key": "creditos",
+            "label": "Créditos",
+            "type": "number",
+            "isRequired": true,
+            "position": 2,
+            "config": {
+              "decimals": 0
+            }
+          },
+          {
+            "fieldId": "campo-003",
+            "key": "clave_asignatura",
+            "label": "Clave",
+            "type": "text",
+            "isRequired": true,
+            "position": 3
+          },
+          {
+            "fieldId": "campo-004",
+            "key": "prerrequisitos",
+            "label": "Prerrequisitos",
+            "type": "text",
+            "isRequired": false,
+            "position": 4
+          },
+          {
+            "fieldId": "campo-005",
+            "key": "escuela",
+            "label": "Escuela",
+            "type": "select",
+            "isRequired": true,
+            "position": 5,
+            "optionsSource": {
+              "type": "institutional_catalog",
+              "catalog": "schools"
+            }
+          },
+          {
+            "fieldId": "campo-006",
+            "key": "carreras",
+            "label": "Carrera(s) en la que se imparte",
+            "type": "multi_select",
+            "isRequired": true,
+            "position": 6,
+            "optionsSource": {
+              "type": "institutional_catalog",
+              "catalog": "degree_programs"
+            }
+          },
+          {
+            "fieldId": "campo-007",
+            "key": "caracter",
+            "label": "Carácter",
+            "type": "select",
+            "isRequired": true,
+            "position": 7,
+            "options": [
+              {
+                "value": "OBLIGATORIA",
+                "label": "Obligatoria"
+              },
+              {
+                "value": "ELECTIVA",
+                "label": "Electiva"
+              }
+            ]
+          },
+          {
+            "fieldId": "campo-008",
+            "key": "modalidades",
+            "label": "Modalidad educativa",
+            "type": "multi_select",
+            "isRequired": true,
+            "position": 8,
+            "optionsSource": {
+              "type": "institutional_catalog",
+              "catalog": "modalities"
+            }
+          },
+          {
+            "fieldId": "campo-009",
+            "key": "periodo_academico",
+            "label": "Período académico",
+            "type": "number",
+            "isRequired": true,
+            "position": 9,
+            "config": {
+              "decimals": 0
+            }
+          },
+          {
+            "fieldId": "campo-010",
+            "key": "bloque_formacion",
+            "label": "Bloque de formación",
+            "type": "text",
+            "isRequired": true,
+            "position": 10
+          },
+          {
+            "fieldId": "campo-011",
+            "key": "ht",
+            "label": "HT - Horas teóricas",
+            "type": "number",
+            "isRequired": true,
+            "position": 11,
+            "config": {
+              "decimals": 0
+            }
+          },
+          {
+            "fieldId": "campo-012",
+            "key": "hp",
+            "label": "HP - Horas prácticas",
+            "type": "number",
+            "isRequired": true,
+            "position": 12,
+            "config": {
+              "decimals": 0
+            }
+          },
+          {
+            "fieldId": "campo-013",
+            "key": "hi",
+            "label": "HI - Horas de interacción",
+            "type": "number",
+            "isRequired": true,
+            "position": 13,
+            "config": {
+              "decimals": 0
+            }
+          },
+          {
+            "fieldId": "campo-014",
+            "key": "hit",
+            "label": "HIT - Horas de interacción tutorial",
+            "type": "number",
+            "isRequired": true,
+            "position": 14,
+            "config": {
+              "decimals": 0
+            }
+          },
+          {
+            "fieldId": "campo-015",
+            "key": "hei",
+            "label": "HEI - Horas de estudio independiente",
+            "type": "number",
+            "isRequired": true,
+            "position": 15,
+            "config": {
+              "decimals": 0
+            }
+          }
+        ],
+        "description": "Identificación y carga horaria de la asignatura."
+      },
+      {
+        "sectionId": "sec-02",
+        "key": "descripcion_asignatura",
+        "title": "Descripción de la asignatura / módulo",
+        "position": 2,
+        "isActive": true,
+        "isRequired": true,
+        "fields": [
+          {
+            "fieldId": "campo-016",
+            "key": "descripcion",
+            "label": "Descripción de la asignatura / módulo",
+            "type": "long_text",
+            "isRequired": true,
+            "position": 1
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-03",
+        "key": "competencias_fundamentales",
+        "title": "Competencias fundamentales y resultados de aprendizaje",
+        "position": 3,
+        "isActive": true,
+        "isRequired": true,
+        "fields": [
+          {
+            "fieldId": "campo-017",
+            "key": "competencias_fundamentales",
+            "label": "Competencias fundamentales",
+            "type": "repeatable_group",
+            "isRequired": true,
+            "position": 1,
+            "config": {
+              "presentation": "blocks",
+              "sortable": true,
+              "addable": true,
+              "removable": true,
+              "fields": [
+                {
+                  "fieldId": "campo-018",
+                  "key": "codigo_competencia",
+                  "label": "Código de la competencia",
+                  "type": "text",
+                  "isRequired": true,
+                  "position": 1
+                },
+                {
+                  "fieldId": "campo-018b",
+                  "key": "competencia",
+                  "label": "Competencia fundamental",
+                  "type": "long_text",
+                  "isRequired": true,
+                  "position": 2
+                },
+                {
+                  "fieldId": "campo-019",
+                  "key": "resultados_aprendizaje",
+                  "label": "Resultados de aprendizaje",
+                  "type": "repeatable_group",
+                  "isRequired": true,
+                  "position": 3,
+                  "config": {
+                    "presentation": "list",
+                    "sortable": true,
+                    "addable": true,
+                    "removable": true,
+                    "fields": [
+                      {
+                        "fieldId": "campo-020",
+                        "key": "codigo_resultado",
+                        "label": "Código del resultado",
+                        "type": "text",
+                        "isRequired": true,
+                        "position": 1
+                      },
+                      {
+                        "fieldId": "campo-021",
+                        "key": "resultado",
+                        "label": "Resultado de aprendizaje",
+                        "type": "long_text",
+                        "isRequired": true,
+                        "position": 2
+                      }
+                    ]
+                  },
+                  "rules": [
+                    {
+                      "type": "cardinality",
+                      "params": {
+                        "minItems": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "rules": [
+              {
+                "type": "cardinality",
+                "params": {
+                  "minItems": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-04",
+        "key": "competencias_especificas",
+        "title": "Competencias específicas y resultados de aprendizaje",
+        "position": 4,
+        "isActive": true,
+        "isRequired": true,
+        "fields": [
+          {
+            "fieldId": "campo-022",
+            "key": "competencias_especificas",
+            "label": "Competencias específicas",
+            "type": "repeatable_group",
+            "isRequired": true,
+            "position": 1,
+            "config": {
+              "presentation": "blocks",
+              "sortable": true,
+              "addable": true,
+              "removable": true,
+              "fields": [
+                {
+                  "fieldId": "campo-023",
+                  "key": "codigo_competencia",
+                  "label": "Código de la competencia",
+                  "type": "text",
+                  "isRequired": true,
+                  "position": 1
+                },
+                {
+                  "fieldId": "campo-024",
+                  "key": "competencia",
+                  "label": "Competencia específica",
+                  "type": "long_text",
+                  "isRequired": true,
+                  "position": 2
+                },
+                {
+                  "fieldId": "campo-025",
+                  "key": "resultados_aprendizaje",
+                  "label": "Resultados de aprendizaje",
+                  "type": "repeatable_group",
+                  "isRequired": true,
+                  "position": 3,
+                  "config": {
+                    "presentation": "list",
+                    "sortable": true,
+                    "addable": true,
+                    "removable": true,
+                    "fields": [
+                      {
+                        "fieldId": "campo-026",
+                        "key": "codigo_resultado",
+                        "label": "Código del resultado",
+                        "type": "text",
+                        "isRequired": true,
+                        "position": 1
+                      },
+                      {
+                        "fieldId": "campo-027",
+                        "key": "resultado",
+                        "label": "Resultado de aprendizaje",
+                        "type": "long_text",
+                        "isRequired": true,
+                        "position": 2
+                      }
+                    ]
+                  },
+                  "rules": [
+                    {
+                      "type": "cardinality",
+                      "params": {
+                        "minItems": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "rules": [
+              {
+                "type": "cardinality",
+                "params": {
+                  "minItems": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-05",
+        "key": "unidades_didacticas",
+        "title": "Unidades didácticas, contenidos, estrategias y evaluación",
+        "position": 5,
+        "isActive": true,
+        "isRequired": true,
+        "fields": [
+          {
+            "fieldId": "campo-028",
+            "key": "unidades_didacticas",
+            "label": "Unidades didácticas",
+            "type": "repeatable_group",
+            "isRequired": true,
+            "position": 1,
+            "config": {
+              "presentation": "blocks",
+              "sortable": true,
+              "addable": true,
+              "removable": true,
+              "fields": [
+                {
+                  "fieldId": "campo-029",
+                  "key": "numero_unidad",
+                  "label": "Número de unidad",
+                  "type": "number",
+                  "isRequired": true,
+                  "position": 1,
+                  "config": {
+                    "decimals": 0
+                  }
+                },
+                {
+                  "fieldId": "campo-030",
+                  "key": "nombre_unidad",
+                  "label": "Nombre de la unidad",
+                  "type": "text",
+                  "isRequired": true,
+                  "position": 2
+                },
+                {
+                  "fieldId": "campo-031",
+                  "key": "temas",
+                  "label": "Temas",
+                  "type": "repeatable_group",
+                  "isRequired": true,
+                  "position": 3,
+                  "config": {
+                    "presentation": "list",
+                    "sortable": true,
+                    "addable": true,
+                    "removable": true,
+                    "fields": [
+                      {
+                        "fieldId": "campo-032",
+                        "key": "tema",
+                        "label": "Tema",
+                        "type": "text",
+                        "isRequired": true,
+                        "position": 1
+                      }
+                    ]
+                  },
+                  "rules": [
+                    {
+                      "type": "cardinality",
+                      "params": {
+                        "minItems": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "fieldId": "campo-033",
+                  "key": "estrategias_metodologicas",
+                  "label": "Estrategias metodológicas",
+                  "type": "multi_select",
+                  "isRequired": true,
+                  "position": 4,
+                  "optionsSource": {
+                    "type": "institutional_catalog",
+                    "catalog": "methodological_strategies"
+                  }
+                },
+                {
+                  "fieldId": "campo-034",
+                  "key": "descripcion_aplicacion",
+                  "label": "Descripción de la aplicación de la estrategia",
+                  "type": "long_text",
+                  "isRequired": false,
+                  "position": 5
+                },
+                {
+                  "fieldId": "campo-035",
+                  "key": "tecnicas_evaluacion",
+                  "label": "Técnicas de evaluación",
+                  "type": "multi_select",
+                  "isRequired": true,
+                  "position": 6,
+                  "optionsSource": {
+                    "type": "institutional_catalog",
+                    "catalog": "assessment_techniques"
+                  }
+                }
+              ]
+            },
+            "rules": [
+              {
+                "type": "cardinality",
+                "params": {
+                  "minItems": 1,
+                  "maxItems": 10
+                },
+                "code": "MAXIMO_UNIDADES_PREGRADO_GRADO"
+              }
+            ]
+          }
+        ],
+        "description": "Cada unidad integra sus temas, estrategias metodológicas y técnicas de evaluación para evitar duplicar la unidad en estructuras paralelas."
+      },
+      {
+        "sectionId": "sec-06",
+        "key": "plan_evaluacion",
+        "title": "Plan de evaluación",
+        "position": 6,
+        "isActive": true,
+        "isRequired": true,
+        "fields": [
+          {
+            "fieldId": "campo-036",
+            "key": "componentes_evaluacion",
+            "label": "Componentes de evaluación",
+            "type": "repeatable_group",
+            "isRequired": true,
+            "position": 1,
+            "config": {
+              "presentation": "table",
+              "sortable": true,
+              "addable": true,
+              "removable": true,
+              "fields": [
+                {
+                  "fieldId": "campo-037",
+                  "key": "componente",
+                  "label": "Criterio o componente a evaluar",
+                  "type": "text",
+                  "isRequired": true,
+                  "position": 1
+                },
+                {
+                  "fieldId": "campo-038",
+                  "key": "porcentaje",
+                  "label": "Porcentaje",
+                  "type": "number",
+                  "isRequired": true,
+                  "position": 2,
+                  "format": "percentage",
+                  "config": {
+                    "decimals": 0
+                  }
+                },
+                {
+                  "fieldId": "campo-039",
+                  "key": "estrategias_tecnicas",
+                  "label": "Estrategias o técnicas predominantes",
+                  "type": "multi_select",
+                  "isRequired": true,
+                  "position": 3,
+                  "optionsSource": {
+                    "type": "institutional_catalog",
+                    "catalog": "strategies_and_assessment_techniques"
+                  }
+                },
+                {
+                  "fieldId": "campo-040",
+                  "key": "instrumentos",
+                  "label": "Instrumentos",
+                  "type": "multi_select",
+                  "isRequired": true,
+                  "position": 4,
+                  "optionsSource": {
+                    "type": "institutional_catalog",
+                    "catalog": "assessment_instruments"
+                  }
+                }
+              ]
+            },
+            "rules": [
+              {
+                "type": "cardinality",
+                "params": {
+                  "minItems": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-07",
+        "key": "perfil_facilitador",
+        "title": "Perfil del docente que facilitará la asignatura",
+        "position": 7,
+        "isActive": true,
+        "isRequired": true,
+        "fields": [
+          {
+            "fieldId": "campo-041",
+            "key": "requisitos_perfil",
+            "label": "Requisitos del perfil",
+            "type": "repeatable_group",
+            "isRequired": true,
+            "position": 1,
+            "config": {
+              "presentation": "list",
+              "sortable": true,
+              "addable": true,
+              "removable": true,
+              "fields": [
+                {
+                  "fieldId": "campo-042",
+                  "key": "requisito",
+                  "label": "Requisito",
+                  "type": "long_text",
+                  "isRequired": true,
+                  "position": 1
+                }
+              ]
+            },
+            "rules": [
+              {
+                "type": "cardinality",
+                "params": {
+                  "minItems": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-08",
+        "key": "elaboracion_revision_validacion",
+        "title": "Elaboración, revisión y validación",
+        "position": 8,
+        "isActive": true,
+        "isRequired": true,
+        "fields": [
+          {
+            "fieldId": "campo-043",
+            "key": "elaborado_por",
+            "label": "Programa elaborado por",
+            "type": "repeatable_group",
+            "isRequired": true,
+            "position": 1,
+            "config": {
+              "presentation": "list",
+              "sortable": false,
+              "addable": true,
+              "removable": true,
+              "fields": [
+                {
+                  "fieldId": "campo-044",
+                  "key": "nombre",
+                  "label": "Nombre",
+                  "type": "text",
+                  "isRequired": true,
+                  "position": 1
+                }
+              ]
+            },
+            "rules": [
+              {
+                "type": "cardinality",
+                "params": {
+                  "minItems": 1
+                }
+              }
+            ]
+          },
+          {
+            "fieldId": "campo-045",
+            "key": "revisado_por",
+            "label": "Revisado por",
+            "type": "text",
+            "isRequired": false,
+            "position": 2,
+            "isReadOnly": true
+          },
+          {
+            "fieldId": "campo-046",
+            "key": "fecha_revision",
+            "label": "Fecha de revisión",
+            "type": "date",
+            "isRequired": false,
+            "position": 3,
+            "isReadOnly": true
+          },
+          {
+            "fieldId": "campo-047",
+            "key": "validado_por",
+            "label": "Validado por",
+            "type": "text",
+            "isRequired": false,
+            "position": 4,
+            "isReadOnly": true
+          },
+          {
+            "fieldId": "campo-048",
+            "key": "fecha_validacion",
+            "label": "Fecha de validación",
+            "type": "date",
+            "isRequired": false,
+            "position": 5,
+            "isReadOnly": true
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-09",
+        "key": "bibliografia",
+        "title": "Bibliografía",
+        "position": 9,
+        "isActive": true,
+        "isRequired": true,
+        "fields": [
+          {
+            "fieldId": "campo-049",
+            "key": "referencias_bibliograficas",
+            "label": "Referencias bibliográficas",
+            "type": "repeatable_group",
+            "isRequired": true,
+            "position": 1,
+            "config": {
+              "presentation": "list",
+              "sortable": true,
+              "addable": true,
+              "removable": true,
+              "fields": [
+                {
+                  "fieldId": "campo-050",
+                  "key": "tipo_bibliografia",
+                  "label": "Tipo",
+                  "type": "select",
+                  "isRequired": true,
+                  "position": 1,
+                  "options": [
+                    {
+                      "value": "BASICA",
+                      "label": "Bibliografía básica"
+                    },
+                    {
+                      "value": "COMPLEMENTARIA",
+                      "label": "Bibliografía complementaria"
+                    }
+                  ]
+                },
+                {
+                  "fieldId": "campo-051",
+                  "key": "referencia",
+                  "label": "Referencia bibliográfica",
+                  "type": "long_text",
+                  "isRequired": true,
+                  "position": 2
+                }
+              ]
+            },
+            "rules": [
+              {
+                "type": "cardinality",
+                "params": {
+                  "minItems": 1
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "rules": [
+      {
+        "ruleId": "regla-evaluacion-100",
+        "code": "SUMA_EVALUACION_100",
+        "scope": "document",
+        "type": "sum_equals",
+        "target": {
+          "section": "plan_evaluacion",
+          "fieldPath": ["componentes_evaluacion", "porcentaje"]
+        },
+        "params": {
+          "expectedValue": 100
+        },
+        "message": "La suma de los porcentajes del plan de evaluación debe ser igual a 100 %.",
+        "severity": "error",
+        "isActive": true
+      }
+    ]
+  }
+}

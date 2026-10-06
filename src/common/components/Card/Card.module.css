@@ -1,6 +1,6 @@
 .card {
   min-width: 0;
-  padding: var(--space-6);
+  padding: var(--card-pad);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--white);
@@ -12,7 +12,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
 }
 
 .title {

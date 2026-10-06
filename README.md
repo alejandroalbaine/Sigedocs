@@ -7,19 +7,36 @@ repositorio no contiene servidor ni acceso a base de datos.
 
 ## Estado
 
-| Módulo                    | Estado                                                                            |
-| ------------------------- | --------------------------------------------------------------------------------- |
-| Acceso, sesión y permisos | Integrado con el backend real (`/api/v1/sessions`, `/users/current`).             |
-| Panel principal           | Indicadores y actividad alimentados por expedientes autorizados.                  |
-| Gestión y búsqueda        | Integradas con `GET /api/v1/dossiers` y alcance por rol.                          |
-| Registro de expediente    | Integrado con `POST /api/v1/dossiers`; código, versión y estado son del servidor. |
-| Revisión de expediente    | Estructura visual lista; decisiones deshabilitadas hasta integrar transiciones.   |
-| Registro de observaciones | Contrato conocido; escritura deshabilitada hasta implementar la ruta.             |
-| Historial y trazabilidad  | Filtros y detalle listos; espera la ruta de auditoría documental.                 |
-| Reportes y UI Kit         | Exportación local CSV/JSON activa; PDF/Excel oficial espera una ruta del backend. |
+El frontend implementa el contrato MVP completo (`contratos/endpoints.md` §1–§9). Cada pantalla
+funciona en cuanto el backend publica su ruta; mientras una ruta confirmada no exista, la pantalla
+lo indica como "pendiente" y nunca muestra datos simulados. Lo que falta del lado del servidor está
+en [docs/pendientes-backend.md](docs/pendientes-backend.md).
 
-Los cinco expedientes locales usados para revisión son datos de desarrollo en PostgreSQL, no
-constantes del frontend. Ninguna pantalla presenta como guardada una operación que no se envió.
+| Módulo                    | Rutas del contrato                                                 | Backend v0.2.0 (01/10)              |
+| ------------------------- | ------------------------------------------------------------------ | ----------------------------------- |
+| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`     | Implementado                        |
+| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `GET/PUT .../roles`        | Implementado                        |
+| Panel, gestión y búsqueda | `GET /dossiers`                                                    | Implementado                        |
+| Registro de expediente    | `POST /dossiers`                                                   | Implementado                        |
+| Detalle y flujo T2 a T8   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions`    | Implementado                        |
+| Asignación (T1)           | `GET .../assignment-candidates`, `POST /dossiers/{id}/assignments` | Implementado                        |
+| Observaciones             | `GET/POST /dossiers/{id}/observations`                             | Implementado                        |
+| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                                  | Implementado                        |
+| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local             | Implementado                        |
+| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`       | Implementado                        |
+| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`      | Plantillas sí; catálogos pendientes |
+
+Verificado desde la interfaz contra el backend v0.2.0 (01/10), con cada rol: la Dirección asigna,
+la especialista revisa y devuelve, la coordinación reenvía, la especialista reevalúa y la Dirección
+aprueba para pilotaje; el historial y la auditoría registran cada paso.
+
+El formulario del programa (CU-01) se genera desde la plantilla publicada y guarda borradores
+contra el backend real (`PATCH .../versions/{id}`). Los campos con catálogo institucional (escuela,
+carreras, modalidad, estrategias) indican que sus opciones estarán disponibles próximamente: el
+backend aún no publica `GET /institutional-catalogs/{catalog}`.
+
+La Biblioteca UI (`/ui-kit`) es una herramienta interna del equipo: solo existe con `npm run dev`
+y no aparece en el menú ni en el build de producción.
 
 ## Tecnologías
 
@@ -58,21 +75,47 @@ el backend.
 
 ### Opción con Docker
 
-Si ya tiene Docker Desktop, no necesita instalar Node.js en su computadora:
+El frontend puede ejecutarse en producción mediante Docker y Nginx.
+
+Para construir la imagen y levantar el contenedor:
 
 ```bash
 docker compose up --build
 ```
 
-Abra <http://localhost:5173>. Para detenerlo:
+Abra <http://localhost:5173>.
+
+El puerto `5173` del equipo se redirige al puerto `80` del contenedor, donde Nginx sirve el build de producción generado por Vite.
+
+Para detener el contenedor:
 
 ```bash
 docker compose down
 ```
 
-Docker levanta únicamente el frontend. El backend continúa ejecutándose desde su propio
-repositorio en el puerto `3000`.
+La variable `VITE_API_BASE_URL` se configura durante el proceso de build. Por defecto utiliza:
 
+```text
+http://localhost:3000
+```
+
+El valor queda fijo dentro de la imagen. Para apuntar a otro backend hay que reconstruirla:
+
+```bash
+VITE_API_BASE_URL=https://api.ejemplo.edu.do docker compose up --build
+```
+
+El backend debe incluir el origen de la interfaz (`http://localhost:5173` en local) en `ALLOWED_ORIGINS`.
+Docker ahora sirve el build de producción; para desarrollar con recarga en caliente use `npm run dev`.
+
+Al etiquetar una versión (`vX.Y.Z`) o fusionar en `main`, GitHub Actions publica la imagen en
+`ghcr.io/alejandroalbaine/sigedocs` (`latest`, `X.Y.Z`, `X.Y`); cada push a `develop` publica la
+etiqueta `develop` para probar el despliegue. Se construye con
+`VITE_API_BASE_URL` vacía: la interfaz llama a `/api/v1` en su mismo dominio y el proxy del
+servidor (Dokploy) dirige `/api` al backend. Para otro origen, definir la variable del repositorio
+`VITE_API_BASE_URL`.
+
+Docker levanta únicamente el frontend. El backend continúa ejecutándose desde su propio repositorio.
 En VS Code, `F5` levanta Vite y abre Chrome con el depurador conectado.
 
 ## Comandos
@@ -83,6 +126,7 @@ npm run setup         # Crea .env desde la plantilla si todavía no existe
 npm run build         # Verificación de tipos y build de producción en dist/
 npm run preview       # Sirve dist/ localmente
 npm test              # Pruebas
+npm run test:integration:b3 # Registro, Gestión y Panel contra una API local real (requiere cuenta de pruebas)
 npm run lint          # ESLint
 npm run lint:css      # Stylelint (rechaza colores fuera de tokens.css)
 npm run format        # Prettier
@@ -138,6 +182,7 @@ La última comparación formal con los archivos entregados está en
 - La sesión es una cookie `HttpOnly` del backend; el frontend nunca lee ni guarda tokens.
 - Toda solicitud usa `credentials: 'include'` y el origen exacto de `VITE_API_BASE_URL`.
 - El build inyecta una CSP como `<meta>` (`script-src 'self'`, `connect-src` limitado a la API).
-  `frame-ancestors`, HSTS y el resto de cabeceras las debe enviar el hosting.
+  `nginx.conf` envía `frame-ancestors`, `X-Frame-Options`, `X-Content-Type-Options` y
+  `Referrer-Policy`; HSTS lo debe enviar el hosting con HTTPS.
 - Ocultar una opción por permisos es experiencia de usuario: el backend autoriza cada operación.
 - Las variables `VITE_*` llegan al navegador; nunca contienen secretos.

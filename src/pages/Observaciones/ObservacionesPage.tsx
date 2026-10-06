@@ -1,46 +1,113 @@
+import { useState } from 'react';
+import { dossiersApi } from '../../common/api/dossiers.ts';
+import type { Observation } from '../../common/api/dossierContract.ts';
+import { useRecurso } from '../../common/api/useRecurso.ts';
 import { RequirePermission } from '../../common/auth/RequirePermission.tsx';
-import { useCurrentUser } from '../../common/auth/SessionContext.ts';
-import { Alert, Card, DataTable, PageHeader, type Column } from '../../common/components/index.ts';
+import {
+  Alert,
+  Card,
+  DataTable,
+  Field,
+  PageHeader,
+  type Column,
+} from '../../common/components/index.ts';
+import { admiteDecisionTecnica } from '../../common/workflow/estados.ts';
+import {
+  estructuraApi,
+  ubicacion,
+  type SeccionObservable,
+} from '../../features/observaciones/estructura.ts';
 import { FormularioObservacion } from '../../features/observaciones/FormularioObservacion.tsx';
+import { EnPreparacion } from '../documental/EnPreparacion.tsx';
+import { useDossiers } from '../documental/useDossiers.ts';
 import styles from '../layout/page.module.css';
 
-interface Observacion {
-  id: string;
-  expediente: string;
-  descripcion: string;
-  estado: string;
-  autor: string;
-  fecha: string;
-}
-
-const COLUMNAS: readonly Column<Observacion>[] = [
-  { key: 'expediente', header: 'Expediente', render: (fila) => fila.expediente },
-  { key: 'descripcion', header: 'Descripción', render: (fila) => fila.descripcion },
-  { key: 'estado', header: 'Estado', render: (fila) => fila.estado },
-  { key: 'autor', header: 'Registrado por', render: (fila) => fila.autor },
-  { key: 'fecha', header: 'Fecha', render: (fila) => fila.fecha },
+const columnas = (estructura: readonly SeccionObservable[] | null): Column<Observation>[] => [
+  { key: 'text', header: 'Observación', render: (fila) => fila.text },
+  {
+    key: 'ubicacion',
+    header: 'Sección / campo',
+    render: (fila) => ubicacion(fila, estructura) || 'General',
+  },
+  { key: 'autor', header: 'Registrada por', render: (fila) => fila.createdBy?.name ?? '—' },
+  {
+    key: 'fecha',
+    header: 'Fecha',
+    render: (fila) => (fila.createdAt ? new Date(fila.createdAt).toLocaleString('es-DO') : '—'),
+  },
 ];
 
 function Observaciones() {
-  const user = useCurrentUser();
+  const { items, loading, error, pendiente } = useDossiers();
+  const revisables = items.filter((item) => admiteDecisionTecnica(item.currentState.code));
+  const [elegido, setElegido] = useState('');
+  const dossier =
+    revisables.find((item) => item.dossierId === elegido) ?? revisables[0] ?? undefined;
+  const lista = useRecurso(
+    dossier
+      ? () => dossiersApi.observations(dossier.dossierId, dossier.currentVersion.versionId)
+      : null,
+    [dossier?.dossierId, dossier?.currentVersion.versionId],
+  );
+  const estructura = useRecurso(dossier ? () => estructuraApi.deExpediente(dossier) : null, [
+    dossier?.template.templateId,
+    dossier?.template.templateVersionId,
+  ]);
+
+  if (loading) return <p>Consultando expedientes…</p>;
+  if (error) return <Alert kind="error">{error}</Alert>;
+  if (pendiente) return <EnPreparacion />;
+  if (!dossier) {
+    return (
+      <Alert kind="info">
+        Ningún expediente visible está En revisión o En reevaluación: solo en esas etapas se
+        registran observaciones.
+      </Alert>
+    );
+  }
+
   return (
     <>
-      <Alert kind="info">
-        El contrato de observaciones está documentado. El control permanece deshabilitado hasta que
-        su ruta de escritura esté implementada y verificada de extremo a extremo.
-      </Alert>
       <Card title="Nueva observación">
-        <FormularioObservacion autor={user.name} />
-      </Card>
-      <Card title="Últimas observaciones registradas">
-        <DataTable
-          caption="Últimas observaciones registradas"
-          columns={COLUMNAS}
-          rows={[]}
-          getRowKey={(fila) => fila.id}
-          emptyMessage="No hay observaciones disponibles."
-          minWidth={620}
+        <Field label="Expediente en revisión">
+          {(control) => (
+            <select
+              {...control}
+              value={dossier.dossierId}
+              onChange={(event) => {
+                setElegido(event.target.value);
+              }}
+            >
+              {revisables.map((item) => (
+                <option key={item.dossierId} value={item.dossierId}>
+                  {item.code} · {item.title} ({item.currentState.name})
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+        <FormularioObservacion
+          key={dossier.dossierId}
+          dossier={dossier}
+          estructura={estructura.data}
+          onRegistrada={lista.reload}
         />
+      </Card>
+      <Card title={`Observaciones de ${dossier.code} · ${dossier.currentVersion.label}`}>
+        {lista.pendiente ? (
+          <EnPreparacion modulo="La consulta de observaciones" />
+        ) : lista.error ? (
+          <Alert kind="error">{lista.error}</Alert>
+        ) : (
+          <DataTable
+            caption="Observaciones de la versión vigente"
+            columns={columnas(estructura.data)}
+            rows={lista.data ?? []}
+            getRowKey={(fila) => fila.observationId}
+            emptyMessage={lista.loading ? 'Consultando…' : 'Sin observaciones en esta versión.'}
+            minWidth={620}
+          />
+        )}
       </Card>
     </>
   );
@@ -50,7 +117,11 @@ export function ObservacionesPage() {
   return (
     <div className={styles.stack}>
       <title>Registro de observaciones | SIGESDOC</title>
-      <PageHeader eyebrow="Expedientes" title="Registro de observaciones" />
+      <PageHeader
+        eyebrow="Expedientes"
+        title="Registro de observaciones"
+        description="Hallazgos de la revisión técnico-curricular sobre la versión vigente."
+      />
       <RequirePermission permission="observations.create" action="registrar observaciones">
         <Observaciones />
       </RequirePermission>

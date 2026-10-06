@@ -1,20 +1,24 @@
 import { useState } from 'react';
+import type { Dossier } from '../../common/api/dossierContract.ts';
 import { Button } from '../../common/components/Button/Button.tsx';
 import { Field } from '../../common/components/Field/Field.tsx';
-import {
-  ACCIONES,
-  ESTADOS,
-  FILTROS_VACIOS,
-  type FiltrosTrazabilidad as Filtros,
-} from './catalogos.ts';
+import { FILTROS_VACIOS, TIPOS_EVENTO, type FiltrosTrazabilidad as Filtros } from './catalogos.ts';
 import styles from './trazabilidad.module.css';
 
 export interface FiltrosTrazabilidadProps {
+  expedientes: readonly Dossier[];
+  expediente: string;
+  onExpediente: (dossierId: string) => void;
   onAplicar: (filtros: Filtros) => void;
 }
 
-/** Acción, estado y fechas se aplican al cambiar; los textos, al pulsar Buscar. */
-export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
+/** Expediente, evento y fechas se aplican al cambiar; el texto, al pulsar Buscar. */
+export function FiltrosTrazabilidad({
+  expedientes,
+  expediente,
+  onExpediente,
+  onAplicar,
+}: FiltrosTrazabilidadProps) {
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VACIOS);
 
   function cambiar(campo: keyof Filtros, valor: string, aplicar: boolean) {
@@ -37,59 +41,32 @@ export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
       <div className={styles.grid}>
         <Field label="Expediente">
           {(control) => (
-            <input
-              {...control}
-              type="text"
-              placeholder="Código del expediente"
-              value={filtros.expediente}
-              onChange={(event) => {
-                cambiar('expediente', event.target.value, false);
-              }}
-            />
-          )}
-        </Field>
-        <Field label="Usuario">
-          {(control) => (
-            <input
-              {...control}
-              type="text"
-              placeholder="Nombre o correo"
-              value={filtros.usuario}
-              onChange={(event) => {
-                cambiar('usuario', event.target.value, false);
-              }}
-            />
-          )}
-        </Field>
-        <Field label="Acción">
-          {(control) => (
             <select
               {...control}
-              value={filtros.accion}
+              value={expediente}
               onChange={(event) => {
-                cambiar('accion', event.target.value, true);
+                onExpediente(event.target.value);
               }}
             >
-              <option value="">Todas las acciones</option>
-              {Object.entries(ACCIONES).map(([valor, { etiqueta }]) => (
-                <option key={valor} value={valor}>
-                  {etiqueta}
+              {expedientes.map((item) => (
+                <option key={item.dossierId} value={item.dossierId}>
+                  {item.code} · {item.title}
                 </option>
               ))}
             </select>
           )}
         </Field>
-        <Field label="Estado nuevo">
+        <Field label="Evento">
           {(control) => (
             <select
               {...control}
-              value={filtros.estado}
+              value={filtros.tipo}
               onChange={(event) => {
-                cambiar('estado', event.target.value, true);
+                cambiar('tipo', event.target.value, true);
               }}
             >
-              <option value="">Todos los estados</option>
-              {Object.entries(ESTADOS).map(([valor, { etiqueta }]) => (
+              <option value="">Todos los eventos</option>
+              {Object.entries(TIPOS_EVENTO).map(([valor, { etiqueta }]) => (
                 <option key={valor} value={valor}>
                   {etiqueta}
                 </option>
@@ -103,6 +80,7 @@ export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
               {...control}
               type="date"
               value={filtros.desde}
+              max={filtros.hasta || undefined}
               onChange={(event) => {
                 cambiar('desde', event.target.value, true);
               }}
@@ -115,6 +93,7 @@ export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
               {...control}
               type="date"
               value={filtros.hasta}
+              min={filtros.desde || undefined}
               onChange={(event) => {
                 cambiar('hasta', event.target.value, true);
               }}
@@ -124,13 +103,13 @@ export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
       </div>
 
       <div className={styles.search}>
-        <Field label="Buscar por expediente, usuario, observación o evidencia">
+        <Field label="Buscar en resumen, usuario o versión">
           {(control) => (
             <input
               {...control}
               type="search"
-              placeholder="Código, título, observación…"
               value={filtros.texto}
+              placeholder="Texto del evento…"
               onChange={(event) => {
                 cambiar('texto', event.target.value, false);
               }}
@@ -143,7 +122,7 @@ export function FiltrosTrazabilidad({ onAplicar }: FiltrosTrazabilidadProps) {
       </div>
 
       <div className={styles.foot}>
-        <span>Acción, estado y fechas se aplican automáticamente.</span>
+        <span>Expediente, evento y fechas se consultan al servidor al cambiar.</span>
         <Button
           variant="text"
           onClick={() => {

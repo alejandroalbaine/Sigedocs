@@ -41,8 +41,12 @@ const LEGACY_BY_CURRENT: Partial<Record<Permission, Permission>> = {
   'dossiers.edit': 'expedientes.editar',
   'observations.create': 'expedientes.editar',
   'workflow.approve_for_pilot': 'expedientes.aprobar',
+  // El backend actual siembra `expedientes.aprobar` al especialista, que según ADR-014 T3/T7
+  // es quien devuelve con observaciones. Se elimina al terminar la migración de códigos.
+  'workflow.request_changes': 'expedientes.aprobar',
   'audit.read': 'auditoria.consultar',
   'templates.manage': 'plantillas.administrar',
+  'users.manage': 'usuarios.administrar',
 };
 
 export function normalizePermissions(value: unknown): Set<string> {

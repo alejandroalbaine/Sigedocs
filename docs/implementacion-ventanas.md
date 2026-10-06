@@ -10,17 +10,17 @@ deduce capacidades por nombre de rol: recibe permisos efectivos desde `/api/v1/u
 
 ## Rutas de la interfaz
 
-| Pantalla            | Ruta                 | Integración actual                                                                                     |
-| ------------------- | -------------------- | ------------------------------------------------------------------------------------------------------ |
-| Panel principal     | `/`                  | Cuatro indicadores, gráficas, actividad real y exportación CSV de los expedientes visibles.            |
-| Gestión documental  | `/expedientes`       | `GET /api/v1/dossiers`; búsqueda, filtros, exportación CSV y alcance del servidor.                     |
-| Registrar documento | `/expedientes/nuevo` | Asistente funcional de cinco pasos y `POST /api/v1/dossiers`; borrador y validación local del archivo. |
-| Búsqueda avanzada   | `/busqueda`          | `GET /api/v1/dossiers?search=...`.                                                                     |
-| Detalle y revisión  | `/revision`          | Cinco pestañas navegables con resumen, metadatos, versión, bitácora y relaciones.                      |
-| Observaciones       | `/observaciones`     | Formulario preparado; escritura aún deshabilitada.                                                     |
-| Historial           | `/historial`         | Filtros preparados; auditoría por expediente aún pendiente.                                            |
-| Reportes            | `/reportes`          | Indicadores derivados de expedientes, filtros por periodo/unidad y exportación CSV.                    |
-| Biblioteca UI       | `/ui-kit`            | Estados, botones, formularios, paneles minimizables, modal de ejemplo y exportación de tokens.         |
+| Pantalla            | Ruta                 | Integración                                                                             |
+| ------------------- | -------------------- | --------------------------------------------------------------------------------------- |
+| Panel principal     | `/`                  | Indicadores por etapa del flujo (ADR-014), gráficas, tareas pendientes y CSV.           |
+| Gestión documental  | `/expedientes`       | `GET /dossiers`; responsable, versión, filtros, paginación y CSV.                       |
+| Registrar documento | `/expedientes/nuevo` | Asistente de cinco pasos y `POST /dossiers`; la retención queda como borrador diferido. |
+| Búsqueda avanzada   | `/busqueda`          | `GET /dossiers?search=...`.                                                             |
+| Detalle y revisión  | `/revision`          | Siete pestañas (T1 §3.7), checklist, dictamen, asignación y transiciones del contrato.  |
+| Observaciones       | `/observaciones`     | `GET/POST /dossiers/{id}/observations` sobre la versión vigente.                        |
+| Historial           | `/historial`         | `GET /dossiers/{id}/audit-events` con filtros por tipo y fecha.                         |
+| Reportes            | `/reportes`          | Indicadores calculados con los expedientes visibles y CSV.                              |
+| Biblioteca UI       | `/ui-kit`            | Paleta y tipografía de Figma, estados, botones, formularios, distintivos y diálogo.     |
 
 ## Roles y permisos
 

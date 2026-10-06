@@ -21,19 +21,21 @@ cada ruta ya esté implementada.
 | Plantillas         | Existe un validador para la definición completa y los ocho tipos de campo. Rechaza tipos desconocidos y más de dos niveles de grupos repetibles.         |
 | Errores            | Interpreta Problem Details final (`code`, `errors`) y su forma transitoria; nunca presenta `detail` técnico al usuario.                                  |
 
-## Acciones que permanecen deshabilitadas
+## Contrato MVP de flujo (actualización del 27/09)
 
-La interfaz no declara como realizadas operaciones que el backend ejecutable aún no ofrece. Esto
-incluye carga persistente de archivos, OCR, X.509, transiciones, observaciones, auditoría por
-expediente, notificaciones, remesas y disposición final. Los controles del prototipo permanecen
-deshabilitados o informativos hasta que la ruta correspondiente responda y tenga pruebas.
+| Área             | Resultado del frontend                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Validación       | `dossierContract.ts` valida `Dossier`, versiones, transiciones, historial, asignaciones, observaciones y auditoría.  |
+| Transiciones     | Envía exactamente `{ transitionId, versionId, observation? }`; solo ofrece las que devuelve `available-transitions`. |
+| Asignación       | Envía `{ specialistId }` a `POST /dossiers/{id}/assignments`.                                                        |
+| Observaciones    | Envía `{ versionId, text }`; solo en `IN_REVIEW` o `IN_REEVALUATION`, sin editar ni borrar.                          |
+| Auditoría        | Filtra con `type`, `from`, `to`; los tipos son los seis de AUD-01.                                                   |
+| Rutas pendientes | Un 404 en una ruta confirmada se muestra como "pendiente en el servidor", nunca con datos simulados.                 |
 
-Esta decisión no es una carencia de integración: evita inventar endpoints, estados, actores o
-resultados, tal como exigen los contratos.
+Las formas que el contrato no fija están en [pendientes-backend.md](pendientes-backend.md) §3.
 
-## Evidencia automatizada
+## Acciones que permanecen fuera del MVP
 
-Las pruebas verifican rutas y métodos de sesión, credenciales entre orígenes, envolturas `data`,
-paginación final y transitoria, Problem Details, permisos, los ocho tipos de plantilla, el máximo de
-dos niveles repetibles y la navegación protegida. Además se ejecutan TypeScript estricto, ESLint,
-Stylelint y el build de producción.
+La interfaz no declara como realizadas operaciones diferidas por los informes técnicos: carga
+persistente de archivos, OCR, firma o sellado digital, notificaciones externas, comparación de
+versiones, rama de posgrado y gestión archivística avanzada (Informe Módulo II §5.1).

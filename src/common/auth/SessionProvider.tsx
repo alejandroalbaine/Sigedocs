@@ -31,6 +31,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const client = useApi();
   const [session, setSession] = useState<SessionState>(LOADING);
   const [roleNames, setRoleNames] = useState<ReadonlyMap<string, string>>(new Map());
+  const [rolesStatus, setRolesStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
   useEffect(() => {
     let active = true;
@@ -60,10 +61,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     client
       .request('roles')
       .then((roles) => {
-        if (active) setRoleNames(new Map(roles.map((role) => [role.code, role.name])));
+        if (!active) return;
+        setRoleNames(new Map(roles.map((role) => [role.code, role.name])));
+        setRolesStatus('ready');
       })
       .catch(() => {
         // Sin nombres se muestran los códigos: no bloquea el uso de la aplicación.
+        if (active) setRolesStatus('error');
       });
     return () => {
       active = false;
@@ -89,8 +93,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [client]);
 
   const value = useMemo<SessionValue>(
-    () => ({ ...session, roleNames, signIn, refresh, logout }),
-    [session, roleNames, signIn, refresh, logout],
+    () => ({ ...session, roleNames, rolesStatus, signIn, refresh, logout }),
+    [session, roleNames, rolesStatus, signIn, refresh, logout],
   );
 
   return <SessionContext value={value}>{children}</SessionContext>;

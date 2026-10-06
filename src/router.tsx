@@ -13,6 +13,7 @@ import { GestionPage } from './pages/Gestion/GestionPage.tsx';
 import { RegistroPage } from './pages/Registro/RegistroPage.tsx';
 import { ReportesPage } from './pages/Reportes/ReportesPage.tsx';
 import { UiKitPage } from './pages/UiKit/UiKitPage.tsx';
+import { UsuariosPage } from './pages/Usuarios/UsuariosPage.tsx';
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
@@ -59,14 +60,9 @@ export const routes: RouteObject[] = [
           </RequirePermission>
         ),
       },
-      {
-        path: 'ui-kit',
-        element: (
-          <RequirePermission permission="templates.manage" action="consultar la biblioteca UI">
-            <UiKitPage />
-          </RequirePermission>
-        ),
-      },
+      { path: 'usuarios', element: <UsuariosPage /> },
+      // Herramienta interna del equipo (Figma ↔ código): solo existe en desarrollo.
+      ...(import.meta.env.DEV ? [{ path: 'ui-kit', element: <UiKitPage /> }] : []),
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -6,18 +6,30 @@
 
 ## Rutas consumidas
 
-| Operación           | Método y ruta                     | `data` validado por  |
-| ------------------- | --------------------------------- | -------------------- |
-| Estado del servicio | `GET /api/v1/status`              | `parseStatus`        |
-| Iniciar sesión      | `POST /api/v1/sessions`           | `parseLoginResponse` |
-| Identidad actual    | `GET /api/v1/users/current`       | `parseCurrentUser`   |
-| Cerrar sesión       | `DELETE /api/v1/sessions/current` | `204 No Content`     |
-| Nombres de rol      | `GET /api/v1/roles`               | `parseRoles`         |
-| Listar expedientes  | `GET /api/v1/dossiers`            | `Dossier[]`          |
-| Crear expediente    | `POST /api/v1/dossiers`           | `Dossier`            |
+| Operación                  | Método y ruta                                            | Validador                   |
+| -------------------------- | -------------------------------------------------------- | --------------------------- |
+| Estado del servicio        | `GET /api/v1/status`                                     | `parseStatus`               |
+| Iniciar sesión             | `POST /api/v1/sessions`                                  | `parseLoginResponse`        |
+| Identidad actual           | `GET /api/v1/users/current`                              | `parseCurrentUser`          |
+| Cerrar sesión              | `DELETE /api/v1/sessions/current`                        | `204 No Content`            |
+| Nombres de rol             | `GET /api/v1/roles`                                      | `parseRoles`                |
+| Usuarios                   | `GET/POST /api/v1/users`, `PATCH /api/v1/users/{userId}` | `parseManagedUser(s)`       |
+| Roles de un usuario        | `GET/PUT /api/v1/users/{userId}/roles`                   | `parseUserRoles`            |
+| Especialistas para asignar | `GET /api/v1/users?roleCode=CURRICULUM_SPECIALIST`       | `parseSpecialists`          |
+| Expedientes                | `GET/POST /api/v1/dossiers`, `GET /api/v1/dossiers/{id}` | `parseDossier(s)`           |
+| Transiciones disponibles   | `GET /api/v1/dossiers/{id}/available-transitions`        | `parseAvailableTransitions` |
+| Ejecutar transición        | `POST /api/v1/dossiers/{id}/transitions`                 | `parseTransitionResult`     |
+| Historial de estados       | `GET /api/v1/dossiers/{id}/transitions`                  | `parseHistory`              |
+| Asignación                 | `POST /api/v1/dossiers/{id}/assignments`                 | `parseAssignment`           |
+| Observaciones              | `GET/POST /api/v1/dossiers/{id}/observations`            | `parseObservation(s)`       |
+| Auditoría del expediente   | `GET /api/v1/dossiers/{id}/audit-events`                 | `parseAuditEvents`          |
+| Versiones                  | `GET /api/v1/dossiers/{id}/versions`                     | `parseVersions`             |
 
-Las respuestas exitosas se leen desde `data`; las colecciones normalizan `meta.pagination`. Cada operación declara su
-validador en `src/common/api/client.ts`. Si la respuesta no cumple el contrato, el cliente
+Las rutas de usuarios están en `src/common/api/users.ts` y `userContract.ts`; las de expedientes,
+en `src/common/api/dossiers.ts` y `dossierContract.ts`, que también cubren el detalle y la edición de
+una versión, la plantilla (`templatesApi`) y los catálogos.
+
+Las respuestas exitosas se leen desde `data`; las colecciones normalizan `meta.pagination`. Si la respuesta no cumple el contrato, el cliente
 lanza `ApiError` con "respuesta no válida" y registra en consola qué campo falló.
 
 ## Identidad (ADR-005)
@@ -88,27 +100,32 @@ error con opción de reintentar, sin confundirlo con falta de sesión.
 El catálogo está tipado en `src/common/auth/permissions.ts`. La interfaz usa los códigos finales
 en inglés y reconoce los alias anteriores únicamente durante REF-02:
 
-| Opción                                 | Permiso                      |
-| -------------------------------------- | ---------------------------- |
-| Gestión documental · Búsqueda avanzada | `dossiers.read`              |
-| Registrar documento                    | `dossiers.create`            |
-| Detalle y revisión                     | `workflow.approve_for_pilot` |
-| Observaciones                          | `observations.create`        |
-| Historial y trazabilidad · Reportes    | `audit.read`                 |
+| Opción o acción                         | Permiso                                                |
+| --------------------------------------- | ------------------------------------------------------ |
+| Gestión documental · Búsqueda · Detalle | `dossiers.read`                                        |
+| Registrar documento                     | `dossiers.create`                                      |
+| Asignar especialista                    | `workflow.assign`                                      |
+| Iniciar revisión · reevaluación         | `workflow.start_review`, `workflow.start_reevaluation` |
+| Solicitar ajustes                       | `workflow.request_changes`                             |
+| Aprobar para pilotaje                   | `workflow.approve_for_pilot`                           |
+| Reenviar                                | `workflow.resubmit`                                    |
+| Observaciones                           | `observations.create`                                  |
+| Historial y trazabilidad · Reportes     | `audit.read`                                           |
+| Usuarios y roles                        | `users.manage`                                         |
+
+Los botones del flujo no los decide la interfaz: muestra solo las transiciones que el servidor
+devuelve en `available-transitions` para ese usuario y ese estado.
 
 La navegación está en `src/pages/layout/navigation.ts`. Ocultar opciones no es control de
 acceso: el backend autoriza cada operación.
 
-## Módulos sin contrato implementado
+## Rutas que el backend aún no publica
 
-`endpoints.md` confirma las rutas de observaciones, transiciones y auditoría, pero el backend
-ejecutable revisado todavía no las expone. Sí expone `GET/POST /api/v1/dossiers`. Mientras tanto:
+Toda pantalla trata una respuesta `404` (o `501`) en una ruta confirmada como "en preparación":
+muestra un aviso neutro, no un error en rojo, y no inventa datos. Los errores reales (sin conexión,
+`500`, `403`) se siguen mostrando. El estado de cada ruta está en la tabla del README y lo que falta
+del lado del servidor, en [pendientes-backend.md](pendientes-backend.md).
 
-- el panel usa los expedientes reales accesibles y muestra ceros solo si la colección viene vacía;
-- observaciones no permite enviar el formulario;
-- historial no muestra eventos (`GET /api/v1/dossiers/{dossierId}/audit-events`);
-- revisión permite recorrer el checklist, pero no declara que guardó decisiones
-  (`POST /api/v1/dossiers/{dossierId}/transitions`).
-
-Para habilitar cada uno: agregar la ruta y su validador al cliente, copiar la respuesta real a
-`src/test/backend.ts`, cubrirla con pruebas y recién entonces conectar la pantalla.
+Para habilitar una ruta nueva: agregar la llamada y su validador al cliente, reproducir la
+respuesta real en `src/test/backend.ts`, cubrirla con pruebas y recién entonces conectar la
+pantalla.

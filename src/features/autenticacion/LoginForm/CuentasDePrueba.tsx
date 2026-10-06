@@ -6,15 +6,18 @@ import styles from './LoginForm.module.css';
  * contraseña: es el valor de SEED_PASSWORD del backend.
  */
 const CUENTAS = [
-  ['admin.integral@uapa.edu.do', 'Administrador Integral (todas las funciones)'],
   ['admin.sistema@uapa.edu.do', 'Admin del Sistema'],
-  ['dir.curricular@uapa.edu.do', 'Dir. Gestión Curricular'],
+  ['dir.curricular@uapa.edu.do', 'Dir. Gestión y Desarrollo Curricular'],
   ['especialista.curricular@uapa.edu.do', 'Especialista Curricular'],
   ['coord.programa@uapa.edu.do', 'Coordinador de Programa'],
   ['facilitador@uapa.edu.do', 'Facilitador de Contenido'],
   ['dir.escuela@uapa.edu.do', 'Director de Escuela'],
+  ['dir.grado@uapa.edu.do', 'Dirección Académica de Grado'],
+  ['dir.posgrado@uapa.edu.do', 'Dirección Académica de Posgrado'],
+  ['vra@uapa.edu.do', 'VRA'],
+  ['vrip@uapa.edu.do', 'VRIP'],
   ['vpid@uapa.edu.do', 'VPID'],
-  ['vra@uapa.edu.do', 'VRA (solo consulta)'],
+  ['cingep@uapa.edu.do', 'CINGEP'],
   ['sin.permisos@uapa.edu.do', 'Sin roles'],
   ['inactivo@uapa.edu.do', 'Cuenta inactiva'],
 ] as const;
@@ -23,7 +26,10 @@ export function CuentasDePrueba({ onSelect }: { onSelect: (email: string) => voi
   return (
     <details className={styles.dev}>
       <summary>Cuentas de prueba (solo desarrollo)</summary>
-      <p>La contraseña es el valor de SEED_PASSWORD con que se sembró el backend.</p>
+      <p>
+        La contraseña es el valor de SEED_PASSWORD con que se sembró el backend. El administrador
+        inicial (scripts/admin.mjs) usa su propia contraseña de 16 caracteres o más.
+      </p>
       <ul className={styles.accounts}>
         {CUENTAS.map(([email, nombre]) => (
           <li key={email}>
