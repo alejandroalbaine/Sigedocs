@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { dossiersApi, templatesApi } from '../../common/api/dossiers.ts';
 import type { CatalogOption, Dossier } from '../../common/api/dossierContract.ts';
 import { ApiError, errorMessage } from '../../common/api/errors.ts';
@@ -16,6 +16,7 @@ function catalogosDe(campos: readonly TemplateField[], nombres = new Set<string>
     if (campo.optionsSource) nombres.add(campo.optionsSource.catalog);
     if (campo.config?.fields) catalogosDe(campo.config.fields, nombres);
   }
+
   return nombres;
 }
 
@@ -32,10 +33,12 @@ interface FormularioProgramaProps {
  */
 export function FormularioPrograma({ dossier, editable }: FormularioProgramaProps) {
   const { dossierId, currentVersion, template } = dossier;
+
   const version = useRecurso(
     () => dossiersApi.version(dossierId, currentVersion.versionId),
     [dossierId, currentVersion.versionId],
   );
+
   const templateVersionId = version.data?.templateVersionId ?? template.templateVersionId;
 
   const metadatosPlantilla = useRecurso(
@@ -51,18 +54,26 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
   const nombresCatalogo = useMemo(
     () =>
       plantilla.data
-        ? [...catalogosDe(plantilla.data.sections.flatMap((s) => s.fields))].sort()
+        ? [...catalogosDe(plantilla.data.sections.flatMap((seccion) => seccion.fields))].sort()
         : [],
     [plantilla.data],
   );
-  const [catalogosCargados, setCatalogos] = useState<{ clave: string; datos: Catalogos }>({
+
+  const [catalogosCargados, setCatalogos] = useState<{
+    clave: string;
+    datos: Catalogos;
+  }>({
     clave: '',
     datos: {},
   });
+
   const claveCatalogos = nombresCatalogo.join(',');
+
   useEffect(() => {
     if (!claveCatalogos) return;
+
     let vigente = true;
+
     void Promise.all(
       claveCatalogos
         .split(',')
@@ -74,18 +85,26 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
           }
         }),
     ).then((pares) => {
-      if (vigente) setCatalogos({ clave: claveCatalogos, datos: Object.fromEntries(pares) });
+      if (vigente) {
+        setCatalogos({
+          clave: claveCatalogos,
+          datos: Object.fromEntries(pares),
+        });
+      }
     });
+
     return () => {
       vigente = false;
     };
   }, [claveCatalogos]);
+
   const catalogos: Catalogos =
     catalogosCargados.clave === claveCatalogos
       ? catalogosCargados.datos
       : Object.fromEntries(nombresCatalogo.map((nombre) => [nombre, 'cargando' as const]));
 
   const clave = `${currentVersion.versionId}:${templateVersionId}`;
+
   const base = useMemo(
     () =>
       plantilla.data && version.data
@@ -93,19 +112,29 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
         : null,
     [plantilla.data, version.data],
   );
-  const [edicion, setEdicion] = useState<{ clave: string; contenido: Contenido } | null>(null);
+
+  const [edicion, setEdicion] = useState<{
+    clave: string;
+    contenido: Contenido;
+  } | null>(null);
+
   const contenido = edicion?.clave === clave ? edicion.contenido : base;
+
   const [mostrarReglas, setMostrarReglas] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [enviandoRevision, setEnviandoRevision] = useState(false);
-  const [aviso, setAviso] = useState<{ kind: 'success' | 'error' | 'info'; texto: string } | null>(
-    null,
-  );
+  const [reenviando, setReenviando] = useState(false);
+
+  const [aviso, setAviso] = useState<{
+    kind: 'success' | 'error' | 'info';
+    texto: string;
+  } | null>(null);
+
   const [erroresServidor, setErroresServidor] = useState<Hallazgo[]>([]);
 
   if (version.loading || plantilla.loading || metadatosPlantilla.loading) {
     return <p className={styles.vacio}>Consultando…</p>;
   }
+
   if (version.pendiente || plantilla.pendiente) {
     return (
       <Alert kind="info">
@@ -127,28 +156,45 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
     ...(mostrarReglas ? validarContenido(plantilla.data, contenido) : []),
     ...erroresServidor,
   ];
-  const errores = hallazgos.filter((h) => h.severidad === 'error').length;
+
+  const errores = hallazgos.filter((hallazgo) => hallazgo.severidad === 'error').length;
+
   const secciones = plantilla.data.sections
     .filter((seccion) => seccion.isActive)
     .sort((a, b) => a.position - b.position);
 
   function cambiar(seccion: string, campo: string, valor: Valor) {
     if (!contenido) return;
+
     setEdicion({
       clave,
-      contenido: { ...contenido, [seccion]: { ...contenido[seccion], [campo]: valor } },
+      contenido: {
+        ...contenido,
+        [seccion]: {
+          ...contenido[seccion],
+          [campo]: valor,
+        },
+      },
     });
+
     setAviso(null);
   }
 
   async function guardar() {
     if (!contenido) return;
+
     setGuardando(true);
     setMostrarReglas(true);
     setErroresServidor([]);
+
     try {
       await dossiersApi.saveContent(dossierId, currentVersion.versionId, contenido);
-      setAviso({ kind: 'success', texto: `Borrador de ${currentVersion.label} guardado.` });
+
+      setAviso({
+        kind: 'success',
+        texto: `Borrador de ${currentVersion.label} guardado.`,
+      });
+
       version.reload();
       setEdicion(null);
     } catch (reason) {
@@ -161,6 +207,7 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
           })),
         );
       }
+
       setAviso({
         kind: reason instanceof ApiError && reason.status === 404 ? 'info' : 'error',
         texto:
@@ -173,10 +220,10 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
     }
   }
 
-  async function enviarARevision() {
+  async function reenviar() {
     if (!contenido) return;
 
-    setEnviandoRevision(true);
+    setReenviando(true);
     setMostrarReglas(true);
     setErroresServidor([]);
     setAviso(null);
@@ -188,26 +235,27 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
       // Consultar las acciones que el backend permite para este expediente.
       const { data: transiciones } = await dossiersApi.availableTransitions(dossierId);
 
-      const iniciarRevision = transiciones.find((transicion) => transicion.code === 'START_REVIEW');
+      const reenviarPrograma = transiciones.find((transicion) => transicion.code === 'RESUBMIT');
 
-      if (!iniciarRevision) {
+      if (!reenviarPrograma) {
         setAviso({
           kind: 'info',
-          texto: 'El envío a revisión no está disponible para este expediente en este momento.',
+          texto: 'El reenvío no está disponible para este expediente en este momento.',
         });
         return;
       }
 
       // Ejecutar la transición real proporcionada por el backend.
       await dossiersApi.transition(dossierId, {
-        transitionId: iniciarRevision.transitionId,
+        transitionId: reenviarPrograma.transitionId,
         versionId: currentVersion.versionId,
       });
 
       setEdicion(null);
+
       setAviso({
         kind: 'success',
-        texto: 'Programa enviado a revisión correctamente.',
+        texto: 'Programa reenviado correctamente.',
       });
 
       version.reload();
@@ -227,15 +275,16 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
         texto:
           reason instanceof ApiError && reason.status === 422
             ? 'El programa todavía tiene campos obligatorios pendientes. Revise los campos señalados.'
-            : errorMessage(reason, 'No fue posible enviar el programa a revisión.'),
+            : errorMessage(reason, 'No fue posible reenviar el programa.'),
       });
     } finally {
-      setEnviandoRevision(false);
+      setReenviando(false);
     }
   }
 
   const sinRuta = erroresServidor.filter(
-    (error) => !error.ruta.includes('.') || !secciones.some((s) => error.ruta.startsWith(s.key)),
+    (error) =>
+      !error.ruta.includes('.') || !secciones.some((seccion) => error.ruta.startsWith(seccion.key)),
   );
 
   return (
@@ -246,12 +295,14 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
             {metadatosPlantilla.data?.name ?? 'Programa de asignatura'} · versión{' '}
             {plantilla.data.versionNumber}
           </strong>
+
           <small>
             {editable
               ? 'Puede guardar incompleto; para pasar a revisión el programa debe cumplir las reglas.'
               : 'Solo lectura: la versión no está en un estado editable o su rol no puede editarla.'}
           </small>
         </div>
+
         {mostrarReglas && (
           <span className={errores ? styles.contadorError : styles.contadorOk}>
             {errores ? `${String(errores)} pendiente(s)` : 'Cumple las reglas de la plantilla'}
@@ -260,7 +311,10 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
       </header>
 
       {secciones.map((seccion) => {
-        const deSeccion = hallazgos.filter((h) => h.ruta.startsWith(`${seccion.key}.`)).length;
+        const deSeccion = hallazgos.filter((hallazgo) =>
+          hallazgo.ruta.startsWith(`${seccion.key}.`),
+        ).length;
+
         return (
           <details key={seccion.key} className={styles.seccion} open>
             <summary>
@@ -268,15 +322,19 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
                 {seccion.title}
                 {seccion.isRequired ? ' *' : ''}
               </span>
+
               {deSeccion > 0 && <span className={styles.contadorError}>{deSeccion}</span>}
             </summary>
+
             {seccion.description && <p className={styles.ayuda}>{seccion.description}</p>}
+
             <div className={styles.campos}>
               {[...seccion.fields]
                 .sort((a, b) => a.position - b.position)
                 .map((campo) => {
                   const ruta = `${seccion.key}.${campo.key}`;
                   const valor = contenido[seccion.key]?.[campo.key];
+
                   return campo.type === 'repeatable_group' ? (
                     <GrupoRepetible
                       key={campo.key}
@@ -333,20 +391,22 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
           <Button
             size="sm"
             loading={guardando}
-            disabled={enviandoRevision}
+            disabled={reenviando}
             onClick={() => void guardar()}
           >
             Guardar borrador
           </Button>
 
-          <Button
-            size="sm"
-            loading={enviandoRevision}
-            disabled={guardando || enviandoRevision}
-            onClick={() => void enviarARevision()}
-          >
-            Enviar a revisión
-          </Button>
+          {dossier.currentState.code === 'CHANGES_REQUIRED' && (
+            <Button
+              size="sm"
+              loading={reenviando}
+              disabled={guardando || reenviando}
+              onClick={() => void reenviar()}
+            >
+              Reenviar
+            </Button>
+          )}
         </div>
       )}
     </div>
