@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
   ClipboardCheck,
@@ -44,6 +44,13 @@ import {
 import { claseEstado } from '../documental/estadoBadge.ts';
 import { useDossiers } from '../documental/useDossiers.ts';
 import styles from './RevisionPage.module.css';
+
+// El comparador se carga al abrir «Versiones»: así no engorda el paquete inicial de la aplicación.
+const ComparadorVersiones = lazy(() =>
+  import('../../features/versiones/ComparadorVersiones.tsx').then((modulo) => ({
+    default: modulo.ComparadorVersiones,
+  })),
+);
 
 /** Las siete pestañas del expediente definidas en el Informe T1 §3.7. */
 const tabs = [
@@ -368,31 +375,37 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
 
           {activeTab === 'versiones' && (
             <InfoPanel title="Versiones">
+              <p className={styles.lead}>
+                La versión documental y el estado curricular son dimensiones distintas.
+              </p>
               <EstadoRecurso recurso={versiones} modulo="El historial de versiones">
                 {(lista) => (
-                  <ol className={styles.timeline}>
-                    {lista.map((version) => (
-                      <li key={version.versionId}>
-                        <strong>
-                          {version.label}
-                          {version.versionId === dossier.currentVersion.versionId
-                            ? ' · versión vigente'
-                            : ''}
-                        </strong>
-                        <span>
-                          Estado: {version.state.name} · {version.createdBy.name} ·{' '}
-                          {fecha(version.createdAt)}
-                        </span>
-                        {version.approvedAt && <small>Aprobada {fecha(version.approvedAt)}</small>}
-                      </li>
-                    ))}
-                  </ol>
+                  <>
+                    <ol className={styles.timeline}>
+                      {lista.map((version) => (
+                        <li key={version.versionId}>
+                          <strong>
+                            {version.label}
+                            {version.versionId === dossier.currentVersion.versionId
+                              ? ' · versión vigente'
+                              : ''}
+                          </strong>
+                          <span>
+                            Estado: {version.state.name} · {version.createdBy.name} ·{' '}
+                            {fecha(version.createdAt)}
+                          </span>
+                          {version.approvedAt && (
+                            <small>Aprobada {fecha(version.approvedAt)}</small>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                    <Suspense fallback={<p className={styles.loading}>Consultando…</p>}>
+                      <ComparadorVersiones dossier={dossier} versiones={lista} />
+                    </Suspense>
+                  </>
                 )}
               </EstadoRecurso>
-              <p className={styles.lead}>
-                La versión documental y el estado curricular son dimensiones distintas. La
-                comparación entre versiones estará disponible en una etapa posterior.
-              </p>
             </InfoPanel>
           )}
 

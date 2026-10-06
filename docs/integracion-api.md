@@ -24,10 +24,17 @@
 | Observaciones              | `GET/POST /api/v1/dossiers/{id}/observations`            | `parseObservation(s)`       |
 | Auditoría del expediente   | `GET /api/v1/dossiers/{id}/audit-events`                 | `parseAuditEvents`          |
 | Versiones                  | `GET /api/v1/dossiers/{id}/versions`                     | `parseVersions`             |
+| Detalle de una versión     | `GET/PATCH /api/v1/dossiers/{id}/versions/{versionId}`   | `parseVersionDetail`        |
+| Plantilla de una versión   | `GET /api/v1/templates/{id}/versions/{versionId}`        | `parseTemplateVersion`      |
 
 Las rutas de usuarios están en `src/common/api/users.ts` y `userContract.ts`; las de expedientes,
 en `src/common/api/dossiers.ts` y `dossierContract.ts`, que también cubren el detalle y la edición de
 una versión, la plantilla (`templatesApi`) y los catálogos.
+
+El comparador de versiones (`src/features/versiones/`) no usa una ruta propia: pide el detalle
+de las dos versiones y la plantilla de cada una (una sola vez si coinciden) y compara el contenido
+en el navegador. Los elementos de un grupo repetible se emparejan por `itemId` y los valores de
+catálogo por `value` (template-data-contract.md §7).
 
 Las respuestas exitosas se leen desde `data`; las colecciones normalizan `meta.pagination`. Si la respuesta no cumple el contrato, el cliente
 lanza `ApiError` con "respuesta no válida" y registra en consola qué campo falló.
