@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { dossiersApi, templatesApi } from '../../common/api/dossiers.ts';
+import type { FieldError } from '../../common/api/contract.ts';
 import type { CatalogOption, Dossier } from '../../common/api/dossierContract.ts';
 import { ApiError, errorMessage } from '../../common/api/errors.ts';
 import type { TemplateField } from '../../common/api/templateContract.ts';
@@ -9,6 +10,16 @@ import { CampoPlantilla, type Catalogos } from './CampoPlantilla.tsx';
 import { contenidoInicial, type Contenido, type Item, type Valor } from './contenido.ts';
 import { GrupoRepetible } from './GrupoRepetible.tsx';
 import { validarContenido, type Hallazgo } from './validacion.ts';
+import {
+  destinosPrograma,
+  hallazgosServidor,
+  idSeccion,
+  pertenece,
+  ubicarHallazgos,
+} from './erroresPrograma.ts';
+import { MensajesCampo } from './MensajesCampo.tsx';
+import { ResumenErrores } from './ResumenErrores.tsx';
+import { conReglasOficiales, validarLimitesOficiales } from './reglasOficiales.ts';
 import styles from './programa.module.css';
 
 function catalogosDe(campos: readonly TemplateField[], nombres = new Set<string>()): Set<string> {
@@ -24,6 +35,8 @@ interface FormularioProgramaProps {
   dossier: Dossier;
   /** Permiso `dossiers.edit` y versión en un estado editable (RECEIVED, CHANGES_REQUIRED). */
   editable: boolean;
+  erroresRevision?: readonly FieldError[];
+  onCorregir?: (ruta: string) => void;
 }
 
 /**
@@ -31,7 +44,12 @@ interface FormularioProgramaProps {
  * (template-data-contract.md). Se guarda con `PATCH /dossiers/{id}/versions/{versionId}` en modo
  * borrador: el servidor acepta campos incompletos y valida del todo al pasar a revisión.
  */
-export function FormularioPrograma({ dossier, editable }: FormularioProgramaProps) {
+export function FormularioPrograma({
+  dossier,
+  editable,
+  erroresRevision = [],
+  onCorregir,
+}: FormularioProgramaProps) {
   const { dossierId, currentVersion, template } = dossier;
 
   const version = useRecurso(
@@ -120,7 +138,7 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
 
   const contenido = edicion?.clave === clave ? edicion.contenido : base;
 
-  const [mostrarReglas, setMostrarReglas] = useState(false);
+  const [mostrarReglas, setMostrarReglas] = useState(erroresRevision.length > 0);
   const [guardando, setGuardando] = useState(false);
   const [reenviando, setReenviando] = useState(false);
 
@@ -152,14 +170,19 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
 
   if (!plantilla.data || !contenido) return null;
 
-  const hallazgos = [
-    ...(mostrarReglas ? validarContenido(plantilla.data, contenido) : []),
-    ...erroresServidor,
-  ];
+  const plantillaValidada = conReglasOficiales(plantilla.data, metadatosPlantilla.data?.code ?? '');
+  const hallazgos = ubicarHallazgos(
+    [
+      ...(mostrarReglas ? validarContenido(plantillaValidada, contenido) : []),
+      ...erroresServidor,
+      ...hallazgosServidor(erroresRevision),
+    ],
+    destinosPrograma(plantillaValidada, contenido),
+  );
 
   const errores = hallazgos.filter((hallazgo) => hallazgo.severidad === 'error').length;
 
-  const secciones = plantilla.data.sections
+  const secciones = plantillaValidada.sections
     .filter((seccion) => seccion.isActive)
     .sort((a, b) => a.position - b.position);
 
@@ -177,6 +200,11 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
       },
     });
 
+    const ruta = `${seccion}.${campo}`;
+    setErroresServidor((actuales) =>
+      actuales.filter((error) => !pertenece(error.ruta, ruta) && error.ruta !== seccion),
+    );
+    onCorregir?.(ruta);
     setAviso(null);
   }
 
@@ -199,13 +227,7 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
       setEdicion(null);
     } catch (reason) {
       if (reason instanceof ApiError && reason.fieldErrors.length) {
-        setErroresServidor(
-          reason.fieldErrors.map((error) => ({
-            ruta: error.field,
-            mensaje: 'Revise este campo: no cumple las reglas del programa.',
-            severidad: 'error',
-          })),
-        );
+        setErroresServidor(hallazgosServidor(reason.fieldErrors));
       }
 
       setAviso({
@@ -221,7 +243,21 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
   }
 
   async function reenviar() {
-    if (!contenido) return;
+    if (!contenido || !plantilla.data) return;
+
+    const limites = validarLimitesOficiales(
+      plantilla.data,
+      contenido,
+      metadatosPlantilla.data?.code ?? '',
+    );
+    if (limites.length) {
+      setMostrarReglas(true);
+      setAviso({
+        kind: 'error',
+        texto: 'El programa no cumple las reglas de la plantilla. Revise los campos señalados.',
+      });
+      return;
+    }
 
     setReenviando(true);
     setMostrarReglas(true);
@@ -261,31 +297,20 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
       version.reload();
     } catch (reason) {
       if (reason instanceof ApiError && reason.fieldErrors.length > 0) {
-        setErroresServidor(
-          reason.fieldErrors.map((error) => ({
-            ruta: error.field,
-            mensaje: 'Revise este campo antes de enviar el programa a revisión.',
-            severidad: 'error',
-          })),
-        );
+        setErroresServidor(hallazgosServidor(reason.fieldErrors));
       }
 
       setAviso({
         kind: 'error',
         texto:
           reason instanceof ApiError && reason.status === 422
-            ? 'El programa todavía tiene campos obligatorios pendientes. Revise los campos señalados.'
+            ? 'El programa no cumple las reglas de la plantilla. Revise los campos señalados.'
             : errorMessage(reason, 'No fue posible reenviar el programa.'),
       });
     } finally {
       setReenviando(false);
     }
   }
-
-  const sinRuta = erroresServidor.filter(
-    (error) =>
-      !error.ruta.includes('.') || !secciones.some((seccion) => error.ruta.startsWith(seccion.key)),
-  );
 
   return (
     <div className={styles.formulario}>
@@ -310,13 +335,21 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
         )}
       </header>
 
+      <ResumenErrores plantilla={plantillaValidada} contenido={contenido} hallazgos={hallazgos} />
+
       {secciones.map((seccion) => {
-        const deSeccion = hallazgos.filter((hallazgo) =>
-          hallazgo.ruta.startsWith(`${seccion.key}.`),
+        const deSeccion = hallazgos.filter(
+          (hallazgo) => hallazgo.severidad === 'error' && pertenece(hallazgo.ruta, seccion.key),
         ).length;
 
         return (
-          <details key={seccion.key} className={styles.seccion} open>
+          <details
+            key={seccion.key}
+            className={styles.seccion}
+            id={idSeccion(seccion.key)}
+            tabIndex={-1}
+            open
+          >
             <summary>
               <span>
                 {seccion.title}
@@ -328,6 +361,11 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
 
             {seccion.description && <p className={styles.ayuda}>{seccion.description}</p>}
 
+            <MensajesCampo
+              id={`${idSeccion(seccion.key)}-error`}
+              hallazgos={hallazgos}
+              ruta={seccion.key}
+            />
             <div className={styles.campos}>
               {[...seccion.fields]
                 .sort((a, b) => a.position - b.position)
@@ -367,12 +405,6 @@ export function FormularioPrograma({ dossier, editable }: FormularioProgramaProp
           </details>
         );
       })}
-
-      {sinRuta.length > 0 && (
-        <Alert kind="error">
-          {sinRuta.map((error) => `${error.ruta}: ${error.mensaje}`).join(' · ')}
-        </Alert>
-      )}
 
       {aviso && <Alert kind={aviso.kind}>{aviso.texto}</Alert>}
 

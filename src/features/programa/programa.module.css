@@ -143,6 +143,11 @@ textarea.control {
   font-weight: 600;
 }
 
+.mensajes-campo {
+  display: grid;
+  gap: var(--space-1);
+}
+
 .aviso {
   color: var(--warning-strong);
   font-size: var(--text-xs);

@@ -51,6 +51,7 @@ export interface Role {
 export interface FieldError {
   field: string;
   code: string;
+  message?: string;
 }
 
 /** La respuesta no tiene la forma que el contrato promete. */
@@ -137,6 +138,7 @@ export function parseFieldErrors(value: unknown): FieldError[] {
               typeof (error.code ?? error.codigo) === 'string'
                 ? ((error.code ?? error.codigo) as string)
                 : '',
+            ...(typeof error.message === 'string' ? { message: error.message } : {}),
           },
         ]
       : [],

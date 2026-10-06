@@ -5,8 +5,10 @@ import type {
   Dossier,
   TransitionResult,
 } from '../../common/api/dossierContract.ts';
+import type { FieldError } from '../../common/api/contract.ts';
 import { ApiError, errorMessage } from '../../common/api/errors.ts';
 import { Alert, Button } from '../../common/components/index.ts';
+import { comprobarEnvio } from '../programa/comprobarEnvio.ts';
 import { CODIGOS_DECISION } from './reglas.ts';
 import styles from './revision.module.css';
 
@@ -14,6 +16,7 @@ interface AccionesFlujoProps {
   dossier: Dossier;
   transiciones: readonly AvailableTransition[];
   onRealizada: (resultado: TransitionResult) => void;
+  onErroresPrograma?: (errores: FieldError[]) => void;
 }
 
 /**
@@ -31,12 +34,17 @@ function mensajeTransicion(reason: unknown): string {
     reason.fieldErrors.length > 0 &&
     !reason.fieldErrors.some(({ field }) => field === 'observation')
   ) {
-    return `El programa de asignatura está incompleto (${String(reason.fieldErrors.length)} secciones o campos obligatorios pendientes). Complételo en «2. Contenido y archivos» antes de continuar.`;
+    return `El programa no cumple las reglas de la plantilla (${String(reason.fieldErrors.length)} errores). Revíselo en «2. Contenido y archivos» antes de continuar.`;
   }
   return errorMessage(reason, 'No fue posible registrar la transición.');
 }
 
-export function AccionesFlujo({ dossier, transiciones, onRealizada }: AccionesFlujoProps) {
+export function AccionesFlujo({
+  dossier,
+  transiciones,
+  onRealizada,
+  onErroresPrograma,
+}: AccionesFlujoProps) {
   // T1 (ASSIGN) necesita elegir especialista: la ejecuta el bloque de asignación.
   const otras = transiciones.filter(
     (item) => !CODIGOS_DECISION.includes(item.code) && item.code !== 'ASSIGN',
@@ -54,6 +62,8 @@ export function AccionesFlujo({ dossier, transiciones, onRealizada }: AccionesFl
     setEnviando(transicion.transitionId);
     setError('');
     try {
+      if (transicion.code === 'START_REVIEW' || transicion.code === 'RESUBMIT')
+        await comprobarEnvio(dossier);
       const { data } = await dossiersApi.transition(dossier.dossierId, {
         transitionId: transicion.transitionId,
         versionId: dossier.currentVersion.versionId,
@@ -61,6 +71,14 @@ export function AccionesFlujo({ dossier, transiciones, onRealizada }: AccionesFl
       });
       onRealizada(data);
     } catch (reason) {
+      if (
+        (transicion.code === 'START_REVIEW' || transicion.code === 'RESUBMIT') &&
+        reason instanceof ApiError &&
+        reason.status === 422
+      ) {
+        const camposPrograma = reason.fieldErrors.filter(({ field }) => field !== 'observation');
+        if (camposPrograma.length) onErroresPrograma?.(camposPrograma);
+      }
       setError(mensajeTransicion(reason));
     } finally {
       setEnviando('');

@@ -3,12 +3,31 @@ import userEvent from '@testing-library/user-event';
 import programaBackend from '../../test/fixtures/course-program-template.backend.json';
 import { dossier, problem, stubApi } from '../../test/backend.ts';
 import { FormularioPrograma } from './FormularioPrograma.tsx';
+import { idCampo } from './erroresPrograma.ts';
 
 const expediente = dossier({
   template: { templateId: 'tpl-1', templateVersionId: 'tv-1' },
 });
 
 const rutaVersion = `/api/v1/dossiers/${expediente.dossierId}/versions/${expediente.currentVersion.versionId}`;
+
+test('el reenvío bloquea una suma distinta de 100 % antes de guardar o ejecutar la transición', async () => {
+  const llamadas = servidor({
+    plan_evaluacion: { componentes_evaluacion: [{ itemId: 'eval1', porcentaje: 90 }] },
+  });
+  const conAjustes = {
+    ...expediente,
+    currentState: { code: 'CHANGES_REQUIRED', name: 'Requiere ajustes', isEditable: true },
+  };
+  render(<FormularioPrograma dossier={conAjustes} editable />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Reenviar' }));
+  expect(screen.getByRole('navigation', { name: 'Errores del programa' })).toHaveTextContent(
+    'Suma actual: 90',
+  );
+  expect(llamadas.some((item) => item.key.startsWith('POST') || item.key.startsWith('PATCH'))).toBe(
+    false,
+  );
+});
 
 const metadatosPlantilla = {
   templateId: 'tpl-1',
@@ -21,6 +40,138 @@ const metadatosPlantilla = {
   latestPublishedVersionNumber: 1,
   createdAt: '2026-09-27T10:00:00.000Z',
 };
+
+test('el resumen abre una sección cerrada y enfoca el campo con error', async () => {
+  servidor();
+  render(<FormularioPrograma dossier={expediente} editable />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
+  const campo = screen.getByRole('textbox', { name: 'Asignatura *' });
+  const seccion = campo.closest('details');
+  if (!seccion) throw new Error('Falta sección');
+  seccion.open = false;
+  await userEvent.click(
+    within(screen.getByRole('navigation', { name: 'Errores del programa' })).getByRole('link', {
+      name: 'Datos académicos · Asignatura',
+    }),
+  );
+  expect(seccion.open).toBe(true);
+  expect(campo).toHaveFocus();
+  expect(campo).toHaveAttribute('aria-invalid', 'true');
+  expect(campo).toHaveAccessibleDescription('Complete "Asignatura".');
+});
+
+test('muestra varios errores del servidor junto al campo con un solo id accesible y los limpia al corregir', async () => {
+  stubApi({
+    [`GET ${rutaVersion}`]: version({ datos_academicos: { asignatura: 'Prueba' } }),
+    [`PATCH ${rutaVersion}`]: () =>
+      problem(422, 'VALIDATION_FAILED', [
+        {
+          field: 'datos_academicos.asignatura',
+          code: 'LENGTH',
+          message: 'El nombre es demasiado corto.',
+        },
+        {
+          field: 'datos_academicos.asignatura',
+          code: 'PATTERN',
+          message: 'El nombre tiene un formato incorrecto.',
+        },
+      ]),
+    'GET /api/v1/templates/tpl-1': metadatosPlantilla,
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+  });
+  render(<FormularioPrograma dossier={expediente} editable />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Guardar borrador' }));
+  const campo = screen.getByRole('textbox', { name: 'Asignatura *' });
+  await within(campo.parentElement!).findByText('El nombre es demasiado corto.');
+  expect(campo).toHaveAccessibleDescription(
+    /El nombre es demasiado corto.*El nombre tiene un formato incorrecto/,
+  );
+  const id = campo.getAttribute('aria-describedby');
+  expect([...document.querySelectorAll('[id]')].filter((item) => item.id === id)).toHaveLength(1);
+  expect(screen.queryByText('Detalle interno del servidor')).not.toBeInTheDocument();
+  await userEvent.type(campo, ' corregida');
+  expect(screen.queryByText('El nombre es demasiado corto.')).not.toBeInTheDocument();
+  expect(campo).not.toHaveAttribute('aria-invalid');
+});
+
+test('el error de suma aparece en el plan, permite navegar y desaparece al llegar a 100 %', async () => {
+  servidor({
+    plan_evaluacion: {
+      componentes_evaluacion: [{ itemId: 'e1', componente: 'Prueba', porcentaje: 90 }],
+    },
+  });
+  render(<FormularioPrograma dossier={expediente} editable />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
+  const grupo = screen.getByRole('region', { name: 'Componentes de evaluación' });
+  expect(within(grupo).getByText(/100 %.*Suma actual: 90/)).toBeVisible();
+  await userEvent.click(
+    within(screen.getByRole('navigation', { name: 'Errores del programa' })).getByRole('link', {
+      name: 'Plan de evaluación · Componentes de evaluación',
+    }),
+  );
+  expect(grupo).toHaveFocus();
+  const porcentaje = within(grupo).getByRole('spinbutton', { name: /Porcentaje/ });
+  await userEvent.clear(porcentaje);
+  await userEvent.type(porcentaje, '100');
+  expect(within(grupo).queryByText(/100 %.*Suma actual/)).not.toBeInTheDocument();
+});
+
+test('señala 11 unidades existentes y permite quitar la excedente; no deja agregar una undécima', async () => {
+  servidor({
+    unidades_didacticas: {
+      unidades_didacticas: Array.from({ length: 11 }, (_, index) => ({
+        itemId: `u${String(index)}`,
+        nombre_unidad: `Unidad ${String(index)}`,
+      })),
+    },
+  });
+  render(<FormularioPrograma dossier={expediente} editable />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
+  const grupo = screen.getByRole('region', { name: 'Unidades didácticas' });
+  expect(
+    within(grupo).getByText('El programa admite como máximo 10 unidades didácticas.'),
+  ).toBeVisible();
+  await userEvent.click(within(grupo).getByRole('button', { name: 'Quitar elemento 11' }));
+  expect(
+    within(grupo).queryByText('El programa admite como máximo 10 unidades didácticas.'),
+  ).not.toBeInTheDocument();
+  expect(within(grupo).queryByRole('button', { name: /Agregar unidades/ })).not.toBeInTheDocument();
+});
+
+test('navega a un error anidado por itemId, incluso después de reordenar', async () => {
+  servidor({
+    competencias_fundamentales: {
+      competencias_fundamentales: [
+        {
+          itemId: 'cf1',
+          competencia: 'Primera',
+          resultados_aprendizaje: [{ itemId: 'ra1', resultado: '' }],
+        },
+        { itemId: 'cf2', competencia: 'Segunda', resultados_aprendizaje: [] },
+      ],
+    },
+  });
+  render(<FormularioPrograma dossier={expediente} editable />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
+  const grupo = screen.getByRole('region', { name: 'Competencias fundamentales' });
+  const bajar = within(grupo)
+    .getAllByRole('button', { name: 'Bajar elemento 1' })
+    .find((boton) => boton.closest('section') === grupo);
+  if (!bajar) throw new Error('Falta botón para reordenar');
+  await userEvent.click(bajar);
+  const campo = document.getElementById(
+    idCampo(
+      'competencias_fundamentales.competencias_fundamentales[cf1].resultados_aprendizaje[ra1].resultado',
+    ),
+  );
+  expect(campo).not.toBeNull();
+  await userEvent.click(
+    within(screen.getByRole('navigation', { name: 'Errores del programa' })).getByRole('link', {
+      name: /Competencias fundamentales 2.*Resultados de aprendizaje 1.*Resultado/,
+    }),
+  );
+  expect(campo).toHaveFocus();
+});
 
 function version(content: Record<string, unknown> = {}) {
   return {
@@ -151,7 +302,9 @@ test('reenvía correctamente un programa en estado Requiere ajustes', async () =
     expedienteConAjustes.currentVersion.versionId;
 
   const llamadas = stubApi({
-    [`GET ${ruta}`]: version(),
+    [`GET ${ruta}`]: version({
+      plan_evaluacion: { componentes_evaluacion: [{ itemId: 'eval1', porcentaje: 100 }] },
+    }),
 
     [`PATCH ${ruta}`]: (init: RequestInit) =>
       version(
@@ -235,7 +388,9 @@ test('muestra campos pendientes cuando el reenvío responde 422', async () => {
     expedienteConAjustes.currentVersion.versionId;
 
   stubApi({
-    [`GET ${ruta}`]: version(),
+    [`GET ${ruta}`]: version({
+      plan_evaluacion: { componentes_evaluacion: [{ itemId: 'eval1', porcentaje: 100 }] },
+    }),
 
     [`PATCH ${ruta}`]: (init: RequestInit) =>
       version(
@@ -280,7 +435,7 @@ test('muestra campos pendientes cuando el reenvío responde 422', async () => {
 
   expect(
     await screen.findByText(
-      'El programa todavía tiene campos obligatorios pendientes. Revise los campos señalados.',
+      'El programa no cumple las reglas de la plantilla. Revise los campos señalados.',
     ),
   ).toBeVisible();
 });

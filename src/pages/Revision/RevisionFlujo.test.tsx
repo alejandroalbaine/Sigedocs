@@ -14,6 +14,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { dossier, problem, signedInBackend, stubApi } from '../../test/backend.ts';
 import { renderApp } from '../../test/renderApp.tsx';
+import programaBackend from '../../test/fixtures/course-program-template.backend.json';
 
 type Estado =
   | 'RECEIVED'
@@ -131,13 +132,23 @@ type Usuario = typeof direccion;
  * Simulador del backend para un solo expediente. Guarda estado, versión e historial entre
  * llamadas, como lo haría el servidor, y rechaza lo que el contrato no permite.
  */
-function crearBackend(inicial: Estado, usuario: Usuario) {
+function crearBackend(
+  inicial: Estado,
+  usuario: Usuario,
+  contenido: Record<string, unknown> = {
+    plan_evaluacion: { componentes_evaluacion: [{ itemId: 'eval1', porcentaje: 100 }] },
+  },
+) {
   let estado: Estado = inicial;
   let version = { versionId: 'v-1.0', label: 'v1.0' };
   let asignado: typeof ESPECIALISTA | null = inicial === 'RECEIVED' ? null : ESPECIALISTA;
   const historial: unknown[] = [];
   const envios: { ruta: string; body: Record<string, unknown> }[] = [];
-  const base = dossier({ dossierId: 'd-1', code: 'ECD-2026-0001' });
+  const base = dossier({
+    dossierId: 'd-1',
+    code: 'ECD-2026-0001',
+    template: { templateId: 'tpl-1', templateVersionId: 'tv-1' },
+  });
   const ruta = `/api/v1/dossiers/${base.dossierId}`;
   const cuerpo = (init: RequestInit) =>
     JSON.parse(typeof init.body === 'string' ? init.body : '{}') as Record<string, unknown>;
@@ -171,6 +182,32 @@ function crearBackend(inicial: Estado, usuario: Usuario) {
     'GET /api/v1/users': [
       { ...ESPECIALISTA, roles: [{ roleId: 'r1', code: 'CURRICULUM_SPECIALIST', name: 'Esp.' }] },
     ],
+    ...Object.fromEntries(
+      ['v-1.0', 'v-1.1'].map((versionId) => [
+        `GET ${ruta}/versions/${versionId}`,
+        () => ({
+          ...version,
+          state: { code: estado, name: NOMBRES[estado] },
+          createdBy: { userId: 'u1', name: 'Coordinación' },
+          createdAt: '2026-10-05T10:00:00.000Z',
+          approvedAt: null,
+          templateVersionId: 'tv-1',
+          content: contenido,
+        }),
+      ]),
+    ),
+    'GET /api/v1/templates/tpl-1': {
+      templateId: 'tpl-1',
+      code: 'COURSE_PROGRAM',
+      name: 'Programa de asignatura',
+      description: null,
+      documentType: 'course_program',
+      academicLevels: ['bachelor'],
+      latestVersionNumber: 1,
+      latestPublishedVersionNumber: 1,
+      createdAt: '2026-10-05T10:00:00.000Z',
+    },
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
     [`GET ${ruta}/available-transitions`]: () =>
       TRANSICIONES.filter(
         (item) => item.from === estado && usuario.permissions.includes(item.permiso),
@@ -247,6 +284,39 @@ async function marcarTodos(opcion: 'Cumple' | 'No cumple') {
 }
 
 const contexto = () => screen.getByLabelText('Contexto del expediente');
+
+test.each([99, 101])(
+  'no inicia revisión si la evaluación persistida suma %s %%',
+  async (porcentaje) => {
+    const be = crearBackend('ASSIGNED', especialista, {
+      plan_evaluacion: { componentes_evaluacion: [{ itemId: 'eval1', porcentaje }] },
+    });
+    renderApp(signedInBackend(especialista), '/revision');
+    await abrirPestaña(/6\. Workflow/);
+    await userEvent.click(await screen.findByRole('button', { name: 'Iniciar revisión' }));
+    const resumen = await screen.findByRole('navigation', { name: 'Errores del programa' });
+    expect(resumen).toHaveTextContent(`Suma actual: ${String(porcentaje)}`);
+    expect(be.envios).toHaveLength(0);
+    expect(be.estado()).toBe('ASSIGNED');
+  },
+);
+
+test('no inicia revisión con 11 unidades, y abre la sección correspondiente', async () => {
+  const be = crearBackend('ASSIGNED', especialista, {
+    plan_evaluacion: { componentes_evaluacion: [{ itemId: 'eval1', porcentaje: 100 }] },
+    unidades_didacticas: {
+      unidades_didacticas: Array.from({ length: 11 }, (_, index) => ({
+        itemId: `u-${String(index)}`,
+      })),
+    },
+  });
+  renderApp(signedInBackend(especialista), '/revision');
+  await abrirPestaña(/6\. Workflow/);
+  await userEvent.click(await screen.findByRole('button', { name: 'Iniciar revisión' }));
+  const resumen = await screen.findByRole('navigation', { name: 'Errores del programa' });
+  expect(resumen).toHaveTextContent('máximo 10 unidades');
+  expect(be.envios).toHaveLength(0);
+});
 
 test('T1 · la Dirección asigna la especialista: Recepcionado → Asignado', async () => {
   const be = crearBackend('RECEIVED', direccion);
@@ -448,13 +518,38 @@ test('con un servidor sin assignment-candidates, la Dirección no ve un error de
   expect(screen.queryByText('No tiene permiso para realizar esta acción.')).not.toBeInTheDocument();
 });
 
-test('si el programa está incompleto, iniciar la revisión lo explica en lugar de un error genérico', async () => {
+test('iniciar revisión con errores abre Contenido y permite ir a la sección señalada', async () => {
   const base = dossier({
     dossierId: 'd-5',
+    template: { templateId: 'tpl-1', templateVersionId: 'tv-1' },
     currentState: { code: 'ASSIGNED', name: 'Asignado', isEditable: false },
   });
   stubApi({
     'GET /api/v1/dossiers': [base],
+    [`GET /api/v1/dossiers/d-5/versions/${base.currentVersion.versionId}`]: {
+      versionId: base.currentVersion.versionId,
+      label: 'v1.0',
+      state: { code: 'ASSIGNED', name: 'Asignado' },
+      createdBy: { userId: 'u1', name: 'Coordinación' },
+      createdAt: '2026-10-05T10:00:00.000Z',
+      approvedAt: null,
+      templateVersionId: 'tv-1',
+      content: {
+        plan_evaluacion: { componentes_evaluacion: [{ itemId: 'eval1', porcentaje: 100 }] },
+      },
+    },
+    'GET /api/v1/templates/tpl-1': {
+      templateId: 'tpl-1',
+      code: 'COURSE_PROGRAM',
+      name: 'Programa de asignatura',
+      description: null,
+      documentType: 'course_program',
+      academicLevels: ['bachelor'],
+      latestVersionNumber: 1,
+      latestPublishedVersionNumber: 1,
+      createdAt: '2026-10-05T10:00:00.000Z',
+    },
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
     'GET /api/v1/dossiers/d-5/available-transitions': [
       {
         transitionId: 't2',
@@ -473,6 +568,12 @@ test('si el programa está incompleto, iniciar la revisión lo explica en lugar 
   renderApp(signedInBackend(especialista), '/revision');
   await abrirPestaña(/6\. Workflow/);
   await userEvent.click(await screen.findByRole('button', { name: 'Iniciar la revisión' }));
-  expect(await screen.findByText(/El programa de asignatura está incompleto \(2/)).toBeVisible();
+  const resumen = await screen.findByRole('navigation', { name: 'Errores del programa' });
+  expect(screen.getByRole('button', { name: /2\. Contenido y archivos/ })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await userEvent.click(within(resumen).getByRole('link', { name: 'Datos académicos' }));
+  expect(document.activeElement).toHaveAttribute('id', 'seccion-datos_academicos');
   expect(screen.queryByText('Revise los campos indicados.')).not.toBeInTheDocument();
 });
