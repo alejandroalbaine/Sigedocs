@@ -435,7 +435,9 @@ export function FormularioPrograma({
                         <span className={styles.lectura}>
                           {subjectPending && campo.key !== 'creditos'
                             ? 'Consultando...'
-                            : typeof valorActual === 'string' || typeof valorActual === 'number' ? String(valorActual) : ''}
+                            : typeof valorActual === 'string' || typeof valorActual === 'number'
+                              ? String(valorActual)
+                              : ''}
                         </span>
 
                         <MensajesCampo

@@ -30,9 +30,7 @@ function urlDeFetch(input: RequestInfo | URL) {
 async function abrirRegistro(conAsignatura = false) {
   if (!vi.isMockFunction(globalThis.fetch)) {
     stubApi({
-      'GET /api/v1/institutional-catalogs/schools': [
-        { value: 'ESC-ING', label: 'Ingeniería' },
-      ],
+      'GET /api/v1/institutional-catalogs/schools': [{ value: 'ESC-ING', label: 'Ingeniería' }],
       'GET /api/v1/institutional-catalogs/degree_programs': [
         { value: 'ISW', label: 'Ingeniería en Software' },
       ],
@@ -331,4 +329,3 @@ describe('Registro de expedientes', () => {
     expect(screen.queryByText('bachelor')).not.toBeInTheDocument();
   });
 });
-

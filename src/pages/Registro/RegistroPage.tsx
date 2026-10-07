@@ -365,8 +365,8 @@ export function RegistroPage() {
         <h1>Registrar expediente curricular</h1>
 
         <p className={styles.subtle}>
-          Asistente de cinco pasos. El código del expediente, la versión 1.0 y el estado inicial
-          se asignan automáticamente al registrar.
+          Asistente de cinco pasos. El código del expediente, la versión 1.0 y el estado inicial se
+          asignan automáticamente al registrar.
         </p>
       </header>
 
@@ -767,11 +767,7 @@ export function RegistroPage() {
                 disabled={saving || Boolean(created)}
                 onClick={() => void submit()}
               >
-                {saving
-                  ? 'Registrando…'
-                  : created
-                    ? 'Expediente registrado'
-                    : 'Radicar expediente'}{' '}
+                {saving ? 'Registrando…' : created ? 'Expediente registrado' : 'Radicar expediente'}{' '}
                 <ShieldCheck size={15} />
               </button>
             )}
