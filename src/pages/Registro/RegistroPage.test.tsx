@@ -174,10 +174,11 @@ describe('Registro de expedientes', () => {
     const respuesta = new Promise<Response>((resolve) => {
       resolver = resolve;
     });
-    const fetchMock = vi.fn<typeof fetch>().mockImplementation((input) => {
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation((input, init) => {
       const url = String(input);
+      const method = init?.method ?? 'GET';
 
-      if (url.includes('/api/v1/institutional-catalogs/')) {
+      if (url.includes('/api/v1/institutional-catalogs/') || url.includes('/api/v1/subjects')) {
         return Promise.resolve(
           json(
             { code: 'NOT_FOUND', detail: 'Catálogo no disponible' },
@@ -187,7 +188,13 @@ describe('Registro de expedientes', () => {
         );
       }
 
-      return respuesta;
+      if (url.includes('/api/v1/dossiers') && method === 'POST') {
+        return respuesta;
+      }
+
+      return Promise.resolve(
+        json({ code: 'NOT_FOUND', detail: 'Ruta no disponible' }, 404, 'application/problem+json'),
+      );
     });
     vi.stubGlobal('fetch', fetchMock);
     await abrirRegistro(true);

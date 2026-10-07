@@ -7,6 +7,7 @@ import { ApiError, INVALID_RESPONSE } from './errors.ts';
 import {
   parseAssignment,
   parseCatalog,
+  parseSubjects,
   parseVersionDetail,
   parseAuditEvents,
   parseAvailableTransitions,
@@ -166,4 +167,7 @@ export const templatesApi = {
     request(`/templates/${id(templateId)}/versions/${id(templateVersionId)}`, parseTemplateVersion),
 
   catalog: (catalog: string) => request(`/institutional-catalogs/${id(catalog)}`, parseCatalog),
+};
+export const subjectsApi = {
+  list: () => request('/subjects', parseSubjects),
 };

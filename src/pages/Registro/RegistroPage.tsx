@@ -11,8 +11,8 @@ import {
   ShieldCheck,
   UploadCloud,
 } from 'lucide-react';
-import { dossiersApi, templatesApi } from '../../common/api/dossiers.ts';
-import type { CatalogOption } from '../../common/api/dossierContract.ts';
+import { dossiersApi, subjectsApi, templatesApi } from '../../common/api/dossiers.ts';
+import type { CatalogOption, Subject } from '../../common/api/dossierContract.ts';
 import { errorMessage } from '../../common/api/errors.ts';
 import type { CreateDossierInput, Dossier } from '../documental/types.ts';
 import { datosRegistro, normalizarRegistro, validarRegistro } from './registro.ts';
@@ -34,6 +34,7 @@ const stepNames = [
   'Confirmación',
 ];
 type CatalogState = CatalogOption[] | 'cargando' | 'pendiente';
+type SubjectState = Subject[] | 'cargando' | 'pendiente';
 
 function loadDraft() {
   const raw = localStorage.getItem('sigesdoc:dossier-draft');
@@ -60,6 +61,8 @@ export function RegistroPage() {
   const [created, setCreated] = useState<Dossier | null>(null);
   const [schools, setSchools] = useState<CatalogState>('cargando');
   const [degreePrograms, setDegreePrograms] = useState<CatalogState>('cargando');
+  const [subjects, setSubjects] = useState<SubjectState>('cargando');
+  const [subjectSearch, setSubjectSearch] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(
@@ -73,7 +76,7 @@ export function RegistroPage() {
 
     async function cargarCatalogos() {
       try {
-        const opciones = await templatesApi.catalog('schools');
+        const { data: opciones } = await templatesApi.catalog('schools');
 
         if (activo) {
           setSchools(opciones);
@@ -85,7 +88,7 @@ export function RegistroPage() {
       }
 
       try {
-        const opciones = await templatesApi.catalog('degree_programs');
+        const { data: opciones } = await templatesApi.catalog('degree_programs');
 
         if (activo) {
           setDegreePrograms(opciones);
@@ -93,6 +96,18 @@ export function RegistroPage() {
       } catch {
         if (activo) {
           setDegreePrograms('pendiente');
+        }
+      }
+
+      try {
+        const { data: opciones } = await subjectsApi.list();
+
+        if (activo) {
+          setSubjects(opciones);
+        }
+      } catch {
+        if (activo) {
+          setSubjects('pendiente');
         }
       }
     }
@@ -104,11 +119,96 @@ export function RegistroPage() {
     };
   }, []);
 
+  const filteredSubjects = Array.isArray(subjects)
+    ? subjects.filter((subject) => {
+        const search = subjectSearch.trim().toLowerCase();
+
+        if (!search) return true;
+
+        return (
+          subject.code.toLowerCase().includes(search) || subject.name.toLowerCase().includes(search)
+        );
+      })
+    : [];
+
   function set<K extends keyof CreateDossierInput>(name: K, value: CreateDossierInput[K]) {
     setForm((current) => ({
       ...current,
       [name]: value,
     }));
+  }
+
+  function renderSubjectSelector() {
+    if (!Array.isArray(subjects) || subjects.length === 0) {
+      return (
+        <>
+          <input
+            id="subject"
+            maxLength={50}
+            className={styles.input}
+            value={form.subjectCode}
+            onChange={(event) => {
+              set('subjectCode', event.target.value);
+            }}
+            placeholder="ISW-201"
+          />
+
+          <p className={styles.subtle}>Catálogo de asignaturas en preparación.</p>
+        </>
+      );
+    }
+
+    const selected = subjects.find((subject) => subject.code === form.subjectCode);
+
+    return (
+      <>
+        <input
+          className={styles.input}
+          value={subjectSearch}
+          onChange={(event) => {
+            setSubjectSearch(event.target.value);
+          }}
+          placeholder="Buscar por clave o nombre"
+          aria-label="Buscar asignatura por clave o nombre"
+        />
+
+        <select
+          id="subject"
+          className={styles.input}
+          value={form.subjectCode}
+          onChange={(event) => {
+            set('subjectCode', event.target.value);
+          }}
+        >
+          <option value="">Seleccione una asignatura</option>
+
+          {filteredSubjects.map((subject) => (
+            <option key={subject.code} value={subject.code}>
+              {subject.code} — {subject.name}
+            </option>
+          ))}
+        </select>
+
+        {selected && (
+          <div className={styles.subtle}>
+            <div>
+              <strong>Clave:</strong> {selected.code}
+            </div>
+
+            <div>
+              <strong>Nombre:</strong> {selected.name}
+            </div>
+
+            <div>
+              <strong>Prerrequisitos:</strong>{' '}
+              {selected.prerequisites.length > 0
+                ? selected.prerequisites.join(', ')
+                : 'Sin prerrequisitos'}
+            </div>
+          </div>
+        )}
+      </>
+    );
   }
 
   function toggleValue(value: string) {
@@ -380,18 +480,7 @@ export function RegistroPage() {
             <div className={styles.field}>
               <label htmlFor="subject">Asignatura *</label>
 
-              <input
-                id="subject"
-                maxLength={50}
-                className={styles.input}
-                value={form.subjectCode}
-                onChange={(event) => {
-                  set('subjectCode', event.target.value);
-                }}
-                placeholder="ISW-201"
-              />
-
-              <p className={styles.subtle}>Catálogo de asignaturas en preparación.</p>
+              {renderSubjectSelector()}
             </div>
           </div>
         )}
@@ -505,18 +594,7 @@ export function RegistroPage() {
               <div className={styles.field}>
                 <label htmlFor="subject">Asignatura *</label>
 
-                <input
-                  id="subject"
-                  maxLength={50}
-                  className={styles.input}
-                  value={form.subjectCode}
-                  onChange={(event) => {
-                    set('subjectCode', event.target.value);
-                  }}
-                  placeholder="ISW-201"
-                />
-
-                <p className={styles.subtle}>Catálogo de asignaturas en preparación.</p>
+                {renderSubjectSelector()}
               </div>
 
               <div className={styles.field}>

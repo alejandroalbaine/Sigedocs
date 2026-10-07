@@ -63,6 +63,12 @@ export interface CatalogOption {
   label: string;
 }
 
+export interface Subject {
+  code: string;
+  name: string;
+  prerequisites: string[];
+}
+
 export interface AvailableTransition {
   transitionId: string;
   code: string;
@@ -370,5 +376,30 @@ export const parseCatalog = (value: unknown): CatalogOption[] =>
     return {
       value: text(option.value ?? option.code, 'catalog.value'),
       label: text(option.label ?? option.name, 'catalog.label'),
+    };
+  });
+function parseSubjectPrerequisites(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
+
+  return list(value, 'subject.prerequisites', (item, i) => {
+    if (typeof item === 'string') return item;
+
+    const prerequisite = record(item, `subject.prerequisites[${String(i)}]`);
+
+    return text(
+      prerequisite.code ?? prerequisite.name ?? prerequisite.value,
+      'subject.prerequisite',
+    );
+  });
+}
+
+export const parseSubjects = (value: unknown): Subject[] =>
+  list(value, 'subjects', (item, i) => {
+    const subject = record(item, `subjects[${String(i)}]`);
+
+    return {
+      code: text(subject.code ?? subject.value, 'subject.code'),
+      name: text(subject.name ?? subject.label, 'subject.name'),
+      prerequisites: parseSubjectPrerequisites(subject.prerequisites ?? subject.prerequisitesCodes),
     };
   });
