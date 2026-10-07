@@ -37,5 +37,8 @@ Las formas que el contrato no fija están en [pendientes-backend.md](pendientes-
 ## Acciones que permanecen fuera del MVP
 
 La interfaz no declara como realizadas operaciones diferidas por los informes técnicos: carga
-persistente de archivos, OCR, firma o sellado digital, notificaciones externas, comparación de
-versiones, rama de posgrado y gestión archivística avanzada (Informe Módulo II §5.1).
+persistente de archivos, OCR, firma o sellado digital, notificaciones externas, rama de posgrado y
+gestión archivística avanzada (Informe Módulo II §5.1).
+
+La comparación de versiones se resuelve en la interfaz con las rutas confirmadas de versiones y
+plantillas; no supone la ruta `POST /version-comparisons`, que en el backend sigue propuesta.

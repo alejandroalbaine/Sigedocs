@@ -35,6 +35,12 @@ contra el backend real (`PATCH .../versions/{id}`). Los campos con catálogo ins
 carreras, modalidad, estrategias) indican que sus opciones estarán disponibles próximamente: el
 backend aún no publica `GET /institutional-catalogs/{catalog}`.
 
+El comparador de versiones (pestaña «Versiones» del expediente) muestra lado a lado qué cambió
+entre dos versiones, sección por sección y campo por campo, con las palabras agregadas y quitadas
+de cada texto. Por defecto compara la versión vigente con la anterior, la que revisó la
+especialista. La comparación se hace en la interfaz con las rutas de versiones y de plantilla:
+el backend no publica una ruta de comparación.
+
 La Biblioteca UI (`/ui-kit`) es una herramienta interna del equipo: solo existe con `npm run dev`
 y no aparece en el menú ni en el build de producción.
 
