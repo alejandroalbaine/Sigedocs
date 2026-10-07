@@ -63,6 +63,7 @@ export function RegistroPage() {
   const [degreePrograms, setDegreePrograms] = useState<CatalogState>('cargando');
   const [subjects, setSubjects] = useState<SubjectState>('cargando');
   const [subjectSearch, setSubjectSearch] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(
@@ -88,18 +89,6 @@ export function RegistroPage() {
       }
 
       try {
-        const { data: opciones } = await templatesApi.catalog('degree_programs');
-
-        if (activo) {
-          setDegreePrograms(opciones);
-        }
-      } catch {
-        if (activo) {
-          setDegreePrograms('pendiente');
-        }
-      }
-
-      try {
         const { data: opciones } = await subjectsApi.list();
 
         if (activo) {
@@ -119,6 +108,64 @@ export function RegistroPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let activo = true;
+
+    async function cargarCarreras() {
+      if (!form.schoolCode) {
+        setDegreePrograms([]);
+        return;
+      }
+
+      setDegreePrograms('cargando');
+
+      try {
+        const { data: opciones } = await templatesApi.catalog('degree_programs', form.schoolCode);
+
+        if (activo) {
+          setDegreePrograms(opciones);
+        }
+      } catch {
+        if (activo) {
+          setDegreePrograms('pendiente');
+        }
+      }
+    }
+
+    void cargarCarreras();
+
+    return () => {
+      activo = false;
+    };
+  }, [form.schoolCode]);
+  useEffect(() => {
+    let activo = true;
+
+    async function cargarDetalleAsignatura() {
+      if (!form.subjectCode) {
+        setSelectedSubject(null);
+        return;
+      }
+
+      try {
+        const { data } = await subjectsApi.get(form.subjectCode);
+
+        if (activo) {
+          setSelectedSubject(data);
+        }
+      } catch {
+        if (activo) {
+          setSelectedSubject(null);
+        }
+      }
+    }
+
+    void cargarDetalleAsignatura();
+
+    return () => {
+      activo = false;
+    };
+  }, [form.subjectCode]);
   const filteredSubjects = Array.isArray(subjects)
     ? subjects.filter((subject) => {
         const search = subjectSearch.trim().toLowerCase();
@@ -158,7 +205,8 @@ export function RegistroPage() {
       );
     }
 
-    const selected = subjects.find((subject) => subject.code === form.subjectCode);
+    const selected =
+      selectedSubject ?? subjects.find((subject) => subject.code === form.subjectCode);
 
     return (
       <>
@@ -317,8 +365,8 @@ export function RegistroPage() {
         <h1>Registrar expediente curricular</h1>
 
         <p className={styles.subtle}>
-          Asistente de cinco pasos. El código del expediente, la versión 1.0 y el estado inicial se
-          asignan automáticamente al registrar.
+          Asistente de cinco pasos. El código del expediente, la versión 1.0 y el estado inicial
+          se asignan automáticamente al registrar.
         </p>
       </header>
 
@@ -411,6 +459,7 @@ export function RegistroPage() {
                   value={form.schoolCode}
                   onChange={(event) => {
                     set('schoolCode', event.target.value);
+                    set('degreeProgramCode', '');
                   }}
                 >
                   <option value="">Seleccione una escuela</option>
@@ -430,6 +479,7 @@ export function RegistroPage() {
                     value={form.schoolCode}
                     onChange={(event) => {
                       set('schoolCode', event.target.value);
+                      set('degreeProgramCode', '');
                     }}
                     placeholder="ESC-ING"
                   />
@@ -717,7 +767,11 @@ export function RegistroPage() {
                 disabled={saving || Boolean(created)}
                 onClick={() => void submit()}
               >
-                {saving ? 'Registrando…' : created ? 'Expediente registrado' : 'Radicar expediente'}{' '}
+                {saving
+                  ? 'Registrando…'
+                  : created
+                    ? 'Expediente registrado'
+                    : 'Radicar expediente'}{' '}
                 <ShieldCheck size={15} />
               </button>
             )}

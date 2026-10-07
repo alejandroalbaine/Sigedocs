@@ -393,13 +393,15 @@ function parseSubjectPrerequisites(value: unknown): string[] {
   });
 }
 
-export const parseSubjects = (value: unknown): Subject[] =>
-  list(value, 'subjects', (item, i) => {
-    const subject = record(item, `subjects[${String(i)}]`);
+export const parseSubject = (value: unknown): Subject => {
+  const subject = record(value, 'subject');
 
-    return {
-      code: text(subject.code ?? subject.value, 'subject.code'),
-      name: text(subject.name ?? subject.label, 'subject.name'),
-      prerequisites: parseSubjectPrerequisites(subject.prerequisites ?? subject.prerequisitesCodes),
-    };
-  });
+  return {
+    code: text(subject.code ?? subject.value, 'subject.code'),
+    name: text(subject.name ?? subject.label, 'subject.name'),
+    prerequisites: parseSubjectPrerequisites(subject.prerequisites ?? subject.prerequisitesCodes),
+  };
+};
+
+export const parseSubjects = (value: unknown): Subject[] =>
+  list(value, 'subjects', (item) => parseSubject(item));

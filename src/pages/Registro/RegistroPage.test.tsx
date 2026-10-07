@@ -28,6 +28,29 @@ function urlDeFetch(input: RequestInfo | URL) {
 }
 
 async function abrirRegistro(conAsignatura = false) {
+  if (!vi.isMockFunction(globalThis.fetch)) {
+    stubApi({
+      'GET /api/v1/institutional-catalogs/schools': [
+        { value: 'ESC-ING', label: 'Ingeniería' },
+      ],
+      'GET /api/v1/institutional-catalogs/degree_programs': [
+        { value: 'ISW', label: 'Ingeniería en Software' },
+      ],
+      'GET /api/v1/subjects': [
+        {
+          code: 'ISW-201',
+          name: 'Ingeniería de Software I',
+          prerequisites: ['INF-210'],
+        },
+      ],
+      'GET /api/v1/subjects/ISW-201': {
+        code: 'ISW-201',
+        name: 'Ingeniería de Software I',
+        prerequisites: ['INF-210'],
+      },
+    });
+  }
+
   if (conAsignatura) {
     localStorage.setItem(
       'sigesdoc:dossier-draft',
@@ -308,3 +331,4 @@ describe('Registro de expedientes', () => {
     expect(screen.queryByText('bachelor')).not.toBeInTheDocument();
   });
 });
+

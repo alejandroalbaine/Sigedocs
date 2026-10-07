@@ -122,25 +122,33 @@ export function FormularioPrograma({
       ? catalogosCargados.datos
       : Object.fromEntries(nombresCatalogo.map((nombre) => [nombre, 'cargando' as const]));
 
-  const [subjects, setSubjects] = useState<Subject[] | 'cargando' | 'pendiente'>('cargando');
-  const [subjectSearch, setSubjectSearch] = useState('');
+  const [subject, setSubject] = useState<Subject | null>(null);
+  const [subjectPending, setSubjectPending] = useState(true);
 
   useEffect(() => {
     let vigente = true;
 
+    setSubjectPending(true);
+
     void subjectsApi
-      .list()
+      .get(dossier.subjectCode)
       .then(({ data }) => {
-        if (vigente) setSubjects(data);
+        if (vigente) {
+          setSubject(data);
+          setSubjectPending(false);
+        }
       })
       .catch(() => {
-        if (vigente) setSubjects('pendiente');
+        if (vigente) {
+          setSubject(null);
+          setSubjectPending(false);
+        }
       });
 
     return () => {
       vigente = false;
     };
-  }, []);
+  }, [dossier.subjectCode]);
 
   const clave = `${currentVersion.versionId}:${templateVersionId}`;
 
@@ -226,40 +234,6 @@ export function FormularioPrograma({
       actuales.filter((error) => !pertenece(error.ruta, ruta) && error.ruta !== seccion),
     );
     onCorregir?.(ruta);
-    setAviso(null);
-  }
-
-  function seleccionarAsignatura(seccion: string, subject: Subject) {
-    if (!contenido) return;
-
-    const prerrequisitos = subject.prerequisites.join(', ');
-
-    setEdicion({
-      clave,
-      contenido: {
-        ...contenido,
-        [seccion]: {
-          ...contenido[seccion],
-          asignatura: subject.name,
-          clave_asignatura: subject.code,
-          prerrequisitos,
-        },
-      },
-    });
-
-    const rutas = [
-      `${seccion}.asignatura`,
-      `${seccion}.clave_asignatura`,
-      `${seccion}.prerrequisitos`,
-    ];
-
-    setErroresServidor((actuales) =>
-      actuales.filter(
-        (error) => !rutas.some((ruta) => pertenece(error.ruta, ruta)) && error.ruta !== seccion,
-      ),
-    );
-
-    for (const ruta of rutas) onCorregir?.(ruta);
     setAviso(null);
   }
 
@@ -427,112 +401,31 @@ export function FormularioPrograma({
                 .map((campo) => {
                   const ruta = `${seccion.key}.${campo.key}`;
                   const valor = contenido[seccion.key]?.[campo.key];
+                  if (
+                    campo.key === 'asignatura' ||
+                    campo.key === 'clave_asignatura' ||
+                    campo.key === 'creditos' ||
+                    campo.key === 'prerrequisitos'
+                  ) {
+                    let valorActual: Valor = valor;
 
-                  if (campo.key === 'asignatura') {
-                    if (!Array.isArray(subjects) || subjects.length === 0) {
-                      return (
-                        <div key={campo.key} className={styles.campo}>
-                          <CampoPlantilla
-                            campo={campo}
-                            valor={valor}
-                            ruta={ruta}
-                            editable={editable}
-                            hallazgos={hallazgos}
-                            catalogos={catalogos}
-                            onChange={(nuevo) => {
-                              cambiar(seccion.key, campo.key, nuevo);
-                            }}
-                          />
-
-                          <p className={styles.pendiente}>
-                            Catálogo de asignaturas en preparación.
-                          </p>
-                        </div>
-                      );
+                    if (campo.key === 'asignatura') {
+                      valorActual = subject?.name ?? valor ?? 'Consultando asignatura...';
                     }
 
-                    const claveActual = contenido[seccion.key]?.clave_asignatura;
-                    const nombreActual = typeof valor === 'string' ? valor : '';
-                    const seleccionada =
-                      subjects.find(
-                        (subject) => subject.code === claveActual || subject.name === nombreActual,
-                      ) ?? null;
+                    if (campo.key === 'clave_asignatura') {
+                      valorActual = subject?.code ?? dossier.subjectCode;
+                    }
 
-                    const busqueda = subjectSearch.trim().toLowerCase();
-                    const opciones = subjects.filter(
-                      (subject) =>
-                        !busqueda ||
-                        subject.code.toLowerCase().includes(busqueda) ||
-                        subject.name.toLowerCase().includes(busqueda) ||
-                        subject.code === seleccionada?.code,
-                    );
+                    if (campo.key === 'prerrequisitos') {
+                      valorActual = subject
+                        ? subject.prerequisites.join(', ') || 'Sin prerrequisitos'
+                        : (valor ?? 'Consultando prerrequisitos...');
+                    }
 
-                    const campoId = idCampo(ruta);
-                    const tieneError = hallazgos.some(
-                      (hallazgo) =>
-                        hallazgo.severidad === 'error' && pertenece(hallazgo.ruta, ruta),
-                    );
-                    const errorId = `${campoId}-error`;
-
-                    return (
-                      <div key={campo.key} className={styles.campo}>
-                        <label className={styles.etiqueta} htmlFor={campoId}>
-                          {campo.label}
-                          {campo.isRequired ? ' *' : ''}
-                        </label>
-
-                        {editable ? (
-                          <>
-                            <input
-                              type="search"
-                              value={subjectSearch}
-                              onChange={(event) => {
-                                setSubjectSearch(event.target.value);
-                              }}
-                              placeholder="Buscar por clave o nombre"
-                              aria-label="Buscar asignatura por clave o nombre"
-                            />
-
-                            <select
-                              id={campoId}
-                              value={seleccionada?.code ?? ''}
-                              aria-invalid={tieneError || undefined}
-                              aria-describedby={tieneError ? errorId : undefined}
-                              onChange={(event) => {
-                                const subject = subjects.find(
-                                  (item) => item.code === event.target.value,
-                                );
-
-                                if (subject) seleccionarAsignatura(seccion.key, subject);
-                              }}
-                            >
-                              <option value="">Seleccione una asignatura</option>
-
-                              {opciones.map((subject) => (
-                                <option key={subject.code} value={subject.code}>
-                                  {subject.code} — {subject.name}
-                                </option>
-                              ))}
-                            </select>
-                          </>
-                        ) : (
-                          <span className={styles.lectura}>
-                            {seleccionada
-                              ? `${seleccionada.code} — ${seleccionada.name}`
-                              : nombreActual || 'Sin asignatura'}
-                          </span>
-                        )}
-
-                        <MensajesCampo id={errorId} hallazgos={hallazgos} ruta={ruta} />
-                      </div>
-                    );
-                  }
-
-                  if (campo.key === 'clave_asignatura' || campo.key === 'prerrequisitos') {
-                    const valorActual =
-                      typeof valor === 'string' && valor.trim()
-                        ? valor
-                        : 'Se completará automáticamente desde el catálogo.';
+                    if (campo.key === 'creditos' && (valorActual === '' || valorActual == null)) {
+                      valorActual = 'Pendiente del catálogo';
+                    }
 
                     return (
                       <div key={campo.key} className={styles.campo}>
@@ -541,7 +434,17 @@ export function FormularioPrograma({
                           {campo.isRequired ? ' *' : ''}
                         </span>
 
-                        <span className={styles.lectura}>{valorActual}</span>
+                        <span className={styles.lectura}>
+                          {subjectPending && campo.key !== 'creditos'
+                            ? 'Consultando...'
+                            : String(valorActual ?? '')}
+                        </span>
+
+                        <MensajesCampo
+                          id={`${idCampo(ruta)}-error`}
+                          hallazgos={hallazgos}
+                          ruta={ruta}
+                        />
                       </div>
                     );
                   }
