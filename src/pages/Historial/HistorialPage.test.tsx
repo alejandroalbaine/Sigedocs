@@ -4,6 +4,7 @@ import {
   adminSistema,
   dossier,
   especialista,
+  problem,
   signedInBackend,
   stubApi,
   stubDossiers,
@@ -16,167 +17,73 @@ const auditoria = {
   permissions: [...adminSistema.permissions, 'expedientes.consultar'],
 };
 
-/**
- * Fila de la tabla que contiene un texto. Se acota a la tabla porque las acciones y los
- * estados se repiten también como opciones de los filtros.
- */
-function filaDe(texto: string): HTMLElement {
-  const tabla = screen.getByRole('table', { name: 'Eventos de trazabilidad' });
-  const fila = within(tabla).getByText(texto).closest('tr');
-  if (!fila) throw new Error(`Ninguna fila de la tabla contiene «${texto}».`);
-  return fila;
+const AUDITORIA = `GET /api/v1/dossiers/${expediente.dossierId}/audit-events`;
+const NOTIFICACIONES = `GET /api/v1/dossiers/${expediente.dossierId}/notifications`;
+
+async function elegirExpediente() {
+  await userEvent.selectOptions(await screen.findByLabelText('Expediente'), expediente.dossierId);
 }
 
-test('exige auditoria.consultar', async () => {
+test('exige permiso de auditoría', async () => {
   renderApp(signedInBackend(especialista), '/historial');
   expect(await screen.findByText('Sin permiso')).toBeInTheDocument();
 });
 
-test('muestra los filtros y los eventos simulados con el aviso de correo pendiente', async () => {
-  stubDossiers([expediente]);
+test('sin expediente elegido pide seleccionarlo y no consulta ninguna ruta', async () => {
+  const llamadas = stubDossiers([expediente]);
   renderApp(signedInBackend(auditoria), '/historial');
-  expect(await screen.findByRole('search', { name: 'Filtros de trazabilidad' })).toBeVisible();
-  expect(screen.getByText(/Datos simulados/)).toBeInTheDocument();
-  expect(screen.getByText('Mostrando 1–5 de 5 eventos')).toBeInTheDocument();
-  expect(screen.getByRole('columnheader', { name: 'Notificados' })).toBeInTheDocument();
-
-  await userEvent.selectOptions(screen.getByLabelText('Acción'), 'aprobar_revision');
-  expect(screen.getByLabelText('Acción')).toHaveValue('aprobar_revision');
-  await userEvent.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
-  expect(screen.getByLabelText('Acción')).toHaveValue('');
+  expect(await screen.findByText('Seleccione un expediente para continuar.')).toBeVisible();
+  expect(llamadas.some((llamada) => llamada.key.includes('audit-events'))).toBe(false);
+  expect(llamadas.some((llamada) => llamada.key.includes('notifications'))).toBe(false);
+  expect(screen.queryByText(/simulados/i)).not.toBeInTheDocument();
 });
 
-test('ofrece el selector de expediente y sigue mostrando los simulados sin selección', async () => {
-  stubDossiers([expediente]);
-  renderApp(signedInBackend(auditoria), '/historial');
-  await screen.findByRole('search', { name: 'Filtros de trazabilidad' });
-
-  const selector = screen.getByLabelText('Expediente consultado');
-  expect(selector).toBeInTheDocument();
-  expect(selector).toHaveValue('');
-  expect(screen.getByText(/Datos simulados/)).toBeInTheDocument();
-  expect(screen.getByText('Mostrando 1–5 de 5 eventos')).toBeInTheDocument();
-});
-
-test('cada fila muestra el estado del envío y sus destinatarios', async () => {
-  stubDossiers([expediente]);
-  renderApp(signedInBackend(auditoria), '/historial');
-  await screen.findByRole('search', { name: 'Filtros de trazabilidad' });
-
-  const enviado = filaDe('Aprobar revisión');
-  expect(within(enviado).getByText('Enviado')).toBeInTheDocument();
-  expect(within(enviado).getByText('coord.programa@uapa.edu.do')).toBeVisible();
-  expect(within(enviado).getByText('dir.curricular@uapa.edu.do')).toBeVisible();
-
-  expect(within(filaDe('Requiere cambios')).getByText('No se pudo enviar')).toBeInTheDocument();
-  expect(within(filaDe('Iniciar reevaluación')).getByText('En preparación')).toBeInTheDocument();
-
-  // El evento sin el campo `notificacion` también degrada a «En preparación».
-  expect(screen.getAllByText('En preparación')).toHaveLength(2);
-});
-
-test('la ficha del evento expone los destinatarios del envío fallido sin detalle técnico', async () => {
-  stubDossiers([expediente]);
-  renderApp(signedInBackend(auditoria), '/historial');
-  await screen.findByRole('search', { name: 'Filtros de trazabilidad' });
-
-  await userEvent.click(
-    within(filaDe('Requiere cambios')).getByRole('button', { name: 'Ver detalle' }),
-  );
-
-  const dialogo = await screen.findByRole('dialog', { name: 'Detalle del evento' });
-  expect(within(dialogo).getByText('No se pudo enviar')).toBeInTheDocument();
-  expect(within(dialogo).getByText('especialista.curricular@uapa.edu.do')).toBeVisible();
-  expect(within(dialogo).queryByText(/SMTP/)).not.toBeInTheDocument();
-});
-
-test('si la ruta de notificaciones no existe aún, la pantalla dice que está en preparación', async () => {
-  stubDossiers([expediente]);
-  renderApp(signedInBackend(auditoria), '/historial');
-  await screen.findByRole('search', { name: 'Filtros de trazabilidad' });
-  await screen.findByRole('option', { name: `${expediente.code} · ${expediente.title}` });
-
-  await userEvent.selectOptions(
-    screen.getByLabelText('Expediente consultado'),
-    expediente.dossierId,
-  );
-  expect(
-    await screen.findByText(/El historial de notificaciones está en preparación/),
-  ).toBeVisible();
-});
-
-test('muestra los estados reales de notifications sin exponer lastError', async () => {
+test('la cronología sigue siendo audit-events y envía los filtros al servidor', async () => {
   const llamadas = stubApi({
     'GET /api/v1/dossiers': [expediente],
-    [`GET /api/v1/dossiers/${expediente.dossierId}/notifications`]: [
+    [AUDITORIA]: [
       {
-        historyId: 'sh-1',
-        transition: { transitionId: 't-1', code: 'START_REVIEW', name: 'Iniciar la revisión' },
+        eventId: 'e1',
+        type: 'state_changed',
+        occurredAt: '2026-09-20T15:00:00.000Z',
+        user: { userId: 'u1', name: 'Especialista Curricular' },
+        versionLabel: 'v1.0',
+        summary: 'En revisión → Requiere ajustes',
+      },
+    ],
+    [NOTIFICACIONES]: [],
+  });
+  renderApp(signedInBackend(auditoria), '/historial');
+  await screen.findByRole('search', { name: 'Filtros de trazabilidad' });
+  await elegirExpediente();
+
+  expect(await screen.findByText('En revisión → Requiere ajustes')).toBeVisible();
+  const tabla = screen.getByRole('table', { name: 'Eventos de trazabilidad' });
+  expect(within(tabla).getByText('Cambio de estado')).toBeVisible();
+
+  await userEvent.selectOptions(screen.getByLabelText('Evento'), 'assigned');
+  const ultima = llamadas.filter((llamada) => llamada.key.includes('audit-events')).at(-1);
+  expect(ultima?.url.searchParams.get('type')).toBe('assigned');
+});
+
+test('la sección de notificaciones pinta el estado de correo de cada destinatario', async () => {
+  stubApi({
+    'GET /api/v1/dossiers': [expediente],
+    [AUDITORIA]: [],
+    [NOTIFICACIONES]: [
+      {
+        historyId: 'h1',
+        transition: { code: 'START_REVIEW', name: 'Iniciar la revisión' },
         fromState: { code: 'ASSIGNED', name: 'Asignado' },
         toState: { code: 'IN_REVIEW', name: 'En revisión' },
         occurredAt: '2026-10-06T22:00:00.000Z',
         recipients: [
+          { email: 'especialista.curricular@uapa.edu.do', status: 'sent' },
+          { email: 'dir.curricular@uapa.edu.do', status: 'pending' },
           {
-            notificationId: 'n-1',
-            userId: 'u-1',
-            email: 'persona@uapa.edu.do',
-            status: 'sent',
-            attempts: 1,
-            lastError: null,
-            sentAt: '2026-10-06T22:01:00.000Z',
-            failedAt: null,
-          },
-          {
-            notificationId: 'n-2',
-            userId: null,
-            email: 'dir.curricular@uapa.edu.do',
-            status: 'sent',
-            attempts: 1,
-            lastError: null,
-            sentAt: '2026-10-06T22:01:00.000Z',
-            failedAt: null,
-          },
-        ],
-      },
-      {
-        historyId: 'sh-2',
-        transition: { transitionId: 't-2', code: 'REQUEST_CHANGES', name: 'Devolver para ajustes' },
-        fromState: { code: 'IN_REVIEW', name: 'En revisión' },
-        toState: { code: 'CHANGES_REQUIRED', name: 'Requiere ajustes' },
-        occurredAt: '2026-10-06T23:00:00.000Z',
-        recipients: [
-          {
-            notificationId: 'n-3',
-            userId: 'u-1',
-            email: 'persona@uapa.edu.do',
-            status: 'pending',
-            attempts: 0,
-            lastError: null,
-            sentAt: null,
-            failedAt: null,
-          },
-        ],
-      },
-      {
-        historyId: 'sh-3',
-        transition: {
-          transitionId: 't-3',
-          code: 'FINALIZE',
-          name: 'Declarar la versión definitiva',
-        },
-        fromState: { code: 'EVALUATED', name: 'Evaluado' },
-        toState: { code: 'FINAL', name: 'Definitivo' },
-        occurredAt: '2026-10-07T00:00:00.000Z',
-        recipients: [
-          {
-            notificationId: 'n-4',
-            userId: 'u-1',
-            email: 'persona@uapa.edu.do',
+            email: 'coord.programa@uapa.edu.do',
             status: 'failed',
-            attempts: 3,
             lastError: 'SMTP 550: rechazado por el servidor',
-            sentAt: null,
-            failedAt: '2026-10-07T00:01:00.000Z',
           },
         ],
       },
@@ -184,21 +91,82 @@ test('muestra los estados reales de notifications sin exponer lastError', async 
   });
   renderApp(signedInBackend(auditoria), '/historial');
   await screen.findByRole('search', { name: 'Filtros de trazabilidad' });
-  await screen.findByRole('option', { name: `${expediente.code} · ${expediente.title}` });
+  await elegirExpediente();
 
-  await userEvent.selectOptions(
-    screen.getByLabelText('Expediente consultado'),
-    expediente.dossierId,
+  const tabla = await screen.findByRole('table', { name: 'Notificaciones por correo' });
+  expect(within(tabla).getAllByText('Asignado → En revisión')).toHaveLength(3);
+  expect(within(tabla).getByText('especialista.curricular@uapa.edu.do')).toBeVisible();
+  expect(within(tabla).getByText('dir.curricular@uapa.edu.do')).toBeVisible();
+  expect(within(tabla).getByText('coord.programa@uapa.edu.do')).toBeVisible();
+  expect(within(tabla).getByText('Enviado')).toBeVisible();
+  expect(within(tabla).getByText('Pendiente de envío')).toBeVisible();
+  expect(within(tabla).getByText('No se pudo enviar')).toBeVisible();
+  expect(within(tabla).queryByText(/SMTP/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/simulados/i)).not.toBeInTheDocument();
+});
+
+test('un 404 en notificaciones indica fuera de alcance, no «en preparación»', async () => {
+  stubApi({
+    'GET /api/v1/dossiers': [expediente],
+    [AUDITORIA]: [],
+    [NOTIFICACIONES]: () => problem(404, 'NOT_FOUND'),
+  });
+  renderApp(signedInBackend(auditoria), '/historial');
+  await screen.findByRole('search', { name: 'Filtros de trazabilidad' });
+  await elegirExpediente();
+
+  expect(
+    await screen.findByText('Expediente no encontrado o fuera del alcance del usuario.'),
+  ).toBeVisible();
+  expect(screen.queryByText(/está en preparación/)).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('table', { name: 'Notificaciones por correo' }),
+  ).not.toBeInTheDocument();
+});
+
+test('si la consulta de notificaciones falla muestra solo el mensaje de error', async () => {
+  stubApi({
+    'GET /api/v1/dossiers': [expediente],
+    [AUDITORIA]: [],
+    [NOTIFICACIONES]: () => problem(500, 'ERROR_INTERNO'),
+  });
+  renderApp(signedInBackend(auditoria), '/historial');
+  await screen.findByRole('search', { name: 'Filtros de trazabilidad' });
+  await elegirExpediente();
+
+  expect(
+    await screen.findByText('El servicio no está disponible en este momento. Inténtelo más tarde.'),
+  ).toBeVisible();
+  expect(
+    screen.queryByRole('table', { name: 'Notificaciones por correo' }),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText(/simulados/i)).not.toBeInTheDocument();
+});
+
+test('si no hay notificaciones lo dice sin inventar eventos', async () => {
+  stubApi({
+    'GET /api/v1/dossiers': [expediente],
+    [AUDITORIA]: [],
+    [NOTIFICACIONES]: [],
+  });
+  renderApp(signedInBackend(auditoria), '/historial');
+  await screen.findByRole('search', { name: 'Filtros de trazabilidad' });
+  await elegirExpediente();
+
+  expect(
+    await screen.findByText('No hay notificaciones registradas para este expediente.'),
+  ).toBeVisible();
+  expect(screen.queryByText(/simulados/i)).not.toBeInTheDocument();
+});
+
+test('el administrador del sistema (sin dossiers.read) no ve errores ni el menú de historial', async () => {
+  const llamadas = stubApi({});
+  renderApp(
+    signedInBackend({ ...adminSistema, permissions: ['users.manage', 'audit.read'] }),
+    '/historial',
   );
-
-  expect(await screen.findByText('Pendiente de envío')).toBeInTheDocument();
-  expect(screen.getByText('No se pudo enviar')).toBeInTheDocument();
-
-  const enviado = filaDe('Iniciar la revisión');
-  expect(within(enviado).getByText('Enviado')).toBeInTheDocument();
-  expect(within(enviado).getByText('persona@uapa.edu.do')).toBeVisible();
-  expect(within(enviado).getByText('En revisión')).toBeInTheDocument();
-
-  expect(screen.queryByText(/SMTP 550/)).not.toBeInTheDocument();
-  expect(llamadas.some((llamada) => llamada.key.includes('/notifications'))).toBe(true);
+  expect(await screen.findByText(/Su rol no consulta expedientes curriculares/)).toBeVisible();
+  expect(screen.queryByText(/No tiene permiso/)).not.toBeInTheDocument();
+  expect(llamadas.some((llamada) => llamada.key === 'GET /api/v1/dossiers')).toBe(false);
+  expect(screen.queryByRole('link', { name: /Historial y trazabilidad/ })).not.toBeInTheDocument();
 });

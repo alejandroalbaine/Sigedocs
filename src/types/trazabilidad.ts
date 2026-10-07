@@ -14,7 +14,7 @@ export const ETIQUETAS_ESTADO_ENVIO: Readonly<Record<EstadoEnvio, string>> = {
   en_preparacion: 'En preparación',
 };
 
-/** Respuesta tolerada mientras el contrato de notifications se incorpora a develop. */
+/** Forma tolerada de `GET /dossiers/{id}/notifications` (planos y agrupados). */
 export interface NotificationResponse {
   notificationId?: unknown;
   id?: unknown;
@@ -40,7 +40,13 @@ export interface NotificationResponse {
   toState?: unknown;
 }
 
-/** Registro que la pantalla puede renderizar sin exponer errores técnicos. */
+/** Correo notificado con su propio estado de envío; nunca incluye `lastError`. */
+export interface DestinatarioNotificacion {
+  email: string;
+  status: EstadoEnvio;
+}
+
+/** Registro que la pantalla renderiza sin exponer errores técnicos. */
 export interface HistorialItem {
   notificationId: string;
   eventId: string | null;
@@ -51,19 +57,10 @@ export interface HistorialItem {
   versionLabel: string | null;
   estadoAnterior: string | null;
   estadoNuevo: string | null;
-  destinatarios: string[];
-  status: EstadoEnvio;
-  etiquetaEstadoEnvio: string;
+  destinatarios: DestinatarioNotificacion[];
 }
 
 export interface NotificationsFilters {
   limit?: number;
   cursor?: string;
-}
-
-export interface HistorialPage {
-  items: HistorialItem[];
-  nextCursor: string | null;
-  limit: number;
-  sourceStatus: 'ready' | 'en_preparacion';
 }

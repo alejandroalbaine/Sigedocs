@@ -2,16 +2,14 @@ import { ApiError } from '../common/api/errors.ts';
 import { ContractError } from '../common/api/contract.ts';
 import { domainRequest } from '../common/api/domainClient.ts';
 import {
-  ETIQUETAS_ESTADO_ENVIO,
   NOTIFICATION_STATUSES,
+  type DestinatarioNotificacion,
+  type EstadoEnvio,
   type HistorialItem,
-  type HistorialPage,
   type NotificationResponse,
   type NotificationStatus,
   type NotificationsFilters,
 } from '../types/trazabilidad.ts';
-
-const ROUTE_UNAVAILABLE_STATUSES = new Set([404, 405, 501]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -29,25 +27,9 @@ function firstText(...values: unknown[]): string | null {
   return null;
 }
 
-function recipientList(value: unknown): string[] {
-  if (value === undefined || value === null) return [];
-  if (typeof value === 'string') return value.trim() ? [value.trim()] : [];
-  if (!Array.isArray(value)) throw new ContractError('notification recipients');
-
-  return [
-    ...new Set(
-      value.flatMap((item) => {
-        if (typeof item === 'string') return item.trim() ? [item.trim()] : [];
-        if (!isRecord(item)) return [];
-        const email = firstText(item.email, item.correo, item.address, item.direccion);
-        return email ? [email] : [];
-      }),
-    ),
-  ];
-}
-
-function notificationStatus(value: unknown): NotificationStatus | 'en_preparacion' {
-  if (typeof value !== 'string') return 'en_preparacion';
+/** Estado individual de un destinatario; lo desconocido degrada a `en_preparacion`. */
+function estadoEnvio(value: unknown, porDefecto: EstadoEnvio): EstadoEnvio {
+  if (typeof value !== 'string') return porDefecto;
   const normalized = value.trim().toLowerCase();
   if ((NOTIFICATION_STATUSES as readonly string[]).includes(normalized)) {
     return normalized as NotificationStatus;
@@ -55,28 +37,42 @@ function notificationStatus(value: unknown): NotificationStatus | 'en_preparacio
   return 'en_preparacion';
 }
 
+/**
+ * Cada destinatario conserva su propio estado (`sent`, `pending`, `failed`); si el
+ * backend solo trae cadenas, se aplica el estado del aviso completo. `lastError`
+ * jamás se copia al resultado.
+ */
+function destinatariosDe(value: unknown, porDefecto: EstadoEnvio): DestinatarioNotificacion[] {
+  if (value === undefined || value === null) return [];
+  if (typeof value === 'string') {
+    return value.trim() ? [{ email: value.trim(), status: porDefecto }] : [];
+  }
+  if (!Array.isArray(value)) throw new ContractError('notification recipients');
+
+  const vistos = new Set<string>();
+  const destinatarios: DestinatarioNotificacion[] = [];
+  for (const item of value) {
+    let email: string | null;
+    let status: EstadoEnvio;
+    if (typeof item === 'string') {
+      email = item.trim() || null;
+      status = porDefecto;
+    } else if (isRecord(item)) {
+      email = firstText(item.email, item.correo, item.address, item.direccion);
+      status = estadoEnvio(item.status, porDefecto);
+    } else {
+      continue;
+    }
+    if (!email || vistos.has(email)) continue;
+    vistos.add(email);
+    destinatarios.push({ email, status });
+  }
+  return destinatarios;
+}
+
 function nombreDeEstado(value: unknown): string | null {
   if (isRecord(value)) return optionalText(value.name);
   return optionalText(value);
-}
-
-function recipientStatuses(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) =>
-    isRecord(item) && typeof item.status === 'string' ? [item.status.trim().toLowerCase()] : [],
-  );
-}
-
-/**
- * Una transición notifica a varias personas con estados distintos: la fila muestra el peor
- * (`failed` gana a `pending`, `pending` a `sent`), de modo que un solo destinatario sin
- * enviar mantenga el aviso visible.
- */
-function estadoAgregado(estados: readonly string[]): NotificationStatus | 'en_preparacion' {
-  if (estados.includes('failed')) return 'failed';
-  if (estados.includes('pending')) return 'pending';
-  if (estados.includes('sent')) return 'sent';
-  return 'en_preparacion';
 }
 
 /**
@@ -99,7 +95,6 @@ function normalizarGrupo(value: Record<string, unknown>): HistorialItem {
       ? `${estadoAnterior} → ${estadoNuevo}`
       : (type ?? optionalText(value.summary));
 
-  const status = estadoAgregado(recipientStatuses(value.recipients));
   return {
     notificationId,
     eventId: optionalText(value.eventId),
@@ -110,9 +105,7 @@ function normalizarGrupo(value: Record<string, unknown>): HistorialItem {
     versionLabel: optionalText(value.versionLabel),
     estadoAnterior,
     estadoNuevo,
-    destinatarios: recipientList(value.recipients),
-    status,
-    etiquetaEstadoEnvio: ETIQUETAS_ESTADO_ENVIO[status],
+    destinatarios: destinatariosDe(value.recipients, 'en_preparacion'),
   };
 }
 
@@ -133,7 +126,7 @@ export function normalizarNotificacion(value: unknown): HistorialItem {
   if (!notificationId) throw new ContractError('notification notificationId');
   if (!occurredAt) throw new ContractError('notification occurredAt');
 
-  const status = notificationStatus(raw.status);
+  const status = estadoEnvio(raw.status, 'en_preparacion');
   return {
     notificationId,
     eventId: optionalText(raw.eventId),
@@ -144,11 +137,10 @@ export function normalizarNotificacion(value: unknown): HistorialItem {
     versionLabel: optionalText(raw.versionLabel),
     estadoAnterior: optionalText(raw.estadoAnterior),
     estadoNuevo: optionalText(raw.estadoNuevo),
-    destinatarios: recipientList(
+    destinatarios: destinatariosDe(
       raw.recipients ?? raw.destinatarios ?? raw.recipientEmails ?? raw.recipientEmail,
+      status,
     ),
-    status,
-    etiquetaEstadoEnvio: ETIQUETAS_ESTADO_ENVIO[status],
   };
 }
 
@@ -165,32 +157,17 @@ export function notificationsPath(dossierId: string, filters: NotificationsFilte
   return `/dossiers/${encodeURIComponent(dossierId)}/notifications${query ? `?${query}` : ''}`;
 }
 
-export function rutaNotificationsNoDisponible(error: unknown): boolean {
-  return error instanceof ApiError && ROUTE_UNAVAILABLE_STATUSES.has(error.status);
+/** 404: el expediente no existe o está fuera del alcance del usuario. */
+export function fueraDeAlcance(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 404;
 }
 
-export function historialEnPreparacion(): HistorialPage {
-  return { items: [], nextCursor: null, limit: 0, sourceStatus: 'en_preparacion' };
-}
-
-/** Consulta las notificaciones visibles del expediente para la pantalla Historial. */
+/** Consulta las notificaciones visibles del expediente para la sección de correos. */
 export async function consultarNotificaciones(
   dossierId: string,
   filters: NotificationsFilters = {},
-): Promise<HistorialPage> {
-  try {
-    const { data, meta } = await domainRequest<unknown>(notificationsPath(dossierId, filters));
-    if (!Array.isArray(data)) throw new ContractError('notifications data');
-
-    const pagination = meta?.pagination;
-    return {
-      items: data.map(normalizarNotificacion),
-      nextCursor: pagination?.nextCursor ?? null,
-      limit: pagination?.limit ?? data.length,
-      sourceStatus: 'ready',
-    };
-  } catch (error) {
-    if (rutaNotificationsNoDisponible(error)) return historialEnPreparacion();
-    throw error;
-  }
+): Promise<HistorialItem[]> {
+  const { data } = await domainRequest<unknown>(notificationsPath(dossierId, filters));
+  if (!Array.isArray(data)) throw new ContractError('notifications data');
+  return data.map(normalizarNotificacion);
 }

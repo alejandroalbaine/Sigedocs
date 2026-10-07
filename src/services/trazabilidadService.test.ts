@@ -1,7 +1,7 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import {
   consultarNotificaciones,
-  historialEnPreparacion,
+  fueraDeAlcance,
   normalizarNotificacion,
   notificationsPath,
 } from './trazabilidadService.ts';
@@ -21,31 +21,46 @@ const notification = {
   recipients: ['persona@uapa.edu.do', 'direccion@uapa.edu.do'],
 };
 
-test('usa Pendiente de envío para pending', () => {
-  expect(normalizarNotificacion({ ...notification, status: 'pending' })).toMatchObject({
-    status: 'pending',
-    etiquetaEstadoEnvio: 'Pendiente de envío',
-  });
+test('pending aplica el estado del aviso a cada destinatario', () => {
+  expect(normalizarNotificacion({ ...notification, status: 'pending' }).destinatarios).toEqual([
+    { email: 'persona@uapa.edu.do', status: 'pending' },
+    { email: 'direccion@uapa.edu.do', status: 'pending' },
+  ]);
 });
 
-test('usa Enviado para sent', () => {
-  expect(normalizarNotificacion({ ...notification, status: 'sent' })).toMatchObject({
-    status: 'sent',
-    etiquetaEstadoEnvio: 'Enviado',
+test('cada destinatario conserva su propio estado de recipients[]', () => {
+  const item = normalizarNotificacion({
+    ...notification,
+    recipients: [
+      { email: 'persona@uapa.edu.do', status: 'sent' },
+      { email: 'direccion@uapa.edu.do', status: 'pending' },
+    ],
   });
+  expect(item.destinatarios).toEqual([
+    { email: 'persona@uapa.edu.do', status: 'sent' },
+    { email: 'direccion@uapa.edu.do', status: 'pending' },
+  ]);
 });
 
-test('usa No se pudo enviar para failed y no expone lastError', () => {
+test('failed conserva el estado por destinatario y no expone lastError', () => {
   const item = normalizarNotificacion({
     ...notification,
     status: 'failed',
-    lastError: 'SMTP password rejected: internal detail',
+    recipients: [
+      {
+        email: 'persona@uapa.edu.do',
+        status: 'failed',
+        lastError: 'SMTP password rejected: internal detail',
+      },
+      { email: 'direccion@uapa.edu.do', status: 'sent' },
+    ],
   });
-  expect(item).toMatchObject({
-    status: 'failed',
-    etiquetaEstadoEnvio: 'No se pudo enviar',
-  });
+  expect(item.destinatarios).toEqual([
+    { email: 'persona@uapa.edu.do', status: 'failed' },
+    { email: 'direccion@uapa.edu.do', status: 'sent' },
+  ]);
   expect(item).not.toHaveProperty('lastError');
+  expect(JSON.stringify(item)).not.toContain('SMTP');
 });
 
 test('conserva los destinatarios y elimina duplicados', () => {
@@ -59,7 +74,10 @@ test('conserva los destinatarios y elimina duplicados', () => {
       ],
       status: 'sent',
     }).destinatarios,
-  ).toEqual(['persona@uapa.edu.do', 'direccion@uapa.edu.do']);
+  ).toEqual([
+    { email: 'persona@uapa.edu.do', status: 'sent' },
+    { email: 'direccion@uapa.edu.do', status: 'sent' },
+  ]);
 });
 
 test('construye la ruta notifications con paginación', () => {
@@ -83,16 +101,19 @@ test('consulta notifications y normaliza la respuesta', async () => {
   });
   vi.stubGlobal('fetch', fetchMock);
 
-  await expect(consultarNotificaciones('dossier-1')).resolves.toMatchObject({
-    nextCursor: 'cursor-2',
-    limit: 25,
-    sourceStatus: 'ready',
-    items: [{ status: 'sent', etiquetaEstadoEnvio: 'Enviado' }],
-  });
+  await expect(consultarNotificaciones('dossier-1')).resolves.toEqual([
+    expect.objectContaining({
+      notificationId: 'notification-1',
+      destinatarios: [
+        { email: 'persona@uapa.edu.do', status: 'sent' },
+        { email: 'direccion@uapa.edu.do', status: 'sent' },
+      ],
+    }),
+  ]);
   expect(fetchMock).toHaveBeenCalledOnce();
 });
 
-test('muestra en preparación si la ruta todavía no está disponible', async () => {
+test('un 404 se reporta como fuera de alcance, nunca como en preparación', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn(
@@ -104,7 +125,31 @@ test('muestra en preparación si la ruta todavía no está disponible', async ()
     ),
   );
 
-  await expect(consultarNotificaciones('dossier-1')).resolves.toEqual(historialEnPreparacion());
+  const motivo = await consultarNotificaciones('dossier-1').then(
+    () => null,
+    (razon: unknown) => razon,
+  );
+  expect(fueraDeAlcance(motivo)).toBe(true);
+});
+
+test('los demás errores se propagan sin enmascararlos', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify({ code: 'ERROR_INTERNO' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/problem+json' },
+        }),
+    ),
+  );
+
+  const motivo = await consultarNotificaciones('dossier-1').then(
+    () => null,
+    (razon: unknown) => razon,
+  );
+  expect(fueraDeAlcance(motivo)).toBe(false);
+  expect(motivo).toBeInstanceOf(Error);
 });
 
 test('rechaza una notificación incompleta', () => {
@@ -150,42 +195,35 @@ test('normaliza la forma agrupada que devuelve Back End', () => {
     summary: 'Asignado → En revisión',
     estadoAnterior: 'Asignado',
     estadoNuevo: 'En revisión',
-    destinatarios: ['persona@uapa.edu.do', 'direccion@uapa.edu.do'],
-    status: 'sent',
-    etiquetaEstadoEnvio: 'Enviado',
+    destinatarios: [
+      { email: 'persona@uapa.edu.do', status: 'sent' },
+      { email: 'direccion@uapa.edu.do', status: 'sent' },
+    ],
   });
 });
 
-test('agrega los estados de los destinatarios priorizando failed, pending y sent', () => {
-  const pendiente = normalizarNotificacion({
+test('en la forma agrupada cada destinatario mantiene su estado y nunca lastError', () => {
+  const mixto = normalizarNotificacion({
     ...grupo,
     recipients: [
       { ...grupo.recipients[0], status: 'sent' },
       { ...grupo.recipients[1], status: 'pending' },
     ],
   });
-  expect(pendiente).toMatchObject({
-    status: 'pending',
-    etiquetaEstadoEnvio: 'Pendiente de envío',
-  });
+  expect(mixto.destinatarios).toEqual([
+    { email: 'persona@uapa.edu.do', status: 'sent' },
+    { email: 'direccion@uapa.edu.do', status: 'pending' },
+  ]);
 
   const fallido = normalizarNotificacion({
     ...grupo,
-    recipients: [
-      { ...grupo.recipients[0], status: 'sent' },
-      { ...grupo.recipients[1], status: 'failed', lastError: 'SMTP 550: rechazado' },
-    ],
+    recipients: [{ ...grupo.recipients[0], status: 'failed', lastError: 'SMTP 550: rechazado' }],
   });
-  expect(fallido).toMatchObject({
-    status: 'failed',
-    etiquetaEstadoEnvio: 'No se pudo enviar',
-  });
+  expect(fallido.destinatarios).toEqual([{ email: 'persona@uapa.edu.do', status: 'failed' }]);
+  expect(fallido).not.toHaveProperty('lastError');
   expect(JSON.stringify(fallido)).not.toContain('SMTP 550');
 });
 
-test('un grupo sin destinatarios queda en preparación', () => {
-  expect(normalizarNotificacion({ ...grupo, recipients: [] })).toMatchObject({
-    status: 'en_preparacion',
-    etiquetaEstadoEnvio: 'En preparación',
-  });
+test('un grupo sin destinatarios queda con la lista vacía', () => {
+  expect(normalizarNotificacion({ ...grupo, recipients: [] }).destinatarios).toEqual([]);
 });

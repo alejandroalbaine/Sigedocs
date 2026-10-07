@@ -56,54 +56,6 @@
   color: var(--subtle);
 }
 
-.notificacion {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-2);
-}
-
-.destinatarios {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-1);
-}
-
-.pildoras {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pildora {
-  max-width: 210px;
-  padding: 2px var(--space-2);
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--white);
-  color: var(--slate);
-  font-size: var(--text-xs);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mas > summary {
-  color: var(--info);
-  cursor: pointer;
-  font-size: var(--text-xs);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.mas[open] {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-1);
-}
-
 .detail {
   display: grid;
   grid-template-columns: auto 1fr;
