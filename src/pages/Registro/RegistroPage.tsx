@@ -11,7 +11,8 @@ import {
   ShieldCheck,
   UploadCloud,
 } from 'lucide-react';
-import { dossiersApi } from '../../common/api/dossiers.ts';
+import { dossiersApi, templatesApi } from '../../common/api/dossiers.ts';
+import type { CatalogOption } from '../../common/api/dossierContract.ts';
 import { errorMessage } from '../../common/api/errors.ts';
 import type { CreateDossierInput, Dossier } from '../documental/types.ts';
 import { datosRegistro, normalizarRegistro, validarRegistro } from './registro.ts';
@@ -32,6 +33,7 @@ const stepNames = [
   'Retención',
   'Confirmación',
 ];
+type CatalogState = CatalogOption[] | 'cargando' | 'pendiente';
 
 function loadDraft() {
   const raw = localStorage.getItem('sigesdoc:dossier-draft');
@@ -56,6 +58,8 @@ export function RegistroPage() {
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [created, setCreated] = useState<Dossier | null>(null);
+  const [schools, setSchools] = useState<CatalogState>('cargando');
+  const [degreePrograms, setDegreePrograms] = useState<CatalogState>('cargando');
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(
@@ -64,6 +68,41 @@ export function RegistroPage() {
     },
     [fileUrl],
   );
+  useEffect(() => {
+    let activo = true;
+
+    async function cargarCatalogos() {
+      try {
+        const opciones = await templatesApi.catalog('schools');
+
+        if (activo) {
+          setSchools(opciones);
+        }
+      } catch {
+        if (activo) {
+          setSchools('pendiente');
+        }
+      }
+
+      try {
+        const opciones = await templatesApi.catalog('degree_programs');
+
+        if (activo) {
+          setDegreePrograms(opciones);
+        }
+      } catch {
+        if (activo) {
+          setDegreePrograms('pendiente');
+        }
+      }
+    }
+
+    void cargarCatalogos();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   function set<K extends keyof CreateDossierInput>(name: K, value: CreateDossierInput[K]) {
     setForm((current) => ({
@@ -243,11 +282,11 @@ export function RegistroPage() {
             </div>
 
             <div className={styles.field}>
-              <label htmlFor="level">Nivel académico *</label>
+              <label htmlFor="academicLevel">Nivel académico *</label>
 
               <select
-                id="level"
-                className={styles.select}
+                id="academicLevel"
+                className={styles.input}
                 value={form.academicLevel}
                 onChange={(event) => {
                   set('academicLevel', event.target.value as CreateDossierInput['academicLevel']);
@@ -265,35 +304,92 @@ export function RegistroPage() {
             <div className={styles.field}>
               <label htmlFor="school">Unidad productora *</label>
 
-              <input
-                id="school"
-                maxLength={50}
-                className={styles.input}
-                value={form.schoolCode}
-                onChange={(event) => {
-                  set('schoolCode', event.target.value);
-                }}
-                placeholder="ESC-ING"
-              />
+              {Array.isArray(schools) && schools.length > 0 ? (
+                <select
+                  id="school"
+                  className={styles.input}
+                  value={form.schoolCode}
+                  onChange={(event) => {
+                    set('schoolCode', event.target.value);
+                  }}
+                >
+                  <option value="">Seleccione una escuela</option>
+
+                  {schools.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <>
+                  <input
+                    id="school"
+                    maxLength={50}
+                    className={styles.input}
+                    value={form.schoolCode}
+                    onChange={(event) => {
+                      set('schoolCode', event.target.value);
+                    }}
+                    placeholder="ESC-ING"
+                  />
+
+                  <p className={styles.subtle}>Catálogo de escuelas en preparación.</p>
+                </>
+              )}
             </div>
 
             <div className={styles.field}>
               <label htmlFor="program">Código de programa *</label>
 
-              <input
-                id="program"
-                maxLength={50}
-                className={styles.input}
-                value={form.degreeProgramCode}
-                onChange={(event) => {
-                  set('degreeProgramCode', event.target.value);
-                }}
-                placeholder="ISW"
-              />
+              {Array.isArray(degreePrograms) && degreePrograms.length > 0 ? (
+                <select
+                  id="program"
+                  className={styles.input}
+                  value={form.degreeProgramCode}
+                  onChange={(event) => {
+                    set('degreeProgramCode', event.target.value);
+                  }}
+                >
+                  <option value="">Seleccione una carrera</option>
+
+                  {degreePrograms.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <>
+                  <input
+                    id="program"
+                    maxLength={50}
+                    className={styles.input}
+                    value={form.degreeProgramCode}
+                    onChange={(event) => {
+                      set('degreeProgramCode', event.target.value);
+                    }}
+                    placeholder="ISW"
+                  />
+
+                  <p className={styles.subtle}>Catálogo de carreras en preparación.</p>
+                </>
+              )}
             </div>
 
             <div className={styles.field}>
-              <label>Asignatura *</label>
+              <label htmlFor="subject">Asignatura *</label>
+
+              <input
+                id="subject"
+                maxLength={50}
+                className={styles.input}
+                value={form.subjectCode}
+                onChange={(event) => {
+                  set('subjectCode', event.target.value);
+                }}
+                placeholder="ISW-201"
+              />
 
               <p className={styles.subtle}>Catálogo de asignaturas en preparación.</p>
             </div>
@@ -405,6 +501,22 @@ export function RegistroPage() {
                     {label}
                   </label>
                 ))}
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="subject">Asignatura *</label>
+
+                <input
+                  id="subject"
+                  maxLength={50}
+                  className={styles.input}
+                  value={form.subjectCode}
+                  onChange={(event) => {
+                    set('subjectCode', event.target.value);
+                  }}
+                  placeholder="ISW-201"
+                />
+
+                <p className={styles.subtle}>Catálogo de asignaturas en preparación.</p>
               </div>
 
               <div className={styles.field}>

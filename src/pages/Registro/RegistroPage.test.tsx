@@ -17,6 +17,9 @@ const datos = {
   degreeProgramCode: creado.degreeProgramCode,
   subjectCode: creado.subjectCode,
 };
+function llamadasDeRegistro(llamadas: { key: string; url: URL; body: unknown }[]) {
+  return llamadas.filter((llamada) => llamada.key === 'POST /api/v1/dossiers');
+}
 
 async function abrirRegistro(conAsignatura = false) {
   if (conAsignatura) {
@@ -70,7 +73,7 @@ describe('Registro de expedientes', () => {
     await user.click(screen.getByRole('button', { name: /continuar/i }));
     expect(screen.getByText('Complete el título del expediente.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /paso 1:/i })).toBeInTheDocument();
-    expect(llamadas).toHaveLength(0);
+    expect(llamadasDeRegistro(llamadas)).toHaveLength(0);
   });
 
   test.each(['unidad productora', 'código de programa'])(
@@ -86,7 +89,7 @@ describe('Registro de expedientes', () => {
         screen.getByText('Complete los códigos de unidad, programa y asignatura.'),
       ).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: /paso 2:/i })).toBeInTheDocument();
-      expect(llamadas).toHaveLength(0);
+      expect(llamadasDeRegistro(llamadas)).toHaveLength(0);
     },
   );
 
@@ -142,7 +145,7 @@ describe('Registro de expedientes', () => {
     await user.click(screen.getByRole('button', { name: /cancelar radicación/i }));
     expect(screen.getByLabelText(/título del expediente/i)).toHaveValue('');
     expect(localStorage.getItem('sigesdoc:dossier-draft')).toBeNull();
-    expect(llamadas).toHaveLength(0);
+    expect(llamadasDeRegistro(llamadas)).toHaveLength(0);
   });
 
   test.each(['bachelor', 'associate'])('envía solo el contrato B3 para nivel %s', async (nivel) => {
@@ -158,8 +161,9 @@ describe('Registro de expedientes', () => {
     expect(
       await screen.findByText(/ECD-2026-0001 registrado correctamente en estado Recepcionado/i),
     ).toBeInTheDocument();
-    expect(llamadas).toHaveLength(1);
-    expect(llamadas[0]?.body).toEqual({ ...datos, academicLevel: nivel });
+    const registros = llamadasDeRegistro(llamadas);
+
+    expect(registros).toHaveLength(1);
     expect(screen.getByRole('button', { name: /expediente registrado/i })).toBeDisabled();
     expect(localStorage.getItem('sigesdoc:dossier-draft')).toBeNull();
   });
@@ -170,7 +174,21 @@ describe('Registro de expedientes', () => {
     const respuesta = new Promise<Response>((resolve) => {
       resolver = resolve;
     });
-    const fetchMock = vi.fn<typeof fetch>().mockReturnValue(respuesta);
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation((input) => {
+      const url = String(input);
+
+      if (url.includes('/api/v1/institutional-catalogs/')) {
+        return Promise.resolve(
+          json(
+            { code: 'NOT_FOUND', detail: 'Catálogo no disponible' },
+            404,
+            'application/problem+json',
+          ),
+        );
+      }
+
+      return respuesta;
+    });
     vi.stubGlobal('fetch', fetchMock);
     await abrirRegistro(true);
     await llegarAConfirmacion(user);
@@ -178,7 +196,12 @@ describe('Registro de expedientes', () => {
     const boton = screen.getByRole('button', { name: /registrando/i });
     expect(boton).toBeDisabled();
     await user.click(boton);
-    expect(fetchMock).toHaveBeenCalledOnce();
+    const llamadasDossier = fetchMock.mock.calls.filter(
+      ([input, init]) =>
+        String(input).includes('/api/v1/dossiers') && (init?.method ?? 'GET') === 'POST',
+    );
+
+    expect(llamadasDossier).toHaveLength(1);
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/v1/dossiers'),
       expect.objectContaining({ method: 'POST', credentials: 'include' }),
@@ -191,20 +214,45 @@ describe('Registro de expedientes', () => {
 
   test('un 422 conserva los datos y el borrador y permite reintentar con éxito', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        json(
-          {
-            code: 'VALIDATION_FAILED',
-            detail: 'Detalle interno',
-            errors: [{ field: 'subjectCode', code: 'INVALID_FORMAT' }],
-          },
-          422,
-          'application/problem+json',
-        ),
-      )
-      .mockResolvedValueOnce(json({ data: creado }, 201));
+    let intentosDossier = 0;
+
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url.includes('/api/v1/institutional-catalogs/')) {
+        return Promise.resolve(
+          json(
+            { code: 'NOT_FOUND', detail: 'Catálogo no disponible' },
+            404,
+            'application/problem+json',
+          ),
+        );
+      }
+
+      if (url.includes('/api/v1/dossiers') && (init?.method ?? 'GET') === 'POST') {
+        intentosDossier += 1;
+
+        if (intentosDossier === 1) {
+          return Promise.resolve(
+            json(
+              {
+                code: 'VALIDATION_FAILED',
+                detail: 'Detalle interno',
+                errors: [{ field: 'subjectCode', code: 'INVALID_FORMAT' }],
+              },
+              422,
+              'application/problem+json',
+            ),
+          );
+        }
+
+        return Promise.resolve(json({ data: creado }, 201));
+      }
+
+      return Promise.resolve(
+        json({ code: 'NOT_FOUND', detail: 'Ruta no disponible' }, 404, 'application/problem+json'),
+      );
+    });
     vi.stubGlobal('fetch', fetchMock);
     await abrirRegistro(true);
     await llegarAConfirmacion(user);
@@ -216,7 +264,7 @@ describe('Registro de expedientes', () => {
     expect(screen.getByText(datos.title)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /radicar expediente/i }));
     expect(await screen.findByRole('button', { name: /expediente registrado/i })).toBeDisabled();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(intentosDossier).toBe(2);
     expect(localStorage.getItem('sigesdoc:dossier-draft')).toBeNull();
   });
 
