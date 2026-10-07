@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { dossiersApi, subjectsApi, templatesApi } from '../../common/api/dossiers.ts';
 import type { FieldError } from '../../common/api/contract.ts';
 import type { CatalogOption, Dossier, Subject } from '../../common/api/dossierContract.ts';
@@ -127,8 +127,6 @@ export function FormularioPrograma({
 
   useEffect(() => {
     let vigente = true;
-
-    setSubjectPending(true);
 
     void subjectsApi
       .get(dossier.subjectCode)
@@ -437,7 +435,7 @@ export function FormularioPrograma({
                         <span className={styles.lectura}>
                           {subjectPending && campo.key !== 'creditos'
                             ? 'Consultando...'
-                            : String(valorActual ?? '')}
+                            : typeof valorActual === 'string' || typeof valorActual === 'number' ? String(valorActual) : ''}
                         </span>
 
                         <MensajesCampo
