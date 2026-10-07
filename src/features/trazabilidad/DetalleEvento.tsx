@@ -1,34 +1,58 @@
-import type { AuditEvent } from '../../common/api/dossierContract.ts';
 import { Dialog } from '../../common/components/Dialog/Dialog.tsx';
 import { formatDateTime } from '../../common/utils/format.ts';
-import { EtiquetaTipo } from './TablaEventos.tsx';
+import { DetalleErrorNotificacion, NotificacionEvento } from './BadgeNotificacion.tsx';
+import type { EventoTrazabilidad } from './catalogos.ts';
+import { EtiquetaAccion, TransicionEstado } from './TablaEventos.tsx';
 import styles from './trazabilidad.module.css';
 
 export interface DetalleEventoProps {
-  evento: AuditEvent | null;
-  expediente: string;
+  evento: EventoTrazabilidad | null;
   onCerrar: () => void;
 }
 
-export function DetalleEvento({ evento, expediente, onCerrar }: DetalleEventoProps) {
+export function DetalleEvento({ evento, onCerrar }: DetalleEventoProps) {
   return (
     <Dialog open={evento !== null} title="Detalle del evento" onClose={onCerrar}>
       {evento && (
         <>
-          <EtiquetaTipo tipo={evento.type} />
+          <EtiquetaAccion accion={evento.accion} />
           <dl className={styles.detail}>
             <dt>Expediente</dt>
-            <dd>{expediente}</dd>
+            <dd>
+              {evento.expedienteTitulo ? (
+                <>
+                  <strong>{evento.expedienteTitulo}</strong> ({evento.expedienteCodigo})
+                </>
+              ) : (
+                '—'
+              )}
+            </dd>
             <dt>Fecha y hora</dt>
-            <dd>{formatDateTime(evento.occurredAt)}</dd>
+            <dd>{formatDateTime(evento.fecha)}</dd>
             <dt>Usuario</dt>
-            <dd>{evento.user.name}</dd>
+            <dd>
+              {evento.usuarioNombre}
+              {evento.usuarioCorreo ? ` · ${evento.usuarioCorreo}` : ''}
+            </dd>
+            <dt>Rol</dt>
+            <dd>{evento.usuarioRol || '—'}</dd>
             <dt>Versión</dt>
-            <dd>{evento.versionLabel ?? '—'}</dd>
-            <dt>Resumen</dt>
-            <dd>{evento.summary}</dd>
+            <dd>{evento.version || '—'}</dd>
+            <dt>Estado</dt>
+            <dd>
+              <TransicionEstado evento={evento} />
+            </dd>
+            <dt>Notificación por correo</dt>
+            <dd>
+              <NotificacionEvento notificacion={evento.notificacion} />
+              <DetalleErrorNotificacion notificacion={evento.notificacion} />
+            </dd>
+            <dt>Observación</dt>
+            <dd>{evento.observacion ?? 'Sin observaciones'}</dd>
+            <dt>Evidencia</dt>
+            <dd>{evento.evidencia ?? '—'}</dd>
             <dt>Registro</dt>
-            <dd>#{evento.eventId}</dd>
+            <dd>#{evento.id}</dd>
           </dl>
         </>
       )}
