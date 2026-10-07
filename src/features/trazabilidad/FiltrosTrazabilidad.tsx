@@ -48,6 +48,7 @@ export function FiltrosTrazabilidad({
                 onExpediente(event.target.value);
               }}
             >
+              {expedientes.length > 0 && <option value="">Seleccione un expediente</option>}
               {expedientes.map((item) => (
                 <option key={item.dossierId} value={item.dossierId}>
                   {item.code} · {item.title}
