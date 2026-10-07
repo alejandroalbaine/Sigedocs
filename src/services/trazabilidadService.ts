@@ -4,7 +4,6 @@ import { domainRequest } from '../common/api/domainClient.ts';
 import {
   ETIQUETAS_ESTADO_ENVIO,
   NOTIFICATION_STATUSES,
-  type EstadoEnvio,
   type HistorialItem,
   type HistorialPage,
   type NotificationResponse,
@@ -53,13 +52,6 @@ function notificationStatus(value: unknown): NotificationStatus | 'en_preparacio
   if ((NOTIFICATION_STATUSES as readonly string[]).includes(normalized)) {
     return normalized as NotificationStatus;
   }
-  return 'en_preparacion';
-}
-
-function estadoEnvio(status: NotificationStatus | 'en_preparacion'): EstadoEnvio {
-  if (status === 'sent') return 'enviado';
-  if (status === 'failed') return 'fallido';
-  if (status === 'pending') return 'pendiente';
   return 'en_preparacion';
 }
 
@@ -120,7 +112,6 @@ function normalizarGrupo(value: Record<string, unknown>): HistorialItem {
     estadoNuevo,
     destinatarios: recipientList(value.recipients),
     status,
-    estadoEnvio: estadoEnvio(status),
     etiquetaEstadoEnvio: ETIQUETAS_ESTADO_ENVIO[status],
   };
 }
@@ -143,7 +134,6 @@ export function normalizarNotificacion(value: unknown): HistorialItem {
   if (!occurredAt) throw new ContractError('notification occurredAt');
 
   const status = notificationStatus(raw.status);
-  const normalizedState = estadoEnvio(status);
   return {
     notificationId,
     eventId: optionalText(raw.eventId),
@@ -158,7 +148,6 @@ export function normalizarNotificacion(value: unknown): HistorialItem {
       raw.recipients ?? raw.destinatarios ?? raw.recipientEmails ?? raw.recipientEmail,
     ),
     status,
-    estadoEnvio: normalizedState,
     etiquetaEstadoEnvio: ETIQUETAS_ESTADO_ENVIO[status],
   };
 }

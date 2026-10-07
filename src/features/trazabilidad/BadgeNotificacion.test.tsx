@@ -9,7 +9,7 @@ import type { NotificacionCorreo } from './catalogos.ts';
 import { EVENTOS_SIMULADOS } from './datosSimulados.ts';
 
 const ENVIADO: NotificacionCorreo = {
-  estado: 'enviado',
+  estado: 'sent',
   destinatarios: ['docente@uapa.edu.do', 'direccion@uapa.edu.do'],
 };
 
@@ -23,7 +23,7 @@ test('el envío correcto muestra distintivo verde y los dos destinatarios', () =
 test('el envío pendiente muestra «Pendiente de envío» con sus destinatarios', () => {
   render(
     <NotificacionEvento
-      notificacion={{ estado: 'pendiente', destinatarios: ['docente@uapa.edu.do'] }}
+      notificacion={{ estado: 'pending', destinatarios: ['docente@uapa.edu.do'] }}
     />,
   );
   expect(screen.getByText('Pendiente de envío')).toBeInTheDocument();
@@ -33,7 +33,7 @@ test('el envío pendiente muestra «Pendiente de envío» con sus destinatarios'
 test('el envío fallido muestra «No se pudo enviar» sin exponer el motivo técnico', () => {
   render(
     <BadgeNotificacion
-      notificacion={{ estado: 'fallido', destinatarios: ['docente@uapa.edu.do'] }}
+      notificacion={{ estado: 'failed', destinatarios: ['docente@uapa.edu.do'] }}
     />,
   );
   expect(screen.getByText('No se pudo enviar')).toBeInTheDocument();
@@ -66,7 +66,7 @@ test('más de dos destinatarios se resumen en un desplegable', async () => {
   render(
     <DestinatariosNotificacion
       notificacion={{
-        estado: 'enviado',
+        estado: 'sent',
         destinatarios: ['a@uapa.edu.do', 'b@uapa.edu.do', 'c@uapa.edu.do', 'd@uapa.edu.do'],
       }}
     />,
@@ -86,8 +86,8 @@ test('los datos simulados cubren los tres estados de envío', () => {
   const estados = EVENTOS_SIMULADOS.map(
     (evento) => evento.notificacion?.estado ?? 'en_preparacion',
   );
-  expect(estados).toContain('enviado');
-  expect(estados).toContain('fallido');
+  expect(estados).toContain('sent');
+  expect(estados).toContain('failed');
   expect(estados).toContain('en_preparacion');
   expect(EVENTOS_SIMULADOS.some((evento) => evento.notificacion === undefined)).toBe(true);
 });

@@ -29,7 +29,7 @@ function claveDeCatalogo(catalogo: Record<string, { etiqueta: string }>, nombre:
 export function aNotificacionDesdeItem(item: HistorialItem): NotificacionCorreo {
   const notificacion: NotificacionCorreo = {
     destinatarios: item.destinatarios,
-    estado: item.estadoEnvio,
+    estado: item.status,
   };
   return notificacion;
 }

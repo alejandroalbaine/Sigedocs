@@ -4,18 +4,13 @@ export const NOTIFICATION_STATUSES = ['pending', 'sent', 'failed'] as const;
 
 export type NotificationStatus = (typeof NOTIFICATION_STATUSES)[number];
 
-/** Estado normalizado que puede usar la interfaz para mostrar el envío. */
-export const ESTADOS_ENVIO = ['enviado', 'pendiente', 'fallido', 'en_preparacion'] as const;
+/** Estados que la interfaz puede mostrar para un envío, incluida la degradación. */
+export type EstadoEnvio = NotificationStatus | 'en_preparacion';
 
-export type EstadoEnvio = (typeof ESTADOS_ENVIO)[number];
-
-export const ETIQUETAS_ESTADO_ENVIO: Readonly<Record<EstadoEnvio | NotificationStatus, string>> = {
+export const ETIQUETAS_ESTADO_ENVIO: Readonly<Record<EstadoEnvio, string>> = {
   pending: 'Pendiente de envío',
   sent: 'Enviado',
   failed: 'No se pudo enviar',
-  enviado: 'Enviado',
-  pendiente: 'Pendiente de envío',
-  fallido: 'No se pudo enviar',
   en_preparacion: 'En preparación',
 };
 
@@ -57,8 +52,7 @@ export interface HistorialItem {
   estadoAnterior: string | null;
   estadoNuevo: string | null;
   destinatarios: string[];
-  status: NotificationStatus | 'en_preparacion';
-  estadoEnvio: EstadoEnvio;
+  status: EstadoEnvio;
   etiquetaEstadoEnvio: string;
 }
 

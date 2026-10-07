@@ -59,12 +59,12 @@ export function describir<K extends string>(
 
 /**
  * Estado del aviso por correo que acompaña cada cambio de estado: se notifica a la
- * persona involucrada y a Dirección y Desarrollo Curricular. `pendiente` es un envío real
- * aún no resuelto; `en_preparacion` representa el evento cuyo detalle de envío todavía no
- * devuelve el backend, de modo que la vista degrada sola mientras la ruta `notifications`
- * no publique ese campo.
+ * persona involucrada y a Dirección y Desarrollo Curricular. Usa las mismas claves que
+ * el backend (`pending`, `sent`, `failed`); `en_preparacion` representa el evento cuyo
+ * detalle de envío todavía no devuelve la ruta `notifications`, de modo que la vista
+ * degrada sola mientras no publique ese campo.
  */
-export type EstadoEnvioCorreo = 'enviado' | 'pendiente' | 'fallido' | 'en_preparacion';
+export type EstadoEnvioCorreo = 'sent' | 'pending' | 'failed' | 'en_preparacion';
 
 export interface NotificacionCorreo {
   destinatarios: string[];

@@ -24,7 +24,6 @@ const notification = {
 test('usa Pendiente de envío para pending', () => {
   expect(normalizarNotificacion({ ...notification, status: 'pending' })).toMatchObject({
     status: 'pending',
-    estadoEnvio: 'pendiente',
     etiquetaEstadoEnvio: 'Pendiente de envío',
   });
 });
@@ -32,7 +31,6 @@ test('usa Pendiente de envío para pending', () => {
 test('usa Enviado para sent', () => {
   expect(normalizarNotificacion({ ...notification, status: 'sent' })).toMatchObject({
     status: 'sent',
-    estadoEnvio: 'enviado',
     etiquetaEstadoEnvio: 'Enviado',
   });
 });
@@ -45,7 +43,6 @@ test('usa No se pudo enviar para failed y no expone lastError', () => {
   });
   expect(item).toMatchObject({
     status: 'failed',
-    estadoEnvio: 'fallido',
     etiquetaEstadoEnvio: 'No se pudo enviar',
   });
   expect(item).not.toHaveProperty('lastError');
@@ -155,7 +152,6 @@ test('normaliza la forma agrupada que devuelve Back End', () => {
     estadoNuevo: 'En revisión',
     destinatarios: ['persona@uapa.edu.do', 'direccion@uapa.edu.do'],
     status: 'sent',
-    estadoEnvio: 'enviado',
     etiquetaEstadoEnvio: 'Enviado',
   });
 });
@@ -170,7 +166,6 @@ test('agrega los estados de los destinatarios priorizando failed, pending y sent
   });
   expect(pendiente).toMatchObject({
     status: 'pending',
-    estadoEnvio: 'pendiente',
     etiquetaEstadoEnvio: 'Pendiente de envío',
   });
 
@@ -183,7 +178,6 @@ test('agrega los estados de los destinatarios priorizando failed, pending y sent
   });
   expect(fallido).toMatchObject({
     status: 'failed',
-    estadoEnvio: 'fallido',
     etiquetaEstadoEnvio: 'No se pudo enviar',
   });
   expect(JSON.stringify(fallido)).not.toContain('SMTP 550');

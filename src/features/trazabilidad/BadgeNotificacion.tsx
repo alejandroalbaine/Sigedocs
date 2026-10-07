@@ -7,9 +7,9 @@ import styles from './trazabilidad.module.css';
 const SIN_DETALLE = 'en_preparacion' as const satisfies EstadoEnvioCorreo;
 
 const ESTADOS_ENVIO = {
-  enviado: { etiqueta: 'Enviado', tono: 'success', Icono: MailCheck },
-  pendiente: { etiqueta: 'Pendiente de envío', tono: 'warning', Icono: Clock },
-  fallido: { etiqueta: 'No se pudo enviar', tono: 'danger', Icono: MailWarning },
+  sent: { etiqueta: 'Enviado', tono: 'success', Icono: MailCheck },
+  pending: { etiqueta: 'Pendiente de envío', tono: 'warning', Icono: Clock },
+  failed: { etiqueta: 'No se pudo enviar', tono: 'danger', Icono: MailWarning },
   en_preparacion: { etiqueta: 'En preparación', tono: 'neutral', Icono: Hourglass },
 } as const satisfies Record<
   EstadoEnvioCorreo,

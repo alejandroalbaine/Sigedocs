@@ -64,12 +64,12 @@ test('el texto libre también busca entre los destinatarios notificados', () => 
   const notificados = [
     evento({
       id: 'a',
-      notificacion: { estado: 'enviado', destinatarios: ['docente@uapa.edu.do'] },
+      notificacion: { estado: 'sent', destinatarios: ['docente@uapa.edu.do'] },
     }),
     evento({
       id: 'b',
       notificacion: {
-        estado: 'fallido',
+        estado: 'failed',
         destinatarios: ['direccion@uapa.edu.do'],
       },
     }),

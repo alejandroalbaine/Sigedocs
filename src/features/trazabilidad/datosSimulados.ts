@@ -35,7 +35,7 @@ export const EVENTOS_SIMULADOS: readonly EventoTrazabilidad[] = [
     observacion: 'La malla curricular cumple con el eje de formación inicial.',
     evidencia: 'acta-revision-0148.pdf',
     notificacion: {
-      estado: 'enviado',
+      estado: 'sent',
       destinatarios: [COORDINADOR, DIRECCION_Y_DESARROLLO],
     },
   },
@@ -54,7 +54,7 @@ export const EVENTOS_SIMULADOS: readonly EventoTrazabilidad[] = [
     observacion: 'Faltan los descriptivos de dos asignaturas del tercer cuatrimestre.',
     evidencia: null,
     notificacion: {
-      estado: 'fallido',
+      estado: 'failed',
       destinatarios: [ESPECIALISTA, DIRECCION_Y_DESARROLLO],
     },
   },
@@ -92,7 +92,7 @@ export const EVENTOS_SIMULADOS: readonly EventoTrazabilidad[] = [
     observacion: 'Piloto autorizado para las tres secciones del campus principal.',
     evidencia: 'plan-pilotaje-0148.pdf',
     notificacion: {
-      estado: 'enviado',
+      estado: 'sent',
       destinatarios: [
         ESPECIALISTA,
         COORDINADOR,
