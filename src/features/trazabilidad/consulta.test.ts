@@ -71,7 +71,6 @@ test('el texto libre también busca entre los destinatarios notificados', () => 
       notificacion: {
         estado: 'fallido',
         destinatarios: ['direccion@uapa.edu.do'],
-        detalleError: 'SMTP 550: dirección rechazada.',
       },
     }),
   ];
@@ -80,5 +79,5 @@ test('el texto libre también busca entre los destinatarios notificados', () => 
 
   expect(ids('DOCENTE@')).toEqual(['a']);
   expect(ids('direccion@')).toEqual(['b']);
-  expect(ids('smtp 550')).toEqual(['b']);
+  expect(ids('smtp 550')).toEqual([]);
 });

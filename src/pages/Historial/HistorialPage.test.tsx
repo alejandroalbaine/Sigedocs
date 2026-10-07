@@ -75,7 +75,7 @@ test('cada fila muestra el estado del envío y sus destinatarios', async () => {
   expect(screen.getAllByText('En preparación')).toHaveLength(2);
 });
 
-test('la ficha del evento expone el error y los destinatarios del envío fallido', async () => {
+test('la ficha del evento expone los destinatarios del envío fallido sin detalle técnico', async () => {
   stubDossiers([expediente]);
   renderApp(signedInBackend(auditoria), '/historial');
   await screen.findByRole('search', { name: 'Filtros de trazabilidad' });
@@ -87,9 +87,7 @@ test('la ficha del evento expone el error y los destinatarios del envío fallido
   const dialogo = await screen.findByRole('dialog', { name: 'Detalle del evento' });
   expect(within(dialogo).getByText('No se pudo enviar')).toBeInTheDocument();
   expect(within(dialogo).getByText('especialista.curricular@uapa.edu.do')).toBeVisible();
-  expect(
-    within(dialogo).getByText('SMTP 550: dirección rechazada por el servidor institucional.'),
-  ).toBeVisible();
+  expect(within(dialogo).queryByText(/SMTP/)).not.toBeInTheDocument();
 });
 
 test('si la ruta de notificaciones no existe aún, la pantalla dice que está en preparación', async () => {

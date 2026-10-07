@@ -29,7 +29,6 @@ export function filtrarEventos(
         evento.evidencia,
         // Permite localizar los avisos por correo de un destinatario concreto.
         ...(evento.notificacion?.destinatarios ?? []),
-        evento.notificacion?.detalleError ?? null,
       ].some((campo) => contiene(campo, filtros.texto))
     );
   });

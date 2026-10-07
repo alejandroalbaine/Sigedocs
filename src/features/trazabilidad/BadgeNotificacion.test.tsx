@@ -30,20 +30,15 @@ test('el envío pendiente muestra «Pendiente de envío» con sus destinatarios'
   expect(screen.getByText('docente@uapa.edu.do')).toBeVisible();
 });
 
-test('el envío fallido muestra «No se pudo enviar» y el error como texto emergente y leído por lector de pantalla', () => {
-  const { container } = render(
+test('el envío fallido muestra «No se pudo enviar» sin exponer el motivo técnico', () => {
+  render(
     <BadgeNotificacion
-      notificacion={{
-        estado: 'fallido',
-        destinatarios: ['docente@uapa.edu.do'],
-        detalleError: 'SMTP 550: dirección rechazada.',
-      }}
+      notificacion={{ estado: 'fallido', destinatarios: ['docente@uapa.edu.do'] }}
     />,
   );
   expect(screen.getByText('No se pudo enviar')).toBeInTheDocument();
-  const distintivo = container.querySelector('span[title]');
-  expect(distintivo).toHaveAttribute('title', 'SMTP 550: dirección rechazada.');
-  expect(screen.getByText(/SMTP 550: dirección rechazada\./)).toHaveClass('visually-hidden');
+  expect(document.querySelector('span[title]')).toBeNull();
+  expect(screen.queryByText(/SMTP/i)).not.toBeInTheDocument();
 });
 
 test('sin detalle de envío el distintivo degrada a «En preparación»', () => {

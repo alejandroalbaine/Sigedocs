@@ -104,18 +104,6 @@
   gap: var(--space-1);
 }
 
-.error-detalle {
-  display: block;
-  margin-top: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-left: 3px solid var(--danger);
-  border-radius: var(--radius-xs);
-  background: var(--danger-soft);
-  color: var(--danger-strong);
-  font-size: var(--text-xs);
-  overflow-wrap: anywhere;
-}
-
 .detail {
   display: grid;
   grid-template-columns: auto 1fr;

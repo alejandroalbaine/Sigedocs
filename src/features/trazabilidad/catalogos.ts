@@ -69,13 +69,12 @@ export type EstadoEnvioCorreo = 'enviado' | 'pendiente' | 'fallido' | 'en_prepar
 export interface NotificacionCorreo {
   destinatarios: string[];
   estado: EstadoEnvioCorreo;
-  detalleError?: string;
 }
 
 /**
  * Forma provisional de un evento de trazabilidad (la que usaba la interfaz anterior).
- * El contrato real será `GET /api/v1/dossiers/{dossierId}/audit-events`; cuando se
- * publique, este tipo se reemplaza por el de contract.ts.
+ * El contrato real es `GET /api/v1/dossiers/{dossierId}/notifications`; este tipo cubre
+ * la vista mientras existan eventos sin ese campo.
  */
 export interface EventoTrazabilidad {
   id: string;

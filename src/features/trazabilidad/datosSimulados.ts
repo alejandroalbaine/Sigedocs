@@ -14,7 +14,7 @@ const DIRECTOR_ESCUELA = 'dir.escuela@uapa.edu.do';
 
 /**
  * Eventos simulados para construir y revisar la interfaz mientras el backend no publica
- * el detalle del aviso por correo en `GET /api/v1/dossiers/{dossierId}/audit-events`.
+ * el detalle del aviso por correo en `GET /api/v1/dossiers/{dossierId}/notifications`.
  * Cubren los tres estados de envío (enviado, fallido y en preparación), un evento sin
  * campo `notificacion` —que la vista degrada a «En preparación»— y un envío con más de
  * dos destinatarios para ejercitar el desplegable.
@@ -56,7 +56,6 @@ export const EVENTOS_SIMULADOS: readonly EventoTrazabilidad[] = [
     notificacion: {
       estado: 'fallido',
       destinatarios: [ESPECIALISTA, DIRECCION_Y_DESARROLLO],
-      detalleError: 'SMTP 550: dirección rechazada por el servidor institucional.',
     },
   },
   {

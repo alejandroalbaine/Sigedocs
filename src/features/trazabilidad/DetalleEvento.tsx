@@ -1,6 +1,6 @@
 import { Dialog } from '../../common/components/Dialog/Dialog.tsx';
 import { formatDateTime } from '../../common/utils/format.ts';
-import { DetalleErrorNotificacion, NotificacionEvento } from './BadgeNotificacion.tsx';
+import { NotificacionEvento } from './BadgeNotificacion.tsx';
 import type { EventoTrazabilidad } from './catalogos.ts';
 import { EtiquetaAccion, TransicionEstado } from './TablaEventos.tsx';
 import styles from './trazabilidad.module.css';
@@ -45,7 +45,6 @@ export function DetalleEvento({ evento, onCerrar }: DetalleEventoProps) {
             <dt>Notificación por correo</dt>
             <dd>
               <NotificacionEvento notificacion={evento.notificacion} />
-              <DetalleErrorNotificacion notificacion={evento.notificacion} />
             </dd>
             <dt>Observación</dt>
             <dd>{evento.observacion ?? 'Sin observaciones'}</dd>

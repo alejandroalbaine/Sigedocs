@@ -27,15 +27,12 @@ export interface BadgeNotificacionProps {
 /** Distintivo del estado del correo: enviado, pendiente, fallido o en preparación. */
 export function BadgeNotificacion({ notificacion }: BadgeNotificacionProps) {
   const { etiqueta, tono, Icono } = ESTADOS_ENVIO[notificacion?.estado ?? SIN_DETALLE];
-  const detalle = notificacion?.estado === 'fallido' ? notificacion.detalleError : undefined;
-  const distintivo = (
+  return (
     <Badge tone={tono}>
       <Icono size={13} aria-hidden="true" />
       {etiqueta}
-      {detalle && <span className="visually-hidden">: {detalle}</span>}
     </Badge>
   );
-  return detalle ? <span title={detalle}>{distintivo}</span> : distintivo;
 }
 
 export interface DestinatariosNotificacionProps {
@@ -88,14 +85,4 @@ export function NotificacionEvento({ notificacion }: NotificacionEventoProps) {
       <DestinatariosNotificacion notificacion={notificacion} />
     </div>
   );
-}
-
-/** Detalle del fallo del envío, para la ficha del evento. */
-export function DetalleErrorNotificacion({
-  notificacion,
-}: {
-  notificacion?: NotificacionCorreo | null | undefined;
-}) {
-  if (notificacion?.estado !== 'fallido' || !notificacion.detalleError) return null;
-  return <span className={styles.errorDetalle}>{notificacion.detalleError}</span>;
 }
