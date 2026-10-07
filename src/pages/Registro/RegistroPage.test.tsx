@@ -21,6 +21,12 @@ function llamadasDeRegistro(llamadas: { key: string; url: URL; body: unknown }[]
   return llamadas.filter((llamada) => llamada.key === 'POST /api/v1/dossiers');
 }
 
+function urlDeFetch(input: RequestInfo | URL) {
+  if (typeof input === 'string') return input;
+  if (input instanceof URL) return input.href;
+  return input.url;
+}
+
 async function abrirRegistro(conAsignatura = false) {
   if (conAsignatura) {
     localStorage.setItem(
@@ -175,7 +181,7 @@ describe('Registro de expedientes', () => {
       resolver = resolve;
     });
     const fetchMock = vi.fn<typeof fetch>().mockImplementation((input, init) => {
-      const url = String(input);
+      const url = urlDeFetch(input);
       const method = init?.method ?? 'GET';
 
       if (url.includes('/api/v1/institutional-catalogs/') || url.includes('/api/v1/subjects')) {
@@ -205,7 +211,7 @@ describe('Registro de expedientes', () => {
     await user.click(boton);
     const llamadasDossier = fetchMock.mock.calls.filter(
       ([input, init]) =>
-        String(input).includes('/api/v1/dossiers') && (init?.method ?? 'GET') === 'POST',
+        urlDeFetch(input).includes('/api/v1/dossiers') && (init?.method ?? 'GET') === 'POST',
     );
 
     expect(llamadasDossier).toHaveLength(1);
@@ -224,7 +230,7 @@ describe('Registro de expedientes', () => {
     let intentosDossier = 0;
 
     const fetchMock = vi.fn<typeof fetch>().mockImplementation((input, init) => {
-      const url = String(input);
+      const url = urlDeFetch(input);
 
       if (url.includes('/api/v1/institutional-catalogs/')) {
         return Promise.resolve(
