@@ -1,5 +1,40 @@
 # Cambios
 
+## v0.3.0 — Módulo V: catálogo, reglas y notificaciones (8 de octubre de 2026)
+
+Segunda versión integrada, con el backend v0.3.0. Responde a lo que pidió el mentor para el
+Módulo V: la asignatura sale del catálogo oficial, cada cambio de estado se notifica por correo y
+el programa cumple la Resolución No. 02-2025 del Consejo Académico. Verificada el 7 de octubre con
+los 33 casos de prueba de Análisis de Datos (33 aprobados) y el flujo posterior a la aprobación
+(FP-01 a FP-10).
+
+### Funcionalidades
+
+- Selector de asignatura desde el catálogo en el registro: búsqueda por clave o nombre,
+  prerrequisitos a la vista y carreras filtradas por la escuela elegida. En el formulario del
+  programa, asignatura, clave y prerrequisitos son de solo lectura (PR #13).
+- Formulario del programa con los catálogos institucionales y reenvío desde el propio
+  formulario (PR #12).
+- Errores de validación por sección y campo, incluidas las reglas del 100 % en el plan de
+  evaluación y del máximo de 10 unidades (PR #14).
+- Comparador de versiones por sección y campo, con texto quitado y agregado (PR #16).
+- Notificaciones por correo en el historial: cada cambio de estado con sus destinatarios y el
+  estado de cada envío, sin mostrar errores técnicos (PR #17).
+- Filtros por estado y nivel resueltos en el servidor y paginación por cursor en Gestión
+  documental y Búsqueda avanzada (PR #10).
+
+### Calidad y entrega
+
+- 272 pruebas de interfaz y contrato.
+- Imagen publicada para `linux/amd64` y `linux/arm64`, para el servidor ARM del proyecto (PR #15).
+
+### Pendiente para la siguiente versión
+
+- Defectos abiertos del Módulo V (9, de severidad media o baja), entre ellos que el formulario del
+  programa no herede la escuela y la carrera del registro y que el checklist técnico se muestre a
+  quien no revisa.
+- Pantalla para dar de alta asignaturas; envío real de correos cuando TI verifique el dominio.
+
 ## v0.2.0 — Primer corte del MVP (2 de octubre de 2026)
 
 Primera versión integrada con el backend v0.2.0 y PostgreSQL. Verificada desde la interfaz con un
