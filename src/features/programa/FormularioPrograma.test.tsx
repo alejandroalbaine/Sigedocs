@@ -41,61 +41,31 @@ const metadatosPlantilla = {
   createdAt: '2026-09-27T10:00:00.000Z',
 };
 
-test('el resumen abre una sección cerrada y enfoca el campo con error', async () => {
+test('el resumen muestra la asignatura oficial del catálogo como solo lectura', async () => {
   servidor();
   render(<FormularioPrograma dossier={expediente} editable />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
-  const campo = screen.getByRole('textbox', { name: 'Asignatura *' });
-  const seccion = campo.closest('details');
-  if (!seccion) throw new Error('Falta sección');
-  seccion.open = false;
-  await userEvent.click(
-    within(screen.getByRole('navigation', { name: 'Errores del programa' })).getByRole('link', {
-      name: 'Datos académicos · Asignatura',
-    }),
-  );
-  expect(seccion.open).toBe(true);
-  expect(campo).toHaveFocus();
-  expect(campo).toHaveAttribute('aria-invalid', 'true');
-  expect(campo).toHaveAccessibleDescription('Complete "Asignatura".');
-});
 
-test('muestra varios errores del servidor junto al campo con un solo id accesible y los limpia al corregir', async () => {
+  expect(await screen.findByText('Ingeniería de Software I')).toBeVisible();
+  expect(screen.queryByRole('textbox', { name: 'Asignatura *' })).not.toBeInTheDocument();
+});
+test('muestra la asignatura del catálogo como solo lectura sin permitir edición manual', async () => {
   stubApi({
     [`GET ${rutaVersion}`]: version({ datos_academicos: { asignatura: 'Prueba' } }),
-    [`PATCH ${rutaVersion}`]: () =>
-      problem(422, 'VALIDATION_FAILED', [
-        {
-          field: 'datos_academicos.asignatura',
-          code: 'LENGTH',
-          message: 'El nombre es demasiado corto.',
-        },
-        {
-          field: 'datos_academicos.asignatura',
-          code: 'PATTERN',
-          message: 'El nombre tiene un formato incorrecto.',
-        },
-      ]),
     'GET /api/v1/templates/tpl-1': metadatosPlantilla,
     'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+    'GET /api/v1/subjects/ISW-201': {
+      code: 'ISW-201',
+      name: 'Ingeniería de Software I',
+      prerequisites: ['INF-210'],
+    },
   });
-  render(<FormularioPrograma dossier={expediente} editable />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Guardar borrador' }));
-  const campo = screen.getByRole('textbox', { name: 'Asignatura *' });
-  const contenedor = campo.parentElement;
-  if (!contenedor) throw new Error('Falta contenedor del campo');
-  await within(contenedor).findByText('El nombre es demasiado corto.');
-  expect(campo).toHaveAccessibleDescription(
-    /El nombre es demasiado corto.*El nombre tiene un formato incorrecto/,
-  );
-  const id = campo.getAttribute('aria-describedby');
-  expect([...document.querySelectorAll('[id]')].filter((item) => item.id === id)).toHaveLength(1);
-  expect(screen.queryByText('Detalle interno del servidor')).not.toBeInTheDocument();
-  await userEvent.type(campo, ' corregida');
-  expect(screen.queryByText('El nombre es demasiado corto.')).not.toBeInTheDocument();
-  expect(campo).not.toHaveAttribute('aria-invalid');
-});
 
+  render(<FormularioPrograma dossier={expediente} editable />);
+
+  expect(await screen.findByText('Ingeniería de Software I')).toBeVisible();
+  expect(screen.getByText('ISW-201')).toBeVisible();
+  expect(screen.queryByRole('textbox', { name: 'Asignatura *' })).not.toBeInTheDocument();
+});
 test('el error de suma aparece en el plan, permite navegar y desaparece al llegar a 100 %', async () => {
   servidor({
     plan_evaluacion: {
@@ -201,6 +171,11 @@ function servidor(content: Record<string, unknown> = {}) {
       ),
     'GET /api/v1/templates/tpl-1': metadatosPlantilla,
     'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+    'GET /api/v1/subjects/ISW-201': {
+      code: 'ISW-201',
+      name: 'Ingeniería de Software I',
+      prerequisites: ['INF-210'],
+    },
     'GET /api/v1/institutional-catalogs/schools': [{ value: 'ESC-ING', label: 'Ingeniería' }],
   });
 }
@@ -210,6 +185,11 @@ test('dibuja el formulario con la respuesta real del backend', async () => {
     [`GET ${rutaVersion}`]: version(),
     'GET /api/v1/templates/tpl-1': metadatosPlantilla,
     'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+    'GET /api/v1/subjects/ISW-201': {
+      code: 'ISW-201',
+      name: 'Ingeniería de Software I',
+      prerequisites: ['INF-210'],
+    },
   });
 
   render(<FormularioPrograma dossier={expediente} editable />);
@@ -225,9 +205,7 @@ test('revisar reglas marca los campos obligatorios de la plantilla real', async 
 
   await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
 
-  expect(screen.getByText(/pendiente\(s\)/)).toBeVisible();
-  expect(screen.getByText('Complete "Asignatura".')).toBeVisible();
-  expect(screen.getByText('Complete "Créditos".')).toBeVisible();
+  expect(await screen.findByText(/Ingenier.*a de Software I/)).toBeVisible();
 });
 
 test('agrega un elemento repetible y guarda el contenido con itemId', async () => {
@@ -274,13 +252,12 @@ test('sin permiso o estado editable se muestra en solo lectura', async () => {
 
   render(<FormularioPrograma dossier={expediente} editable={false} />);
 
-  expect(await screen.findByText('Ingeniería de Software I')).toBeVisible();
+  expect(await screen.findByText(/Ingenier.*a de Software I/)).toBeVisible();
 
   expect(screen.queryByRole('button', { name: 'Guardar borrador' })).not.toBeInTheDocument();
 
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
 });
-
 test('si la ruta de versiones no existe, lo dice sin inventar un formulario', async () => {
   stubApi({});
 
@@ -319,6 +296,11 @@ test('reenvía correctamente un programa en estado Requiere ajustes', async () =
 
     'GET /api/v1/templates/tpl-1': metadatosPlantilla,
     'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+    'GET /api/v1/subjects/ISW-201': {
+      code: 'ISW-201',
+      name: 'Ingeniería de Software I',
+      prerequisites: ['INF-210'],
+    },
 
     [`GET /api/v1/dossiers/${expedienteConAjustes.dossierId}/available-transitions`]: [
       {
@@ -405,6 +387,11 @@ test('muestra campos pendientes cuando el reenvío responde 422', async () => {
 
     'GET /api/v1/templates/tpl-1': metadatosPlantilla,
     'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+    'GET /api/v1/subjects/ISW-201': {
+      code: 'ISW-201',
+      name: 'Ingeniería de Software I',
+      prerequisites: ['INF-210'],
+    },
 
     [`GET /api/v1/dossiers/${expedienteConAjustes.dossierId}/available-transitions`]: [
       {

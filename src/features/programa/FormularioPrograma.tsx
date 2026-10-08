@@ -1,7 +1,7 @@
-﻿import { useEffect, useMemo, useState } from 'react';
-import { dossiersApi, templatesApi } from '../../common/api/dossiers.ts';
+import { useEffect, useMemo, useState } from 'react';
+import { dossiersApi, subjectsApi, templatesApi } from '../../common/api/dossiers.ts';
 import type { FieldError } from '../../common/api/contract.ts';
-import type { CatalogOption, Dossier } from '../../common/api/dossierContract.ts';
+import type { CatalogOption, Dossier, Subject } from '../../common/api/dossierContract.ts';
 import { ApiError, errorMessage } from '../../common/api/errors.ts';
 import type { TemplateField } from '../../common/api/templateContract.ts';
 import { useRecurso } from '../../common/api/useRecurso.ts';
@@ -13,6 +13,7 @@ import { validarContenido, type Hallazgo } from './validacion.ts';
 import {
   destinosPrograma,
   hallazgosServidor,
+  idCampo,
   idSeccion,
   pertenece,
   ubicarHallazgos,
@@ -120,6 +121,32 @@ export function FormularioPrograma({
     catalogosCargados.clave === claveCatalogos
       ? catalogosCargados.datos
       : Object.fromEntries(nombresCatalogo.map((nombre) => [nombre, 'cargando' as const]));
+
+  const [subject, setSubject] = useState<Subject | null>(null);
+  const [subjectPending, setSubjectPending] = useState(true);
+
+  useEffect(() => {
+    let vigente = true;
+
+    void subjectsApi
+      .get(dossier.subjectCode)
+      .then(({ data }) => {
+        if (vigente) {
+          setSubject(data);
+          setSubjectPending(false);
+        }
+      })
+      .catch(() => {
+        if (vigente) {
+          setSubject(null);
+          setSubjectPending(false);
+        }
+      });
+
+    return () => {
+      vigente = false;
+    };
+  }, [dossier.subjectCode]);
 
   const clave = `${currentVersion.versionId}:${templateVersionId}`;
 
@@ -372,6 +399,50 @@ export function FormularioPrograma({
                 .map((campo) => {
                   const ruta = `${seccion.key}.${campo.key}`;
                   const valor = contenido[seccion.key]?.[campo.key];
+                  if (
+                    campo.key === 'asignatura' ||
+                    campo.key === 'clave_asignatura' ||
+                    campo.key === 'prerrequisitos'
+                  ) {
+                    let valorActual: Valor = valor;
+
+                    if (campo.key === 'asignatura') {
+                      valorActual = subject?.name ?? valor ?? 'Consultando asignatura...';
+                    }
+
+                    if (campo.key === 'clave_asignatura') {
+                      valorActual = subject?.code ?? dossier.subjectCode;
+                    }
+
+                    if (campo.key === 'prerrequisitos') {
+                      valorActual = subject
+                        ? subject.prerequisites.join(', ') || 'Sin prerrequisitos'
+                        : (valor ?? 'Consultando prerrequisitos...');
+                    }
+
+                    return (
+                      <div key={campo.key} className={styles.campo}>
+                        <span className={styles.etiqueta}>
+                          {campo.label}
+                          {campo.isRequired ? ' *' : ''}
+                        </span>
+
+                        <span className={styles.lectura}>
+                          {subjectPending
+                            ? 'Consultando...'
+                            : typeof valorActual === 'string' || typeof valorActual === 'number'
+                              ? String(valorActual)
+                              : ''}
+                        </span>
+
+                        <MensajesCampo
+                          id={`${idCampo(ruta)}-error`}
+                          hallazgos={hallazgos}
+                          ruta={ruta}
+                        />
+                      </div>
+                    );
+                  }
 
                   return campo.type === 'repeatable_group' ? (
                     <GrupoRepetible
