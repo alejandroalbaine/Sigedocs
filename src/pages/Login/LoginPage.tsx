@@ -72,7 +72,7 @@ export function LoginPage() {
               <p className={styles.wordmark}>
                 <span>SIGES</span>
                 <strong>DOC</strong>
-                <small>V1.0</small>
+                <small>V{__APP_VERSION__}</small>
               </p>
               <p className={styles.caption}>Sistema de Gestión Documental Curricular</p>
             </div>

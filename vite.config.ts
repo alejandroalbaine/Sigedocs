@@ -1,6 +1,7 @@
 /// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
+import pkg from './package.json' with { type: 'json' };
 
 /**
  * Devuelve solo el origen de la API o '' (mismo origen). Rechaza rutas, credenciales,
@@ -59,6 +60,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   return {
     plugins: [react(), contentSecurityPolicy(apiOrigin(env.VITE_API_BASE_URL))],
+    // Versión visible en el login; sale de package.json para no repetirla a mano.
+    define: { __APP_VERSION__: JSON.stringify(pkg.version) },
     css: {
       // Clases en kebab-case en el CSS (convención de Stylelint), camelCase en TypeScript.
       modules: { localsConvention: 'camelCaseOnly' },
