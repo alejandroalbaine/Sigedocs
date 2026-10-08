@@ -78,7 +78,7 @@ createdBy: { userId, name }, createdAt }`.
 Pasos que el README del backend no deja claros y que el equipo necesitará:
 
 - `npm run db:migrate` no lee `.env`: exportar `DATABASE_URL` antes.
-- La siembra de usuarios (`database/scripts/usuarios-prueba.mjs` con `SEED_PASSWORD`) solo está
+- La siembra de usuarios (`database/scripts/seed-test-users.mjs` con `SEED_PASSWORD`) solo está
   en `database/README.md`.
 - El administrador inicial (`scripts/admin.mjs`) exige una contraseña de 16 caracteres o más,
   distinta de `SEED_PASSWORD`.

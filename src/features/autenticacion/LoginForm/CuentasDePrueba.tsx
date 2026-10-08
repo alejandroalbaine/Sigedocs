@@ -1,7 +1,7 @@
 import styles from './LoginForm.module.css';
 
 /**
- * Cuentas que siembra SIGESDOC_BACKEND con database/scripts/usuarios-prueba.mjs, una por
+ * Cuentas que siembra SIGESDOC_BACKEND con database/scripts/seed-test-users.mjs, una por
  * rol institucional (migración 004). Solo se muestran en desarrollo y nunca incluyen la
  * contraseña: es el valor de SEED_PASSWORD del backend.
  */
