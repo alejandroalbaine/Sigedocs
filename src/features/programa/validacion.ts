@@ -149,7 +149,18 @@ export function validarContenido(plantilla: TemplateVersion, contenido: Contenid
     validarCampos(seccion.fields, contenido[seccion.key] ?? {}, seccion.key, hallazgos);
   }
 
-  for (const regla of (plantilla.rules ?? []).filter((item) => item.isActive)) {
+  const reglas = [
+    ...(plantilla.rules ?? []),
+    ...plantilla.sections
+      .filter((item) => item.isActive)
+      .flatMap((seccion) =>
+        (seccion.rules ?? []).map((regla) => ({
+          ...regla,
+          target: { section: seccion.key, ...regla.target },
+        })),
+      ),
+  ];
+  for (const regla of reglas.filter((item) => item.isActive)) {
     if (regla.type !== 'sum_equals') continue;
 
     const objetivo = regla.target as { section?: string; fieldPath?: string[] } | undefined;

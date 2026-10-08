@@ -4,6 +4,9 @@ Scripts de la biblioteca estándar de Python 3.8+; no requieren instalar nada.
 
 - `probar_usuarios.py`: ejercita `POST /sessions`, `GET /users/current`, `GET /roles`,
   `GET/POST /users`, `PATCH /users/{id}` y `PUT /users/{id}/roles` contra un backend.
+- `crear_expedientes.py`: crea ~30 expedientes con `POST /dossiers` y verifica la paginación por
+  cursor y los filtros (`academicLevel`, `currentState`, `schoolCode`, `search`) de `GET /dossiers`.
+  Uso: `python scripts/pruebas-api/crear_expedientes.py --email <cuenta con dossiers.create> --password '<SEED_PASSWORD>'`.
 - `servidor_simulado.py`: backend **simulado** para probar el script sin el backend real.
 
 ```bash

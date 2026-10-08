@@ -3,6 +3,8 @@ import type { TemplateField } from '../../common/api/templateContract.ts';
 import { CampoPlantilla, type Catalogos } from './CampoPlantilla.tsx';
 import { nuevoItem, type Item, type Valor } from './contenido.ts';
 import type { Hallazgo } from './validacion.ts';
+import { idCampo } from './erroresPrograma.ts';
+import { MensajesCampo } from './MensajesCampo.tsx';
 import styles from './programa.module.css';
 
 interface GrupoProps {
@@ -16,9 +18,12 @@ interface GrupoProps {
 }
 
 function limite(campo: TemplateField, clave: 'minItems' | 'maxItems'): number | undefined {
-  const regla = campo.rules?.find((item) => item.type === 'cardinality' && item.isActive);
-  const valor = regla?.params[clave];
-  return typeof valor === 'number' ? valor : undefined;
+  const valores = (campo.rules ?? [])
+    .filter((item) => item.type === 'cardinality' && item.isActive && item.severity === 'error')
+    .map((item) => item.params[clave])
+    .filter((valor): valor is number => typeof valor === 'number');
+  if (!valores.length) return undefined;
+  return clave === 'maxItems' ? Math.min(...valores) : Math.max(...valores);
 }
 
 /**
@@ -55,7 +60,13 @@ export function GrupoRepetible({
   }
 
   return (
-    <section className={styles.grupo} aria-label={campo.label}>
+    <section
+      className={styles.grupo}
+      aria-label={campo.label}
+      id={idCampo(ruta)}
+      tabIndex={-1}
+      aria-describedby={propios.length ? `${idCampo(ruta)}-error` : undefined}
+    >
       <header className={styles.grupoCabecera}>
         <span className={styles.etiqueta}>
           {campo.label}
@@ -69,18 +80,21 @@ export function GrupoRepetible({
         </small>
       </header>
       {campo.help && <small className={styles.ayuda}>{campo.help}</small>}
-      {propios.map((hallazgo) => (
-        <small
-          key={hallazgo.mensaje}
-          className={hallazgo.severidad === 'error' ? styles.error : styles.aviso}
-        >
-          {hallazgo.mensaje}
-        </small>
-      ))}
+      <MensajesCampo id={`${idCampo(ruta)}-error`} hallazgos={hallazgos} ruta={ruta} />
 
       <ol className={campo.config?.presentation === 'table' ? styles.itemsTabla : styles.items}>
         {items.map((item, indice) => (
-          <li key={item.itemId} className={styles.item}>
+          <li
+            key={item.itemId}
+            className={styles.item}
+            id={idCampo(`${ruta}[${item.itemId}]`)}
+            tabIndex={-1}
+          >
+            <MensajesCampo
+              id={`${idCampo(`${ruta}[${item.itemId}]`)}-error`}
+              hallazgos={hallazgos}
+              ruta={`${ruta}[${item.itemId}]`}
+            />
             <div className={styles.itemCabecera}>
               <strong>
                 {campo.label} {indice + 1}

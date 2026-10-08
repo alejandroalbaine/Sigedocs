@@ -35,6 +35,12 @@ contra el backend real (`PATCH .../versions/{id}`). Los campos con catálogo ins
 carreras, modalidad, estrategias) indican que sus opciones estarán disponibles próximamente: el
 backend aún no publica `GET /institutional-catalogs/{catalog}`.
 
+El comparador de versiones (pestaña «Versiones» del expediente) muestra lado a lado qué cambió
+entre dos versiones, sección por sección y campo por campo, con las palabras agregadas y quitadas
+de cada texto. Por defecto compara la versión vigente con la anterior, la que revisó la
+especialista. La comparación se hace en la interfaz con las rutas de versiones y de plantilla:
+el backend no publica una ruta de comparación.
+
 La Biblioteca UI (`/ui-kit`) es una herramienta interna del equipo: solo existe con `npm run dev`
 y no aparece en el menú ni en el build de producción.
 
@@ -109,7 +115,8 @@ El backend debe incluir el origen de la interfaz (`http://localhost:5173` en loc
 Docker ahora sirve el build de producción; para desarrollar con recarga en caliente use `npm run dev`.
 
 Al etiquetar una versión (`vX.Y.Z`) o fusionar en `main`, GitHub Actions publica la imagen en
-`ghcr.io/alejandroalbaine/sigedocs` (`latest`, `X.Y.Z`, `X.Y`); cada push a `develop` publica la
+`ghcr.io/alejandroalbaine/sigedocs` (`latest`, `X.Y.Z`, `X.Y`), para
+`linux/amd64` y `linux/arm64` (el VPS de Dokploy es ARM); cada push a `develop` publica la
 etiqueta `develop` para probar el despliegue. Se construye con
 `VITE_API_BASE_URL` vacía: la interfaz llama a `/api/v1` en su mismo dominio y el proxy del
 servidor (Dokploy) dirige `/api` al backend. Para otro origen, definir la variable del repositorio

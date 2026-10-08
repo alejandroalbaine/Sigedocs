@@ -2,6 +2,8 @@ import type { CatalogOption } from '../../common/api/dossierContract.ts';
 import type { TemplateField, TemplateOption } from '../../common/api/templateContract.ts';
 import { esCatalogo, mostrarValor, type Valor } from './contenido.ts';
 import type { Hallazgo } from './validacion.ts';
+import { idCampo } from './erroresPrograma.ts';
+import { MensajesCampo } from './MensajesCampo.tsx';
 import styles from './programa.module.css';
 
 export type Catalogos = Record<string, CatalogOption[] | 'pendiente' | 'cargando'>;
@@ -39,7 +41,7 @@ export function CampoPlantilla({
   catalogos,
   onChange,
 }: CampoProps) {
-  const id = `campo-${ruta.replace(/[^\w-]/g, '_')}`;
+  const id = idCampo(ruta);
   const propios = hallazgos.filter((hallazgo) => hallazgo.ruta === ruta);
   const errorId = propios.length ? `${id}-error` : undefined;
   const ayudaId = campo.help ? `${id}-ayuda` : undefined;
@@ -50,9 +52,15 @@ export function CampoPlantilla({
 
   if (bloqueado) {
     return (
-      <div className={styles.campo}>
+      <div className={styles.campo} id={id} tabIndex={-1} aria-describedby={describedBy}>
         <span className={styles.etiqueta}>{etiqueta}</span>
         <span className={styles.lectura}>{mostrarValor(campo, valor)}</span>
+        {campo.help && (
+          <small id={ayudaId} className={styles.ayuda}>
+            {campo.help}
+          </small>
+        )}
+        <MensajesCampo id={`${id}-error`} hallazgos={hallazgos} ruta={ruta} />
       </div>
     );
   }
@@ -114,6 +122,7 @@ export function CampoPlantilla({
             id={id}
             type="checkbox"
             checked={valor === true}
+            aria-invalid={invalido}
             aria-describedby={describedBy}
             onChange={(event) => {
               onChange(event.target.checked);
@@ -127,7 +136,7 @@ export function CampoPlantilla({
     case 'multi_select':
       if (opciones === null) {
         control = (
-          <p className={styles.pendiente} id={id}>
+          <p className={styles.pendiente} id={id} tabIndex={-1} aria-describedby={describedBy}>
             {catalogos[campo.optionsSource?.catalog ?? ''] === 'cargando'
               ? 'Cargando opciones…'
               : 'Las opciones de este campo estarán disponibles próximamente.'}
@@ -158,7 +167,13 @@ export function CampoPlantilla({
       } else {
         const elegidas = new Set(Array.isArray(valor) ? valor.map(claveDe) : []);
         control = (
-          <fieldset className={styles.multi} id={id} aria-describedby={describedBy}>
+          <fieldset
+            className={styles.multi}
+            id={id}
+            tabIndex={-1}
+            aria-invalid={invalido}
+            aria-describedby={describedBy}
+          >
             <legend className="visually-hidden">{campo.label}</legend>
             {opciones.map((opcion) => (
               <label key={opcion.value} className={styles.check}>
@@ -210,15 +225,7 @@ export function CampoPlantilla({
           {campo.help}
         </small>
       )}
-      {propios.map((hallazgo) => (
-        <small
-          key={hallazgo.mensaje}
-          id={errorId}
-          className={hallazgo.severidad === 'error' ? styles.error : styles.aviso}
-        >
-          {hallazgo.mensaje}
-        </small>
-      ))}
+      <MensajesCampo id={`${id}-error`} hallazgos={hallazgos} ruta={ruta} />
     </div>
   );
 }

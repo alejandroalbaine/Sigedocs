@@ -2,10 +2,13 @@
 /** HTTP real: requiere una API local y una base de desarrollo/pruebas migrada. */
 import process from 'node:process';
 import { afterAll, beforeAll, beforeEach, expect, test, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createApiClient } from '../common/api/client.ts';
 import { dossiersApi } from '../common/api/dossiers.ts';
+import { ApiError } from '../common/api/errors.ts';
+import { FormularioPrograma } from '../features/programa/FormularioPrograma.tsx';
+import { comprobarEnvio } from '../features/programa/comprobarEnvio.ts';
 import { renderApp } from './renderApp.tsx';
 
 const realFetch = globalThis.fetch;
@@ -63,6 +66,77 @@ function abrir(path: string) {
     path,
   );
 }
+
+test('Programa: errores reales por campo y reglas oficiales sobre contenido persistido', async () => {
+  const { data: expediente } = await dossiersApi.create({
+    ...input,
+    title: `Validación de programa ${run}`,
+  });
+  let rechazo: ApiError | undefined;
+  try {
+    await dossiersApi.saveContent(expediente.dossierId, expediente.currentVersion.versionId, {
+      datos_academicos: { creditos: 'incorrecto' },
+    });
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    rechazo = error;
+  }
+  expect(rechazo?.status).toBe(422);
+  const credito = rechazo?.fieldErrors.find((item) => item.field === 'datos_academicos.creditos');
+  expect(credito?.message).toBeTruthy();
+  const vista = render(
+    <FormularioPrograma
+      dossier={expediente}
+      editable
+      erroresRevision={rechazo?.fieldErrors ?? []}
+    />,
+  );
+  const campo = await screen.findByRole('spinbutton', { name: 'Créditos *' });
+  expect(campo).toHaveAttribute('aria-invalid', 'true');
+  expect(campo.parentElement).toHaveTextContent(credito?.message ?? 'Falta mensaje del servidor');
+  const enlaces = within(
+    screen.getByRole('navigation', { name: 'Errores del programa' }),
+  ).getAllByRole('link', { name: 'Datos académicos · Créditos' });
+  const enlace = enlaces.at(-1);
+  if (!enlace) throw new Error('Falta enlace al campo');
+  await userEvent.click(enlace);
+  expect(campo).toHaveFocus();
+  vista.unmount();
+
+  // El MVP acepta este borrador: sus reglas de documento/primer nivel todavía no están en BD.
+  await dossiersApi.saveContent(expediente.dossierId, expediente.currentVersion.versionId, {
+    plan_evaluacion: { componentes_evaluacion: [{ itemId: 'eval-1', porcentaje: 90 }] },
+    unidades_didacticas: {
+      unidades_didacticas: Array.from({ length: 11 }, (_, index) => ({
+        itemId: `unidad-${String(index)}`,
+      })),
+    },
+  });
+  try {
+    await comprobarEnvio(expediente);
+    throw new Error('El envío debía rechazar el contenido inválido');
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    expect(error.status).toBe(422);
+    expect(error.fieldErrors.map((item) => item.field)).toEqual([
+      'unidades_didacticas.unidades_didacticas',
+      'plan_evaluacion.componentes_evaluacion',
+    ]);
+  }
+  const formulario = render(<FormularioPrograma dossier={expediente} editable />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Revisar reglas' }));
+  expect(
+    within(screen.getByRole('region', { name: 'Componentes de evaluación' })).getByText(
+      /100 %.*Suma actual: 90/,
+    ),
+  ).toBeVisible();
+  expect(
+    within(screen.getByRole('region', { name: 'Unidades didácticas' })).getByText(
+      'El programa admite como máximo 10 unidades didácticas.',
+    ),
+  ).toBeVisible();
+  formulario.unmount();
+});
 
 test('Registro → PostgreSQL → Gestión → Panel, incluyendo más de 25 expedientes', async () => {
   const user = userEvent.setup();

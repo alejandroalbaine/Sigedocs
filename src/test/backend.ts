@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import { createApiClient, type ApiClient } from '../common/api/client.ts';
+import type { DossierVersion, DossierVersionDetail } from '../common/api/dossierContract.ts';
 import type { ManagedUser } from '../common/api/userContract.ts';
 import type { Dossier } from '../pages/documental/types.ts';
 
@@ -221,4 +222,30 @@ export function usuarioGestionado(overrides: Partial<ManagedUser> = {}): Managed
     createdAt: '2026-09-25T14:00:00.000Z',
     ...overrides,
   };
+}
+
+/** Elemento de `GET /dossiers/{id}/versions`, como lo arma dossierVersion.mapper.ts del backend. */
+export type VersionRespuesta = Omit<DossierVersion, 'state'> & {
+  state: { code: string; name: string; isEditable: boolean };
+};
+
+export function versionDossier(overrides: Partial<VersionRespuesta> = {}): VersionRespuesta {
+  return {
+    versionId: '40000000-0000-4000-8000-000000000001',
+    label: 'v1.0',
+    state: { code: 'CHANGES_REQUIRED', name: 'Requiere ajustes', isEditable: true },
+    createdBy: { userId: '10000000-0000-4000-8000-000000000019', name: 'Coordinador de Programa' },
+    createdAt: '2026-09-20T14:00:00.000Z',
+    approvedAt: null,
+    ...overrides,
+  };
+}
+
+/** `GET /dossiers/{id}/versions/{versionId}`: el elemento de la lista con plantilla y contenido. */
+export function detalleVersion(
+  version: VersionRespuesta,
+  content: Record<string, unknown>,
+  templateVersionId = '60000000-0000-4000-8000-000000000001',
+): VersionRespuesta & Pick<DossierVersionDetail, 'templateVersionId' | 'content'> {
+  return { ...version, templateVersionId, content };
 }
