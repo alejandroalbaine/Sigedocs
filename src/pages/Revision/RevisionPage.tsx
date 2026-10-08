@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
   ClipboardCheck,
@@ -13,6 +13,8 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { dossiersApi } from '../../common/api/dossiers.ts';
+import type { FieldError } from '../../common/api/contract.ts';
+import { pertenece } from '../../features/programa/erroresPrograma.ts';
 import type { Dossier, TransitionResult } from '../../common/api/dossierContract.ts';
 import { useRecurso, type Recurso } from '../../common/api/useRecurso.ts';
 import { RequirePermission } from '../../common/auth/RequirePermission.tsx';
@@ -42,6 +44,13 @@ import {
 import { claseEstado } from '../documental/estadoBadge.ts';
 import { useDossiers } from '../documental/useDossiers.ts';
 import styles from './RevisionPage.module.css';
+
+// El comparador se carga al abrir «Versiones»: así no engorda el paquete inicial de la aplicación.
+const ComparadorVersiones = lazy(() =>
+  import('../../features/versiones/ComparadorVersiones.tsx').then((modulo) => ({
+    default: modulo.ComparadorVersiones,
+  })),
+);
 
 /** Las siete pestañas del expediente definidas en el Informe T1 §3.7. */
 const tabs = [
@@ -113,6 +122,10 @@ function nombreDeEstado(estado: { code: string; name: string }) {
 function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => void }) {
   const user = useCurrentUser();
   const [activeTab, setActiveTab] = useState<TabId>('resumen');
+  const [erroresPrograma, setErroresPrograma] = useState<{
+    clave: string;
+    errores: FieldError[];
+  } | null>(null);
   const [resultados, setResultados] = useState<ResultadoCriterio[]>(resultadosIniciales);
   const [ultimo, setUltimo] = useState<TransitionResult | null>(null);
   const id = dossier.dossierId;
@@ -267,6 +280,19 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
               <FormularioPrograma
                 key={clave}
                 dossier={dossier}
+                erroresRevision={erroresPrograma?.clave === clave ? erroresPrograma.errores : []}
+                onCorregir={(ruta) => {
+                  setErroresPrograma(
+                    (actuales) =>
+                      actuales && {
+                        ...actuales,
+                        errores: actuales.errores.filter((error) => {
+                          const campo = error.field.replace(/^content\./, '');
+                          return !pertenece(campo, ruta) && campo !== ruta.split('.')[0];
+                        }),
+                      },
+                  );
+                }}
                 editable={dossier.currentState.isEditable && puedeEditar}
               />
               <Pendiente>
@@ -349,31 +375,37 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
 
           {activeTab === 'versiones' && (
             <InfoPanel title="Versiones">
+              <p className={styles.lead}>
+                La versión documental y el estado curricular son dimensiones distintas.
+              </p>
               <EstadoRecurso recurso={versiones} modulo="El historial de versiones">
                 {(lista) => (
-                  <ol className={styles.timeline}>
-                    {lista.map((version) => (
-                      <li key={version.versionId}>
-                        <strong>
-                          {version.label}
-                          {version.versionId === dossier.currentVersion.versionId
-                            ? ' · versión vigente'
-                            : ''}
-                        </strong>
-                        <span>
-                          Estado: {version.state.name} · {version.createdBy.name} ·{' '}
-                          {fecha(version.createdAt)}
-                        </span>
-                        {version.approvedAt && <small>Aprobada {fecha(version.approvedAt)}</small>}
-                      </li>
-                    ))}
-                  </ol>
+                  <>
+                    <ol className={styles.timeline}>
+                      {lista.map((version) => (
+                        <li key={version.versionId}>
+                          <strong>
+                            {version.label}
+                            {version.versionId === dossier.currentVersion.versionId
+                              ? ' · versión vigente'
+                              : ''}
+                          </strong>
+                          <span>
+                            Estado: {version.state.name} · {version.createdBy.name} ·{' '}
+                            {fecha(version.createdAt)}
+                          </span>
+                          {version.approvedAt && (
+                            <small>Aprobada {fecha(version.approvedAt)}</small>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                    <Suspense fallback={<p className={styles.loading}>Consultando…</p>}>
+                      <ComparadorVersiones dossier={dossier} versiones={lista} />
+                    </Suspense>
+                  </>
                 )}
               </EstadoRecurso>
-              <p className={styles.lead}>
-                La versión documental y el estado curricular son dimensiones distintas. La
-                comparación entre versiones estará disponible en una etapa posterior.
-              </p>
             </InfoPanel>
           )}
 
@@ -415,6 +447,10 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                       dossier={dossier}
                       transiciones={lista}
                       onRealizada={transicionRealizada}
+                      onErroresPrograma={(errores) => {
+                        setErroresPrograma({ clave, errores });
+                        setActiveTab('contenido');
+                      }}
                     />
                   )}
                 </EstadoRecurso>

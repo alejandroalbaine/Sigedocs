@@ -48,42 +48,59 @@ test('carga y muestra los expedientes del backend', async () => {
   expect(await screen.findByText('Rediseño de Matemática I')).toBeInTheDocument();
   expect(filas()).toHaveLength(3);
   expect(screen.getByText('EXP-2026-0002', { exact: false })).toBeInTheDocument();
-  expect(screen.getByText(/Mostrando/)).toHaveTextContent('1 - 3 de 3 expedientes');
+  expect(screen.getByText(/Mostrando/)).toHaveTextContent('1–3 expedientes');
   expect(screen.getAllByText('En revisión').length).toBeGreaterThan(0);
 });
 
-test('la búsqueda por texto filtra por código, título o unidad', async () => {
-  stubFetch({ 'GET /api/v1/dossiers': () => json({ data: expedientes }) });
+test('la búsqueda por texto viaja al servidor como search, con espera', async () => {
+  const backend = stubFetch({ 'GET /api/v1/dossiers': () => json({ data: expedientes }) });
   abrirGestion();
   await screen.findByText('Rediseño de Matemática I');
 
   await userEvent.type(screen.getByLabelText('Buscar expedientes'), 'contabilidad');
-  expect(filas()).toHaveLength(1);
-  expect(screen.getByText('Plan de Contabilidad')).toBeInTheDocument();
-
-  await userEvent.clear(screen.getByLabelText('Buscar expedientes'));
-  await userEvent.type(screen.getByLabelText('Buscar expedientes'), 'ESC-EDU');
-  expect(filas()).toHaveLength(1);
-  expect(screen.getByText('Maestría en Educación')).toBeInTheDocument();
+  await waitFor(() => {
+    expect(backend.calls.at(-1)).toBe('GET /api/v1/dossiers?limit=25&search=contabilidad');
+  });
+  // Una sola consulta por la búsqueda completa, no una por tecla.
+  expect(backend.calls.filter((call) => call.includes('search='))).toHaveLength(1);
 });
 
-test('los filtros avanzados por estado y unidad se combinan y se limpian', async () => {
-  stubFetch({ 'GET /api/v1/dossiers': () => json({ data: expedientes }) });
+test('los filtros de estado y nivel viajan al servidor, se combinan y se limpian', async () => {
+  const backend = stubFetch({ 'GET /api/v1/dossiers': () => json({ data: expedientes }) });
   abrirGestion();
   await screen.findByText('Rediseño de Matemática I');
 
   await userEvent.click(screen.getByRole('button', { name: /Filtros Avanzados/ }));
-  await userEvent.selectOptions(screen.getByLabelText('Estado'), 'En revisión');
-  expect(filas()).toHaveLength(1);
+  await userEvent.selectOptions(screen.getByLabelText('Estado'), 'IN_REVIEW');
+  await waitFor(() => {
+    expect(backend.calls.at(-1)).toBe('GET /api/v1/dossiers?limit=25&currentState=IN_REVIEW');
+  });
   expect(screen.getByText('1 activos')).toBeInTheDocument();
-  expect(screen.getByText('Plan de Contabilidad')).toBeInTheDocument();
 
-  await userEvent.selectOptions(screen.getByLabelText('Unidad productora'), 'ESC-ING');
+  await userEvent.selectOptions(screen.getByLabelText('Nivel académico'), 'associate');
+  await waitFor(() => {
+    expect(backend.calls.at(-1)).toBe(
+      'GET /api/v1/dossiers?limit=25&currentState=IN_REVIEW&academicLevel=associate',
+    );
+  });
   expect(screen.getByText('2 activos')).toBeInTheDocument();
-  expect(screen.getByText(/No hay expedientes que coincidan/)).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
-  expect(filas()).toHaveLength(3);
+  await waitFor(() => {
+    expect(backend.calls.at(-1)).toBe('GET /api/v1/dossiers?limit=25');
+  });
+});
+
+test('el selector de estado ofrece los estados del flujo, no solo los de la página', async () => {
+  stubFetch({ 'GET /api/v1/dossiers': () => json({ data: [expedientes[0]] }) });
+  abrirGestion();
+  await screen.findByText('Rediseño de Matemática I');
+
+  await userEvent.click(screen.getByRole('button', { name: /Filtros Avanzados/ }));
+  const opciones = within(screen.getByLabelText('Estado')).getAllByRole('option');
+  expect(opciones.map((opcion) => opcion.textContent)).toEqual(
+    expect.arrayContaining(['Todos los estados', 'Recepcionado', 'En revisión', 'Definitivo']),
+  );
 });
 
 test('sin expedientes muestra el estado vacío', async () => {
