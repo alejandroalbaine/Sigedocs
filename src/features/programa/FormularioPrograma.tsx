@@ -402,7 +402,6 @@ export function FormularioPrograma({
                   if (
                     campo.key === 'asignatura' ||
                     campo.key === 'clave_asignatura' ||
-                    campo.key === 'creditos' ||
                     campo.key === 'prerrequisitos'
                   ) {
                     let valorActual: Valor = valor;
@@ -421,10 +420,6 @@ export function FormularioPrograma({
                         : (valor ?? 'Consultando prerrequisitos...');
                     }
 
-                    if (campo.key === 'creditos' && (valorActual === '' || valorActual == null)) {
-                      valorActual = 'Pendiente del catálogo';
-                    }
-
                     return (
                       <div key={campo.key} className={styles.campo}>
                         <span className={styles.etiqueta}>
@@ -433,7 +428,7 @@ export function FormularioPrograma({
                         </span>
 
                         <span className={styles.lectura}>
-                          {subjectPending && campo.key !== 'creditos'
+                          {subjectPending
                             ? 'Consultando...'
                             : typeof valorActual === 'string' || typeof valorActual === 'number'
                               ? String(valorActual)
