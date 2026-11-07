@@ -41,7 +41,6 @@ Prioridad: P1 alta, P2 media, P3 baja. Puntos: escala de Fibonacci (propuesta).
 | PB-01 | Como especialista, quiero que el formulario del programa traiga la escuela y la carrera del registro para no volver a elegirlas       | P1   | 3   | D-01 (hecho)                      |
 | PB-02 | Como usuario de solo consulta, quiero no ver el checklist técnico para no confundirlo con una acción que puedo realizar               | P1   | 3   | D-02 (hecho)                      |
 | PB-03 | Como equipo, quiero un README fiel al estado real para no inducir a error a quien se incorpora                                        | P3   | 1   | D-03 (hecho)                      |
-| PB-04 | Como usuario, quiero ver el nombre de mi rol y no su código en la cabecera                                                            | P2   | 2   | D-04                              |
 | PB-05 | Como equipo, quiero la lista de los defectos abiertos del Módulo V en un solo lugar (issues de GitHub) para planificar su corrección  | P1   | 2   | D-05                              |
 | PB-06 | Como coordinador, quiero dar de alta asignaturas desde la interfaz para no depender de una carga externa del catálogo                 | P1   | 8   | Pendiente v0.3.0                  |
 | PB-07 | Como Dirección, quiero que las notificaciones por correo se envíen de verdad para que cada responsable se entere del cambio de estado | P2   | 5   | Pendiente v0.3.0 (depende de TI)  |
@@ -54,12 +53,6 @@ Prioridad: P1 alta, P2 media, P3 baja. Puntos: escala de Fibonacci (propuesta).
 | PB-14 | Como Dirección, quiero la rama de posgrado en el flujo                                                                                | P3   | 13  | Diferido                          |
 
 ## 5. Historias del primer sprint con criterios de aceptación
-
-**PB-04 · Nombre del rol en la cabecera**
-
-- Dado un usuario con rol `ESPECIALISTA_CURRICULAR`, cuando abre cualquier pantalla, entonces la
-  cabecera muestra «Especialista curricular».
-- Si el rol no tiene nombre conocido, se muestra el código como alternativa.
 
 **PB-05 · Lista única de defectos**
 
@@ -91,11 +84,10 @@ y preparar con el backend el alta de asignaturas.
 | PB-02 | Hecho            | 3      | —           |
 | PB-03 | Hecho            | 1      | —           |
 | PB-05 | Por hacer        | 2      | Por asignar |
-| PB-04 | Por hacer        | 2      | Por asignar |
 | PB-08 | Por hacer        | 5      | Por asignar |
 | PB-06 | Diseño y ruta    | 3 de 8 | Por asignar |
 
-Capacidad nueva a comprometer: 12 puntos. Los tres ítems ya hechos (7 puntos) se presentan en la
+Capacidad nueva a comprometer: 10 puntos. Los tres ítems ya hechos (7 puntos) se presentan en la
 primera revisión.
 
 **Riesgos:** el backend real no se ha podido probar en este entorno (hay que repetir la integración
