@@ -57,6 +57,7 @@ Archivos más grandes: `RegistroPage.tsx` (779 líneas), `RevisionPage.tsx` (593
 | D-01 | Media     | El formulario del programa no heredaba la escuela y la carrera del registro                                                         | **Corregido**                                                  |
 | D-02 | Media     | El checklist técnico y el dictamen se mostraban a quien no revisa                                                                   | **Corregido**                                                  |
 | D-03 | Baja      | README desfasado respecto a catálogos y versión del backend                                                                         | **Corregido**                                                  |
+| D-06 | Media     | El formulario del programa ofrecía las carreras de todas las escuelas, sin filtrar por la escuela del registro                      | **Corregido**                                                  |
 | D-04 | —         | Descartado: la cabecera muestra el código del rol solo si `GET /roles` falla (como en la simulación). Es el comportamiento previsto | Descartado                                                     |
 | D-05 | —         | Siete defectos del Módulo V citados en el `CHANGELOG` sin lista en el repositorio                                                   | Sin lista: se buscó en issues de GitHub, Trello y Drive (7/11) |
 
@@ -107,6 +108,12 @@ si el usuario puede devolver o aprobar. La numeración de las pestañas se conse
 
 Con rol revisor no cambia nada: ![Revisor](capturas/despues-revision-revisor.png)
 
+### D-06 · Carreras filtradas por escuela
+
+El formulario pide `GET /institutional-catalogs/degree_programs?schoolCode=…` con la escuela guardada
+en la versión o, si no hay, la del registro. Al elegir otra escuela se vuelven a pedir las carreras y
+se vacían las ya marcadas, que dejan de ser válidas.
+
 ### D-03 · README
 
 Se corrigió la tabla de módulos y el párrafo sobre catálogos.
@@ -115,12 +122,12 @@ Se corrigió la tabla de módulos y el párrafo sobre catálogos.
 
 | Comprobación                              | Antes | Después                   |
 | ----------------------------------------- | ----- | ------------------------- |
-| Pruebas                                   | 272   | **274** (todas aprobadas) |
+| Pruebas                                   | 272   | **275** (todas aprobadas) |
 | `tsc`, ESLint, Stylelint, Prettier, build | OK    | OK                        |
 
 Pruebas nuevas o modificadas:
 
-- `FormularioPrograma.test.tsx`: hereda escuela y carrera; no sobrescribe una escuela ya guardada.
+- `FormularioPrograma.test.tsx`: hereda escuela y carrera; no sobrescribe una escuela ya guardada; filtra las carreras por escuela y las vuelve a pedir al cambiarla.
 - `RevisionPage.test.tsx`: el rol de solo consulta no ve checklist, panel ni la pestaña 3 (sustituye
   a la prueba anterior, que daba por buena la visibilidad del mensaje de rol sin decisiones).
 

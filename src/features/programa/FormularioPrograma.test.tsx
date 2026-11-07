@@ -485,3 +485,40 @@ test('no sobrescribe la escuela ya guardada en la versión (D-01)', async () => 
   render(<FormularioPrograma dossier={expediente} editable />);
   expect(await screen.findByRole('combobox', { name: /^Escuela/ })).toHaveValue('ESC-SAL');
 });
+
+test('pide las carreras de la escuela del registro y las vuelve a pedir al cambiar de escuela (D-06)', async () => {
+  const llamadas = stubApi({
+    [`GET ${rutaVersion}`]: version(),
+    'GET /api/v1/templates/tpl-1': metadatosPlantilla,
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+    'GET /api/v1/subjects/ISW-201': {
+      code: 'ISW-201',
+      name: 'Ingeniería de Software I',
+      prerequisites: [],
+    },
+    'GET /api/v1/institutional-catalogs/schools': [
+      { value: 'ESC-ING', label: 'Ingeniería' },
+      { value: 'ESC-SAL', label: 'Salud' },
+    ],
+    'GET /api/v1/institutional-catalogs/degree_programs': (_init: RequestInit, url: URL) =>
+      url.searchParams.get('schoolCode') === 'ESC-SAL'
+        ? [{ value: 'MED', label: 'Medicina' }]
+        : [{ value: 'ISW', label: 'Ingeniería de Software' }],
+  });
+  render(<FormularioPrograma dossier={expediente} editable />);
+
+  expect(await screen.findByRole('checkbox', { name: 'Ingeniería de Software' })).toBeChecked();
+  const carreras = () =>
+    llamadas.filter(
+      (llamada) => llamada.key === 'GET /api/v1/institutional-catalogs/degree_programs',
+    );
+  expect(carreras().at(-1)?.url.searchParams.get('schoolCode')).toBe('ESC-ING');
+
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: /^Escuela/ }), 'ESC-SAL');
+
+  expect(await screen.findByRole('checkbox', { name: 'Medicina' })).not.toBeChecked();
+  expect(
+    screen.queryByRole('checkbox', { name: 'Ingeniería de Software' }),
+  ).not.toBeInTheDocument();
+  expect(carreras().at(-1)?.url.searchParams.get('schoolCode')).toBe('ESC-SAL');
+});

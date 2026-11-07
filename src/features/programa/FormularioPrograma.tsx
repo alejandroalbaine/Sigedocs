@@ -92,23 +92,40 @@ export function FormularioPrograma({
     datos: {},
   });
 
-  const claveCatalogos = nombresCatalogo.join(',');
+  // Las carreras se filtran por la escuela: la elegida en este formulario, la ya guardada en la
+  // versión o, en su defecto, la del registro. Así no se ofrecen carreras de otra escuela.
+  const [escuelaElegida, setEscuelaElegida] = useState<string | null>(null);
+  const escuelaGuardada = useMemo(() => {
+    for (const seccion of plantilla.data?.sections ?? []) {
+      for (const campo of seccion.fields) {
+        if (campo.optionsSource?.catalog !== 'schools') continue;
+        const valor = (version.data?.content as Contenido | undefined)?.[seccion.key]?.[campo.key];
+        if (typeof valor === 'object' && valor !== null && 'value' in valor) {
+          const codigo = valor.value;
+          if (typeof codigo === 'string' && codigo) return codigo;
+        }
+      }
+    }
+    return null;
+  }, [plantilla.data, version.data]);
+  const codigoEscuela = escuelaElegida ?? escuelaGuardada ?? dossier.schoolCode;
+
+  const claveCatalogos = `${nombresCatalogo.join(',')}@${codigoEscuela}`;
 
   useEffect(() => {
-    if (!claveCatalogos) return;
+    if (nombresCatalogo.length === 0) return;
 
     let vigente = true;
 
     void Promise.all(
-      claveCatalogos
-        .split(',')
-        .map(async (nombre): Promise<[string, CatalogOption[] | 'pendiente']> => {
-          try {
-            return [nombre, (await templatesApi.catalog(nombre)).data];
-          } catch {
-            return [nombre, 'pendiente'];
-          }
-        }),
+      nombresCatalogo.map(async (nombre): Promise<[string, CatalogOption[] | 'pendiente']> => {
+        try {
+          const escuela = nombre === 'degree_programs' ? codigoEscuela : undefined;
+          return [nombre, (await templatesApi.catalog(nombre, escuela)).data];
+        } catch {
+          return [nombre, 'pendiente'];
+        }
+      }),
     ).then((pares) => {
       if (vigente) {
         setCatalogos({
@@ -121,7 +138,7 @@ export function FormularioPrograma({
     return () => {
       vigente = false;
     };
-  }, [claveCatalogos]);
+  }, [nombresCatalogo, codigoEscuela, claveCatalogos]);
 
   const catalogos: Catalogos =
     catalogosCargados.clave === claveCatalogos
@@ -235,15 +252,27 @@ export function FormularioPrograma({
   function cambiar(seccion: string, campo: string, valor: Valor) {
     if (!contenido) return;
 
+    const definicion = plantillaValidada.sections
+      .find((item) => item.key === seccion)
+      ?.fields.find((item) => item.key === campo);
+    const cambiaEscuela = definicion?.optionsSource?.catalog === 'schools';
+    const nuevaEscuela =
+      typeof valor === 'object' && valor !== null && 'value' in valor ? String(valor.value) : null;
+    const escuelaDistinta = cambiaEscuela && nuevaEscuela !== codigoEscuela;
+    const actualizada: Record<string, Valor> = { ...contenido[seccion], [campo]: valor };
+
+    // Otra escuela tiene otras carreras: las ya elegidas dejan de ser válidas.
+    if (escuelaDistinta) {
+      for (const hermano of plantillaValidada.sections.find((item) => item.key === seccion)
+        ?.fields ?? []) {
+        if (hermano.optionsSource?.catalog === 'degree_programs') actualizada[hermano.key] = [];
+      }
+      setEscuelaElegida(nuevaEscuela);
+    }
+
     setEdicion({
       clave,
-      contenido: {
-        ...contenido,
-        [seccion]: {
-          ...contenido[seccion],
-          [campo]: valor,
-        },
-      },
+      contenido: { ...contenido, [seccion]: actualizada },
     });
 
     const ruta = `${seccion}.${campo}`;
