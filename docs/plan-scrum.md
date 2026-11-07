@@ -41,6 +41,7 @@ Prioridad: P1 alta, P2 media, P3 baja. Puntos: escala de Fibonacci (propuesta).
 | PB-01 | Como especialista, quiero que el formulario del programa traiga la escuela y la carrera del registro para no volver a elegirlas       | P1   | 3   | D-01 (hecho)                      |
 | PB-02 | Como usuario de solo consulta, quiero no ver el checklist técnico para no confundirlo con una acción que puedo realizar               | P1   | 3   | D-02 (hecho)                      |
 | PB-03 | Como equipo, quiero un README fiel al estado real para no inducir a error a quien se incorpora                                        | P3   | 1   | D-03 (hecho)                      |
+| PB-04 | Como especialista, quiero un mensaje claro cuando aún no tengo expedientes asignados, en lugar de un error de permiso en el panel     | P2   | 2   | D-07                              |
 | PB-05 | Como equipo, quiero la lista de los defectos abiertos del Módulo V en un solo lugar (issues de GitHub) para planificar su corrección  | P1   | 2   | D-05                              |
 | PB-06 | Como coordinador, quiero dar de alta asignaturas desde la interfaz para no depender de una carga externa del catálogo                 | P1   | 8   | Pendiente v0.3.0                  |
 | PB-07 | Como Dirección, quiero que las notificaciones por correo se envíen de verdad para que cada responsable se entere del cambio de estado | P2   | 5   | Pendiente v0.3.0 (depende de TI)  |

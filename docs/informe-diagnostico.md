@@ -4,17 +4,37 @@ Fecha: 7 de noviembre de 2026. Versión analizada: v0.3.0, rama `claude/blissful
 
 ## 1. Recuperación, entorno y ejecución
 
-| Paso                  | Resultado                                                                          |
-| --------------------- | ---------------------------------------------------------------------------------- |
-| Repositorio           | `alejandroalbaine/Sigedocs`, clonado y en la rama de trabajo                       |
-| Dependencias          | `npm ci` sin errores (Node 22 según `.nvmrc`)                                      |
-| `npm run check`       | Formato, tipos, 272 pruebas, lint, stylelint y build: todo en verde antes de tocar |
-| Ejecución             | `vite` arranca en 166 ms; la interfaz responde en el navegador                     |
-| Backend real          | **No disponible en este entorno.** No hay API ni PostgreSQL                        |
-| Cómo se ejecutó la UI | Con un backend simulado (rutas interceptadas con Playwright) y datos de prueba     |
+| Paso                  | Resultado                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Repositorio           | `alejandroalbaine/Sigedocs`, clonado y en la rama de trabajo                                                       |
+| Dependencias          | `npm ci` sin errores (Node 22 según `.nvmrc`)                                                                      |
+| `npm run check`       | Formato, tipos, 272 pruebas, lint, stylelint y build: todo en verde antes de tocar                                 |
+| Ejecución             | `vite` arranca en 166 ms; la interfaz responde en el navegador                                                     |
+| Backend real          | No disponible en el entorno de revisión (sin API ni PostgreSQL). Sí corre en la máquina del equipo (Figuras 1 a 4) |
+| Cómo se ejecutó la UI | Con un backend simulado (rutas interceptadas con Playwright) y datos de prueba                                     |
 
-Consecuencia: lo verificado aquí es el comportamiento de la interfaz frente al contrato. No se
-repitió la integración contra el servidor real (`SIGESDOC_BACKEND`).
+Consecuencia: las pruebas y las capturas de antes y después de la sección 5 se obtuvieron con el
+backend simulado. No se repitió la integración contra el servidor real (`SIGESDOC_BACKEND`).
+
+### Evidencia del entorno del equipo
+
+Las cuatro capturas siguientes las aportó el equipo desde su máquina de trabajo.
+
+![Figura 1. Frontend (`SIGESDOC_FRONTEND`) abierto en Visual Studio Code: `package.json` indica la versión 0.3.0.](capturas/entorno-1-frontend-vscode.png)
+
+![Figura 2. Backend (`SIGESDOC_BACKEND`) en Visual Studio Code: `package.json` indica la versión 1.0.0 y trae scripts de migración, siembra y pruebas de base de datos.](capturas/entorno-2-backend-vscode.png)
+
+![Figura 3. Interfaz en `localhost:5173` con el rol Especialista Curricular: el panel muestra el aviso «No tiene permiso para realizar esta acción» y los contadores en cero.](capturas/entorno-3-panel-especialista.png)
+
+![Figura 4. Docker Desktop con el contenedor `sigesdoc` en ejecución.](capturas/entorno-4-docker.png)
+
+Lo que estas capturas muestran, y lo que no:
+
+- La interfaz arranca y muestra al usuario y su rol con datos del servidor (Figura 3).
+- El aviso de permiso de la Figura 3 es un hallazgo nuevo (D-07).
+- El backend declara la versión 1.0.0, mientras que la documentación del frontend habla de la
+  v0.3.0. Conviene aclarar cómo se numeran las versiones de cada repositorio.
+- No se repitieron en ese entorno las pruebas del informe.
 
 ## 2. Tecnologías, componentes y estructura
 
@@ -37,29 +57,30 @@ Archivos más grandes: `RegistroPage.tsx` (779 líneas), `RevisionPage.tsx` (593
 
 ## 3. Documentado frente a lo que funciona
 
-| Afirmación documentada                                        | Comprobación                                          | Resultado        |
-| ------------------------------------------------------------- | ----------------------------------------------------- | ---------------- |
-| 272 pruebas, todas en verde (`CHANGELOG`)                     | `vitest run`: 272 de 272                              | Coincide         |
-| Build de producción y lint limpios                            | `npm run check`                                       | Coincide         |
-| Siete pestañas del expediente (Informe T1)                    | Se ven las siete con rol revisor                      | Coincide         |
-| Checklist y dictamen son de la revisión técnica               | Se mostraban a un rol de solo consulta                | **No coincidía** |
-| README: «catálogos pendientes» en el backend                  | El código y el `CHANGELOG` v0.3.0 ya los consumen     | **Desfasado**    |
-| README: «Verificado contra el backend v0.2.0»                 | `CHANGELOG` indica verificación con v0.3.0 (33 casos) | **Desfasado**    |
-| El formulario del programa parte de lo elegido en el registro | Escuela y carrera salían vacías                       | **No coincidía** |
-| Integración con el backend real                               | No comprobable aquí                                   | Sin verificar    |
+| Afirmación documentada                                        | Comprobación                                                                                                   | Resultado        |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 272 pruebas, todas en verde (`CHANGELOG`)                     | `vitest run`: 272 de 272                                                                                       | Coincide         |
+| Build de producción y lint limpios                            | `npm run check`                                                                                                | Coincide         |
+| Siete pestañas del expediente (Informe T1)                    | Se ven las siete con rol revisor                                                                               | Coincide         |
+| Checklist y dictamen son de la revisión técnica               | Se mostraban a un rol de solo consulta                                                                         | **No coincidía** |
+| README: «catálogos pendientes» en el backend                  | El código y el `CHANGELOG` v0.3.0 ya los consumen                                                              | **Desfasado**    |
+| README: «Verificado contra el backend v0.2.0»                 | `CHANGELOG` indica verificación con v0.3.0 (33 casos)                                                          | **Desfasado**    |
+| El formulario del programa parte de lo elegido en el registro | Escuela y carrera salían vacías                                                                                | **No coincidía** |
+| Integración con el backend real                               | La interfaz inicia sesión contra el backend local (Figura 3), pero el panel muestra un aviso de permiso (D-07) | Parcial          |
 
 ## 4. Hallazgos
 
 ### Defectos
 
-| ID   | Severidad | Hallazgo                                                                                                                            | Estado                                                         |
-| ---- | --------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| D-01 | Media     | El formulario del programa no heredaba la escuela y la carrera del registro                                                         | **Corregido**                                                  |
-| D-02 | Media     | El checklist técnico y el dictamen se mostraban a quien no revisa                                                                   | **Corregido**                                                  |
-| D-03 | Baja      | README desfasado respecto a catálogos y versión del backend                                                                         | **Corregido**                                                  |
-| D-06 | Media     | El formulario del programa ofrecía las carreras de todas las escuelas, sin filtrar por la escuela del registro                      | **Corregido**                                                  |
-| D-04 | —         | Descartado: la cabecera muestra el código del rol solo si `GET /roles` falla (como en la simulación). Es el comportamiento previsto | Descartado                                                     |
-| D-05 | —         | Siete defectos del Módulo V citados en el `CHANGELOG` sin lista en el repositorio                                                   | Sin lista: se buscó en issues de GitHub, Trello y Drive (7/11) |
+| ID   | Severidad | Hallazgo                                                                                                                                                                                                                        | Estado                                                         |
+| ---- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| D-01 | Media     | El formulario del programa no heredaba la escuela y la carrera del registro                                                                                                                                                     | **Corregido**                                                  |
+| D-02 | Media     | El checklist técnico y el dictamen se mostraban a quien no revisa                                                                                                                                                               | **Corregido**                                                  |
+| D-03 | Baja      | README desfasado respecto a catálogos y versión del backend                                                                                                                                                                     | **Corregido**                                                  |
+| D-06 | Media     | El formulario del programa ofrecía las carreras de todas las escuelas, sin filtrar por la escuela del registro                                                                                                                  | **Corregido**                                                  |
+| D-07 | Media     | Con el backend local, el panel del Especialista Curricular muestra «No tiene permiso para realizar esta acción» y los contadores en cero (Figura 3). Probable `403` de `GET /dossiers`; falta confirmar la causa con el backend | **Abierto**                                                    |
+| D-04 | —         | Descartado: la cabecera muestra el código del rol solo si `GET /roles` falla (como en la simulación). Es el comportamiento previsto                                                                                             | Descartado                                                     |
+| D-05 | —         | Siete defectos del Módulo V citados en el `CHANGELOG` sin lista en el repositorio                                                                                                                                               | Sin lista: se buscó en issues de GitHub, Trello y Drive (7/11) |
 
 ### Deuda técnica
 
@@ -84,6 +105,8 @@ Archivos más grandes: `RegistroPage.tsx` (779 líneas), `RevisionPage.tsx` (593
 - Dividir por ruta (`React.lazy`) para bajar el bloque inicial.
 - Ejecutar las pruebas de integración contra un backend real en CI.
 - Medir cobertura y fijar un mínimo.
+- Mostrar un mensaje claro («Aún no tiene expedientes asignados») en lugar de un error de permiso cuando el especialista no tenga expedientes (D-07).
+- Alinear el número de versión del frontend (0.3.0) y del backend (1.0.0) o documentar su relación.
 
 ## 5. Correcciones realizadas
 
@@ -108,15 +131,15 @@ si el usuario puede devolver o aprobar. La numeración de las pestañas se conse
 
 Con rol revisor no cambia nada: ![Revisor](capturas/despues-revision-revisor.png)
 
+### D-03 · README
+
+Se corrigió la tabla de módulos y el párrafo sobre catálogos.
+
 ### D-06 · Carreras filtradas por escuela
 
 El formulario pide `GET /institutional-catalogs/degree_programs?schoolCode=…` con la escuela guardada
 en la versión o, si no hay, la del registro. Al elegir otra escuela se vuelven a pedir las carreras y
 se vacían las ya marcadas, que dejan de ser válidas.
-
-### D-03 · README
-
-Se corrigió la tabla de módulos y el párrafo sobre catálogos.
 
 ## 6. Pruebas
 
