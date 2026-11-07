@@ -52,13 +52,13 @@ Archivos más grandes: `RegistroPage.tsx` (779 líneas), `RevisionPage.tsx` (593
 
 ### Defectos
 
-| ID   | Severidad | Hallazgo                                                                                                                            | Estado                |
-| ---- | --------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| D-01 | Media     | El formulario del programa no heredaba la escuela y la carrera del registro                                                         | **Corregido**         |
-| D-02 | Media     | El checklist técnico y el dictamen se mostraban a quien no revisa                                                                   | **Corregido**         |
-| D-03 | Baja      | README desfasado respecto a catálogos y versión del backend                                                                         | **Corregido**         |
-| D-04 | —         | Descartado: la cabecera muestra el código del rol solo si `GET /roles` falla (como en la simulación). Es el comportamiento previsto | Descartado            |
-| D-05 | —         | Siete defectos del Módulo V citados en el `CHANGELOG` sin lista en el repositorio                                                   | Falta la lista fuente |
+| ID   | Severidad | Hallazgo                                                                                                                            | Estado                                                         |
+| ---- | --------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| D-01 | Media     | El formulario del programa no heredaba la escuela y la carrera del registro                                                         | **Corregido**                                                  |
+| D-02 | Media     | El checklist técnico y el dictamen se mostraban a quien no revisa                                                                   | **Corregido**                                                  |
+| D-03 | Baja      | README desfasado respecto a catálogos y versión del backend                                                                         | **Corregido**                                                  |
+| D-04 | —         | Descartado: la cabecera muestra el código del rol solo si `GET /roles` falla (como en la simulación). Es el comportamiento previsto | Descartado                                                     |
+| D-05 | —         | Siete defectos del Módulo V citados en el `CHANGELOG` sin lista en el repositorio                                                   | Sin lista: se buscó en issues de GitHub, Trello y Drive (7/11) |
 
 ### Deuda técnica
 
