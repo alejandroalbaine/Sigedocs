@@ -142,6 +142,10 @@
   gap: 20px;
 }
 
+.sin-panel {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .review-panel {
   display: grid;
   align-content: start;

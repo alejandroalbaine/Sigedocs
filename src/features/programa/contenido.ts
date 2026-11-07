@@ -96,3 +96,47 @@ export function mostrarValor(campo: TemplateField, valor: Valor): string {
   if (campo.type === 'number' && campo.format === 'percentage') return `${etiqueta(valor)} %`;
   return etiqueta(valor);
 }
+
+interface DatosRegistro {
+  schoolCode: string;
+  degreeProgramCode: string;
+}
+
+type OpcionesCatalogo = readonly TemplateOption[] | 'cargando' | 'pendiente';
+
+/**
+ * Precarga `escuela` y `carreras` con lo elegido en el registro del expediente, solo mientras el
+ * campo siga vacío: un valor ya guardado en la versión nunca se sobrescribe. Si el catálogo aún
+ * no llegó, o no contiene el código del registro, el campo queda vacío para que se elija a mano.
+ */
+export function heredarDelRegistro(
+  contenido: Contenido,
+  plantilla: TemplateVersion,
+  catalogos: Record<string, OpcionesCatalogo>,
+  registro: DatosRegistro,
+): Contenido {
+  const resultado: Contenido = { ...contenido };
+  for (const seccion of plantilla.sections.filter((item) => item.isActive)) {
+    for (const campo of seccion.fields) {
+      const catalogo = campo.optionsSource?.catalog;
+      const codigo =
+        catalogo === 'schools'
+          ? registro.schoolCode
+          : catalogo === 'degree_programs'
+            ? registro.degreeProgramCode
+            : null;
+      const lista = catalogo ? catalogos[catalogo] : undefined;
+      if (!codigo || !Array.isArray(lista)) continue;
+      const actual = resultado[seccion.key]?.[campo.key];
+      const vacio = Array.isArray(actual) ? actual.length === 0 : actual === null || actual === '';
+      if (!vacio) continue;
+      const opcion = (lista as readonly TemplateOption[]).find((item) => item.value === codigo);
+      if (!opcion) continue;
+      resultado[seccion.key] = {
+        ...resultado[seccion.key],
+        [campo.key]: campo.type === 'multi_select' ? [opcion] : opcion,
+      };
+    }
+  }
+  return resultado;
+}

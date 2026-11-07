@@ -428,3 +428,60 @@ test('muestra campos pendientes cuando el reenvío responde 422', async () => {
     ),
   ).toBeVisible();
 });
+
+test('hereda la escuela y la carrera del registro cuando el formulario está vacío (D-01)', async () => {
+  const llamadas = stubApi({
+    [`GET ${rutaVersion}`]: version(),
+    [`PATCH ${rutaVersion}`]: (init: RequestInit) =>
+      version((JSON.parse(init.body as string) as { content: Record<string, unknown> }).content),
+    'GET /api/v1/templates/tpl-1': metadatosPlantilla,
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+    'GET /api/v1/subjects/ISW-201': {
+      code: 'ISW-201',
+      name: 'Ingeniería de Software I',
+      prerequisites: [],
+    },
+    'GET /api/v1/institutional-catalogs/schools': [
+      { value: 'ESC-ING', label: 'Ingeniería' },
+      { value: 'ESC-SAL', label: 'Salud' },
+    ],
+    'GET /api/v1/institutional-catalogs/degree_programs': [
+      { value: 'ISW', label: 'Ingeniería de Software' },
+      { value: 'MED', label: 'Medicina' },
+    ],
+  });
+  render(<FormularioPrograma dossier={expediente} editable />);
+
+  expect(await screen.findByRole('combobox', { name: /^Escuela/ })).toHaveValue('ESC-ING');
+  expect(screen.getByRole('checkbox', { name: 'Ingeniería de Software' })).toBeChecked();
+  expect(screen.getByRole('checkbox', { name: 'Medicina' })).not.toBeChecked();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+  await screen.findByText('Borrador de v1.0 guardado.');
+  const envio = llamadas.find((llamada) => llamada.key.startsWith('PATCH'));
+  const datos = (envio?.body as { content: Record<string, Record<string, unknown>> }).content
+    .datos_academicos;
+  expect(datos?.escuela).toEqual({ value: 'ESC-ING', label: 'Ingeniería' });
+  expect(datos?.carreras).toEqual([{ value: 'ISW', label: 'Ingeniería de Software' }]);
+});
+
+test('no sobrescribe la escuela ya guardada en la versión (D-01)', async () => {
+  stubApi({
+    [`GET ${rutaVersion}`]: version({
+      datos_academicos: { escuela: { value: 'ESC-SAL', label: 'Salud' } },
+    }),
+    'GET /api/v1/templates/tpl-1': metadatosPlantilla,
+    'GET /api/v1/templates/tpl-1/versions/tv-1': programaBackend,
+    'GET /api/v1/subjects/ISW-201': {
+      code: 'ISW-201',
+      name: 'Ingeniería de Software I',
+      prerequisites: [],
+    },
+    'GET /api/v1/institutional-catalogs/schools': [
+      { value: 'ESC-ING', label: 'Ingeniería' },
+      { value: 'ESC-SAL', label: 'Salud' },
+    ],
+  });
+  render(<FormularioPrograma dossier={expediente} editable />);
+  expect(await screen.findByRole('combobox', { name: /^Escuela/ })).toHaveValue('ESC-SAL');
+});

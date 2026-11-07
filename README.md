@@ -12,28 +12,26 @@ funciona en cuanto el backend publica su ruta; mientras una ruta confirmada no e
 lo indica como "pendiente" y nunca muestra datos simulados. Lo que falta del lado del servidor está
 en [docs/pendientes-backend.md](docs/pendientes-backend.md).
 
-| Módulo                    | Rutas del contrato                                                 | Backend v0.2.0 (01/10)              |
-| ------------------------- | ------------------------------------------------------------------ | ----------------------------------- |
-| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`     | Implementado                        |
-| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `GET/PUT .../roles`        | Implementado                        |
-| Panel, gestión y búsqueda | `GET /dossiers`                                                    | Implementado                        |
-| Registro de expediente    | `POST /dossiers`                                                   | Implementado                        |
-| Detalle y flujo T2 a T8   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions`    | Implementado                        |
-| Asignación (T1)           | `GET .../assignment-candidates`, `POST /dossiers/{id}/assignments` | Implementado                        |
-| Observaciones             | `GET/POST /dossiers/{id}/observations`                             | Implementado                        |
-| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                                  | Implementado                        |
-| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local             | Implementado                        |
-| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`       | Implementado                        |
-| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`      | Plantillas sí; catálogos pendientes |
+| Módulo                    | Rutas del contrato                                                 | Backend v0.3.0 (08/10) |
+| ------------------------- | ------------------------------------------------------------------ | ---------------------- |
+| Acceso, sesión y permisos | `POST /sessions`, `GET /users/current`, `DELETE /sessions/...`     | Implementado           |
+| Usuarios y roles (CU-12)  | `GET/POST /users`, `PATCH /users/{id}`, `GET/PUT .../roles`        | Implementado           |
+| Panel, gestión y búsqueda | `GET /dossiers`                                                    | Implementado           |
+| Registro de expediente    | `POST /dossiers`                                                   | Implementado           |
+| Detalle y flujo T2 a T8   | `/available-transitions`, `POST/GET /dossiers/{id}/transitions`    | Implementado           |
+| Asignación (T1)           | `GET .../assignment-candidates`, `POST /dossiers/{id}/assignments` | Implementado           |
+| Observaciones             | `GET/POST /dossiers/{id}/observations`                             | Implementado           |
+| Historial de auditoría    | `GET /dossiers/{id}/audit-events`                                  | Implementado           |
+| Reportes                  | Se calculan con `GET /dossiers`; exportación CSV local             | Implementado           |
+| Versiones del expediente  | `GET /dossiers/{id}/versions`, `GET/PATCH .../versions/{id}`       | Implementado           |
+| Plantillas y catálogos    | `GET /templates/...`, `GET /institutional-catalogs/{catalog}`      | Implementado           |
 
 Verificado desde la interfaz contra el backend v0.2.0 (01/10), con cada rol: la Dirección asigna,
 la especialista revisa y devuelve, la coordinación reenvía, la especialista reevalúa y la Dirección
 aprueba para pilotaje; el historial y la auditoría registran cada paso.
 
 El formulario del programa (CU-01) se genera desde la plantilla publicada y guarda borradores
-contra el backend real (`PATCH .../versions/{id}`). Los campos con catálogo institucional (escuela,
-carreras, modalidad, estrategias) indican que sus opciones estarán disponibles próximamente: el
-backend aún no publica `GET /institutional-catalogs/{catalog}`.
+contra el backend real (`PATCH .../versions/{id}`). Los campos con catálogo institucional (escuela, carreras, modalidad, estrategias) cargan sus opciones desde `GET /institutional-catalogs/{catalog}`; la escuela y la carrera elegidas en el registro llegan precargadas. Si un catálogo no responde, el campo lo indica.
 
 El comparador de versiones (pestaña «Versiones» del expediente) muestra lado a lado qué cambió
 entre dos versiones, sección por sección y campo por campo, con las palabras agregadas y quitadas

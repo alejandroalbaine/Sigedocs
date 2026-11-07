@@ -92,11 +92,19 @@ test('devolver exige un incumplimiento y observaciones (REG-01)', async () => {
   expect(screen.getByText(/no se envió/)).toBeInTheDocument();
 });
 
-test('un rol de solo consulta no ve decisiones técnicas', async () => {
+test('un rol de solo consulta no ve el checklist ni las decisiones técnicas (D-02)', async () => {
   stubDossiers([enRevision]);
   renderApp(signedInBackend(soloConsulta), '/revision');
-  expect(await screen.findByText(/no emitir decisiones técnicas/)).toBeInTheDocument();
+  await screen.findByLabelText('Contexto del expediente');
+  expect(
+    screen.queryByRole('complementary', { name: 'Panel de revisión técnico-curricular' }),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText(/Checklist técnico-curricular/)).not.toBeInTheDocument();
+  expect(screen.queryByRole('group', { name: /Contrastar con/ })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Aprobar para pilotaje' })).not.toBeInTheDocument();
+  const pestañas = within(screen.getByRole('navigation', { name: 'Secciones del expediente' }));
+  expect(pestañas.getAllByRole('button')).toHaveLength(6);
+  expect(pestañas.queryByRole('button', { name: /Revisión y checklist/ })).not.toBeInTheDocument();
 });
 
 test('fuera de revisión las decisiones y el checklist quedan deshabilitados', async () => {

@@ -1,5 +1,13 @@
 # Cambios
 
+## Sin publicar
+
+- El formulario del programa precarga la escuela y la carrera elegidas en el registro, sin
+  sobrescribir lo ya guardado.
+- El checklist técnico, su pestaña y el dictamen solo se muestran a quien puede devolver o aprobar.
+- README alineado con el backend v0.3.0. Informe de diagnóstico (`docs/informe-diagnostico.md`) y
+  plan Scrum (`docs/plan-scrum.md`). 274 pruebas.
+
 ## v0.3.0 — Módulo V: catálogo, reglas y notificaciones (8 de octubre de 2026)
 
 Segunda versión integrada, con el backend v0.3.0. Responde a lo que pidió el mentor para el

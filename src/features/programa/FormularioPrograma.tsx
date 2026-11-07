@@ -7,7 +7,13 @@ import type { TemplateField } from '../../common/api/templateContract.ts';
 import { useRecurso } from '../../common/api/useRecurso.ts';
 import { Alert, Button } from '../../common/components/index.ts';
 import { CampoPlantilla, type Catalogos } from './CampoPlantilla.tsx';
-import { contenidoInicial, type Contenido, type Item, type Valor } from './contenido.ts';
+import {
+  contenidoInicial,
+  heredarDelRegistro,
+  type Contenido,
+  type Item,
+  type Valor,
+} from './contenido.ts';
 import { GrupoRepetible } from './GrupoRepetible.tsx';
 import { validarContenido, type Hallazgo } from './validacion.ts';
 import {
@@ -153,9 +159,22 @@ export function FormularioPrograma({
   const base = useMemo(
     () =>
       plantilla.data && version.data
-        ? contenidoInicial(plantilla.data, version.data.content)
+        ? heredarDelRegistro(
+            contenidoInicial(plantilla.data, version.data.content),
+            plantilla.data,
+            catalogos,
+            { schoolCode: dossier.schoolCode, degreeProgramCode: dossier.degreeProgramCode },
+          )
         : null,
-    [plantilla.data, version.data],
+    // `catalogos` se recalcula en cada render; su contenido cambia solo con `catalogosCargados`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      plantilla.data,
+      version.data,
+      catalogosCargados,
+      dossier.schoolCode,
+      dossier.degreeProgramCode,
+    ],
   );
 
   const [edicion, setEdicion] = useState<{

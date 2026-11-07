@@ -134,6 +134,10 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
   const puedeAsignar = hasPermission(user.permissions, 'workflow.assign');
   const puedeObservar = hasPermission(user.permissions, 'observations.create');
   const puedeEditar = hasPermission(user.permissions, 'dossiers.edit');
+  // El checklist y el dictamen son de quien revisa: devuelve o aprueba. Para el resto de roles
+  // con acceso de lectura no se muestran (defecto D-02 del Módulo V).
+  const esRevisor = puedeDevolver || puedeAprobar;
+  const pestanas = esRevisor ? tabs : tabs.filter((tab) => tab.id !== 'checklist');
   const decisionHabilitada = admiteDecisionTecnica(dossier.currentState.code);
   const { evaluados, total } = resumirChecklist(resultados);
   const responsable = dossier.assignedSpecialist?.name ?? 'Sin asignar';
@@ -229,7 +233,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
       </section>
 
       <nav className={styles.tabs} aria-label="Secciones del expediente">
-        {tabs.map((tab, index) => {
+        {pestanas.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
@@ -241,13 +245,13 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
                 setActiveTab(tab.id);
               }}
             >
-              <Icon size={16} /> {index + 1}. {tab.label}
+              <Icon size={16} /> {tabs.indexOf(tab) + 1}. {tab.label}
             </button>
           );
         })}
       </nav>
 
-      <div className={styles.workspace}>
+      <div className={esRevisor ? styles.workspace : `${styles.workspace} ${styles.sinPanel}`}>
         <div>
           {activeTab === 'resumen' && (
             <InfoPanel title="Resumen y metadatos">
@@ -302,7 +306,7 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
             </InfoPanel>
           )}
 
-          {activeTab === 'checklist' && (
+          {activeTab === 'checklist' && esRevisor && (
             <InfoPanel title="Revisión y checklist">
               <p className={styles.lead}>
                 Cada criterio se contrasta con su documento maestro. Un criterio obligatorio en
@@ -490,50 +494,52 @@ function Expediente({ dossier, onCambio }: { dossier: Dossier; onCambio: () => v
           )}
         </div>
 
-        <aside className={styles.reviewPanel} aria-label="Panel de revisión técnico-curricular">
-          <div className={styles.reviewer}>
-            <span>
-              <ShieldCheck size={19} />
-            </span>
-            <strong>{user.name}</strong>
-            <small>Revisión técnico-curricular</small>
-          </div>
-          <details className={styles.reviewBlock} open>
-            <summary>
-              Checklist técnico-curricular{' '}
-              <b>
-                {evaluados} / {total}
-              </b>
-            </summary>
-            <ChecklistRevision
-              resultados={resultados}
-              disabled={!decisionHabilitada}
-              onChange={(index, resultado) => {
-                setResultados((current) =>
-                  current.map((value, i) => (i === index ? resultado : value)),
-                );
-              }}
-            />
-          </details>
-          <section className={styles.decision}>
-            <h3>Dictamen técnico</h3>
-            {decisionHabilitada ? (
-              <DecisionRevision
-                dossier={dossier}
+        {esRevisor && (
+          <aside className={styles.reviewPanel} aria-label="Panel de revisión técnico-curricular">
+            <div className={styles.reviewer}>
+              <span>
+                <ShieldCheck size={19} />
+              </span>
+              <strong>{user.name}</strong>
+              <small>Revisión técnico-curricular</small>
+            </div>
+            <details className={styles.reviewBlock} open>
+              <summary>
+                Checklist técnico-curricular{' '}
+                <b>
+                  {evaluados} / {total}
+                </b>
+              </summary>
+              <ChecklistRevision
                 resultados={resultados}
-                transiciones={transiciones}
-                puedeDevolver={puedeDevolver}
-                puedeAprobar={puedeAprobar}
-                onRealizada={transicionRealizada}
+                disabled={!decisionHabilitada}
+                onChange={(index, resultado) => {
+                  setResultados((current) =>
+                    current.map((value, i) => (i === index ? resultado : value)),
+                  );
+                }}
               />
-            ) : (
-              <p className={styles.lead}>
-                Las decisiones se habilitan cuando el expediente está En revisión o En reevaluación.
-                Estado actual: <strong>{dossier.currentState.name}</strong>.
-              </p>
-            )}
-          </section>
-        </aside>
+            </details>
+            <section className={styles.decision}>
+              <h3>Dictamen técnico</h3>
+              {decisionHabilitada ? (
+                <DecisionRevision
+                  dossier={dossier}
+                  resultados={resultados}
+                  transiciones={transiciones}
+                  puedeDevolver={puedeDevolver}
+                  puedeAprobar={puedeAprobar}
+                  onRealizada={transicionRealizada}
+                />
+              ) : (
+                <p className={styles.lead}>
+                  Las decisiones se habilitan cuando el expediente está En revisión o En
+                  reevaluación. Estado actual: <strong>{dossier.currentState.name}</strong>.
+                </p>
+              )}
+            </section>
+          </aside>
+        )}
       </div>
     </div>
   );
