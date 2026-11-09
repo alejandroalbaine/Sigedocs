@@ -39,13 +39,18 @@ function filasDe(items: readonly HistorialItem[]): FilaNotificacion[] {
   });
 }
 
+/** D-13: mismo orden que la cronología de eventos (fecha descendente, la más reciente primero). */
+function ordenarFilas(filas: readonly FilaNotificacion[]): FilaNotificacion[] {
+  return [...filas].sort((a, b) => -a.fecha.localeCompare(b.fecha, 'es'));
+}
+
 export interface TablaNotificacionesProps {
   items: readonly HistorialItem[];
   vacio: string;
 }
 
 export function TablaNotificaciones({ items, vacio }: TablaNotificacionesProps) {
-  const filas = filasDe(items);
+  const filas = ordenarFilas(filasDe(items));
   const columnas: Column<FilaNotificacion>[] = [
     {
       key: 'fecha',
