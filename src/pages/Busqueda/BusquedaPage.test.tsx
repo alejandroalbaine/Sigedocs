@@ -55,7 +55,7 @@ test('el texto de búsqueda viaja como parámetro search y se conserva en la URL
   await screen.findByText('Rediseño de Matemática I');
 
   await userEvent.type(screen.getByLabelText('Texto'), 'matemática & más');
-  await userEvent.click(screen.getByRole('button', { name: 'Aplicar consulta' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Buscar' }));
 
   await waitFor(() => {
     expect(backend.calls).toContain(
@@ -122,7 +122,7 @@ test('los filtros de nivel y estado viajan al servidor y se conservan en la URL'
 
   await userEvent.selectOptions(screen.getByLabelText('Nivel académico'), 'associate');
   await userEvent.selectOptions(screen.getByLabelText('Estado'), 'IN_REVIEW');
-  await userEvent.click(screen.getByRole('button', { name: 'Aplicar consulta' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Buscar' }));
 
   await waitFor(() => {
     expect(backend.calls.at(-1)).toBe(
@@ -148,4 +148,13 @@ test('pagina los resultados con el cursor del servidor', async () => {
   expect(await screen.findByText('Maestría en Educación')).toBeInTheDocument();
   expect(backend.calls.at(-1)).toBe('GET /api/v1/dossiers?limit=25&cursor=c2');
   expect(screen.queryByText('Rediseño de Matemática I')).not.toBeInTheDocument();
+});
+
+test('D-12: hay un solo botón de búsqueda', async () => {
+  stubFetch({ 'GET /api/v1/dossiers': () => json({ data: expedientes }) });
+  abrirBusqueda();
+  await screen.findByText('Rediseño de Matemática I');
+
+  expect(screen.getAllByRole('button', { name: /^Buscar$|Aplicar consulta/ })).toHaveLength(1);
+  expect(screen.queryByRole('button', { name: 'Aplicar consulta' })).not.toBeInTheDocument();
 });

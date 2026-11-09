@@ -49,7 +49,7 @@ export function BusquedaPage() {
             autorizado.
           </p>
         </div>
-        <form className={styles.headerActions} onSubmit={submit}>
+        <div className={styles.headerActions}>
           <button
             type="button"
             className={`${styles.button} ${styles.buttonQuiet}`}
@@ -62,10 +62,15 @@ export function BusquedaPage() {
           >
             <X size={16} /> Limpiar filtros
           </button>
-          <button className={`${styles.button} ${styles.buttonOrange}`}>
+          {/* D-12: único botón de búsqueda; envía el formulario de filtros aunque esté plegado. */}
+          <button
+            type="submit"
+            form="filtros-busqueda"
+            className={`${styles.button} ${styles.buttonOrange}`}
+          >
             <Search size={16} /> Buscar
           </button>
-        </form>
+        </div>
       </header>
 
       <details className={styles.filterBar}>
@@ -81,7 +86,7 @@ export function BusquedaPage() {
           )}
           <span className={styles.subtle}>• Código, título, asignatura, nivel o estado</span>
         </summary>
-        <form className={styles.filters} onSubmit={submit}>
+        <form id="filtros-busqueda" className={styles.filters} onSubmit={submit}>
           <div className={styles.field}>
             <label htmlFor="q">Texto</label>
             <input
@@ -129,10 +134,6 @@ export function BusquedaPage() {
                 </option>
               ))}
             </select>
-          </div>
-          <div className={styles.field}>
-            <label>&nbsp;</label>
-            <button className={styles.button}>Aplicar consulta</button>
           </div>
         </form>
       </details>
