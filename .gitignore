@@ -10,3 +10,6 @@ npm-debug.log*
 *.log
 .vscode/*.local.json
 pid
+
+# Archivos comprimidos: no versionar copias del proyecto (DEF-H1)
+*.zip
