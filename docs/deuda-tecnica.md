@@ -5,11 +5,11 @@
 
 ## Resumen
 
-| ID | Deuda | Medición | Prioridad | Estimación de pago |
-|---|---|---|---|---|
-| DT-01 | Componentes de más de 250 líneas | 3 principales: 779, 593 y 517 líneas (más 6 archivos entre 251 y 481) | Alta | 8 pts |
-| DT-02 | Un solo bundle sin división por pantalla | `index-*.js` = 508 kB (156 kB gzip); solo 1 `lazy()` | Media | 3 pts |
-| DT-03 | Carga de datos manual (`useRecurso`) sin caché | 7 archivos, 15 llamadas, sin librería de caché | Media | 5 pts |
+| ID    | Deuda                                          | Medición                                                              | Prioridad | Estimación de pago |
+| ----- | ---------------------------------------------- | --------------------------------------------------------------------- | --------- | ------------------ |
+| DT-01 | Componentes de más de 250 líneas               | 3 principales: 779, 593 y 517 líneas (más 6 archivos entre 251 y 481) | Alta      | 8 pts              |
+| DT-02 | Un solo bundle sin división por pantalla       | `index-*.js` = 508 kB (156 kB gzip); solo 1 `lazy()`                  | Media     | 3 pts              |
+| DT-03 | Carga de datos manual (`useRecurso`) sin caché | 7 archivos, 15 llamadas, sin librería de caché                        | Media     | 5 pts              |
 
 Las estimaciones son iniciales y deben validarse en la planificación del sprint.
 
@@ -17,17 +17,17 @@ Las estimaciones son iniciales y deben validarse en la planificación del sprint
 
 Archivos fuente (sin pruebas) que superan las 250 líneas:
 
-| Líneas | Archivo | Tipo |
-|---:|---|---|
-| 779 | `src/pages/Registro/RegistroPage.tsx` | Página (componente) |
-| 593 | `src/pages/Revision/RevisionPage.tsx` | Página (componente) |
-| 517 | `src/features/programa/FormularioPrograma.tsx` | Formulario (componente) |
-| 442 | `src/features/versiones/ComparadorVersiones.tsx` | Componente |
-| 378 | `src/pages/Dashboard/DashboardPage.tsx` | Página (componente) |
-| 380 | `src/pages/UiKit/UiKitPage.tsx` | Solo desarrollo (`import.meta.env.DEV`) |
-| 481 | `src/common/api/templateContract.ts` | Contrato/validadores, no es un componente |
-| 412 | `src/features/versiones/comparacion.ts` | Lógica pura, no es un componente |
-| 407 | `src/common/api/dossierContract.ts` | Contrato/validadores, no es un componente |
+| Líneas | Archivo                                          | Tipo                                      |
+| -----: | ------------------------------------------------ | ----------------------------------------- |
+|    779 | `src/pages/Registro/RegistroPage.tsx`            | Página (componente)                       |
+|    593 | `src/pages/Revision/RevisionPage.tsx`            | Página (componente)                       |
+|    517 | `src/features/programa/FormularioPrograma.tsx`   | Formulario (componente)                   |
+|    442 | `src/features/versiones/ComparadorVersiones.tsx` | Componente                                |
+|    378 | `src/pages/Dashboard/DashboardPage.tsx`          | Página (componente)                       |
+|    380 | `src/pages/UiKit/UiKitPage.tsx`                  | Solo desarrollo (`import.meta.env.DEV`)   |
+|    481 | `src/common/api/templateContract.ts`             | Contrato/validadores, no es un componente |
+|    412 | `src/features/versiones/comparacion.ts`          | Lógica pura, no es un componente          |
+|    407 | `src/common/api/dossierContract.ts`              | Contrato/validadores, no es un componente |
 
 Los tres primeros son los citados en el criterio de aceptación y la medición los confirma.
 Los módulos de contrato y de lógica pura son largos por naturaleza (tablas de validación); se
@@ -44,10 +44,10 @@ Meta: ningún componente por encima de 250 líneas, comprobable con la regla `ma
 
 `vite build` produce:
 
-| Chunk | Tamaño | gzip |
-|---|---:|---:|
-| `index-*.js` | 508.01 kB | 155.92 kB |
-| `ComparadorVersiones-*.js` | 15.47 kB | 5.52 kB |
+| Chunk                      |    Tamaño |      gzip |
+| -------------------------- | --------: | --------: |
+| `index-*.js`               | 508.01 kB | 155.92 kB |
+| `ComparadorVersiones-*.js` |  15.47 kB |   5.52 kB |
 
 - Vite emite la advertencia de «chunks mayores de 500 kB».
 - `src/router.tsx` importa de forma estática las 12 páginas. La única carga diferida existente es
